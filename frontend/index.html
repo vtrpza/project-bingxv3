@@ -142,6 +142,15 @@
                     case 'pong':
                         console.log('Pong received');
                         break;
+                    case 'scanner_progress':
+                    case 'scanner_completion':
+                    case 'scanner_error':
+                        if (window.handleScannerMessage) {
+                            window.handleScannerMessage(data);
+                        } else {
+                            console.warn('window.handleScannerMessage not available yet');
+                        }
+                        break;
                     default:
                         console.log('Unknown message type:', data.type);
                 }

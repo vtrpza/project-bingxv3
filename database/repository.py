@@ -754,6 +754,16 @@ class SignalRepository(BaseRepository):
     
     def __init__(self):
         super().__init__(Signal)
+
+    def _convert_decimals_to_float(self, data: Any) -> Any:
+        """Recursively converts Decimal objects in a dictionary or list to floats."""
+        if isinstance(data, dict):
+            return {k: self._convert_decimals_to_float(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._convert_decimals_to_float(elem) for elem in data]
+        elif isinstance(data, Decimal):
+            return float(data)
+        return data
     
     def create_signal(self, session: Session, asset_id: str, signal_type: str, strength: Decimal,
                      rules_triggered: List[str], indicators_snapshot: Dict, trade_id: str = None) -> Optional[Signal]:
@@ -766,7 +776,7 @@ class SignalRepository(BaseRepository):
                 signal_type=signal_type,
                 strength=strength,
                 rules_triggered=rules_triggered,
-                indicators_snapshot=indicators_snapshot,
+                indicators_snapshot=self._convert_decimals_to_float(indicators_snapshot),
                 trade_id=trade_id
             )
         except SQLAlchemyError as e:

@@ -720,6 +720,50 @@ class TradingBotApp:
         # Keep connection alive - pong received
         pass
     
+    def handle_scanner_message(self, data):
+        """Handle scanner-related WebSocket messages"""
+        message_type = data.get("type")
+        payload = data.get("payload", {})
+        
+        if message_type == "scanner_progress":
+            processed = payload.get("processed_count", 0)
+            total = payload.get("total_assets", 0)
+            progress_percent = payload.get("progress_percent", 0)
+            eta = payload.get("estimated_remaining_time_seconds", 0)
+            
+            ui_components.show_notification(
+                "Scanner",
+                f"Processando: {processed}/{total} ({progress_percent:.1f}%) - ETA: {eta:.0f}s",
+                "info",
+                duration=2000 # Short duration for progress updates
+            )
+            
+            # Update UI elements for progress bar/text if they exist
+            # Example: document.getElementById("scanner-progress-text").textContent = f"..."
+            
+        elif message_type == "scanner_completion":
+            valid_assets = payload.get("valid_assets_count", 0)
+            total_assets = payload.get("total_assets", 0)
+            scan_duration = payload.get("scan_duration_seconds", 0)
+            
+            ui_components.show_notification(
+                "Scanner Concluído",
+                f"Scan finalizado! {valid_assets}/{total_assets} ativos válidos em {scan_duration:.1f}s",
+                "success",
+                duration=5000
+            )
+            # Refresh validation table after completion
+            asyncio.create_task(self.update_validation_table())
+            
+        elif message_type == "scanner_error":
+            error_message = payload.get("message", "Erro desconhecido no scanner")
+            ui_components.show_notification(
+                "Erro no Scanner",
+                f"Ocorreu um erro durante o scan: {error_message}",
+                "error",
+                duration=8000
+            )
+
     def setup_auto_refresh(self):
         """Set up automatic data refresh"""
         def refresh_task():
@@ -1083,6 +1127,7 @@ window.updateTradingDataTable = create_proxy(updateTradingDataTable)
 window.filterTradingDataTable = create_proxy(filterTradingDataTable)
 window.refreshTradingData = create_proxy(refreshTradingData)
 window.executeSignalTrade = create_proxy(executeSignalTrade)
+window.handleScannerMessage = create_proxy(app.handle_scanner_message)
 # Removed toggleAutoTrading from window proxy to avoid conflicts
 
 # Initialize the application

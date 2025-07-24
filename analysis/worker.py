@@ -219,7 +219,7 @@ class AnalysisWorker:
             # Generate trading signal
             signal_result = {}
             try:
-                signal_result = self.signal_generator.generate_trading_signal(
+                signal_result = await self.signal_generator.generate_trading_signal(
                     symbol,
                     candles_data.get('spot', []),
                     candles_data.get('2h', []),
@@ -290,7 +290,7 @@ class AnalysisWorker:
             try:
                 # Determine limit based on indicator requirements
                 if tf_name == 'spot':
-                    limit = max(50, self.config.VOLUME_SPIKE_LOOKBACK + 10)  # For volume analysis
+                    limit = max(100, self.config.VOLUME_SPIKE_LOOKBACK + 20)  # Increased for correlation analysis
                 else:
                     limit = max(50, self.config.CENTER_PERIOD + 10)  # For MA calculations
                 
