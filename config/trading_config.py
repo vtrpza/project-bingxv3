@@ -18,7 +18,7 @@ class TradingConfig:
     """Trading strategy and risk management parameters."""
     
     # Position Sizing & Limits - VST-ONLY MODE
-    MAX_CONCURRENT_TRADES: int = int(os.getenv("MAX_CONCURRENT_TRADES", "1"))  # Only 1 trade for VST
+    MAX_CONCURRENT_TRADES: int = int(os.getenv("MAX_CONCURRENT_TRADES", "10"))  # Only 1 trade for VST
     MIN_ORDER_SIZE_USDT: Decimal = Decimal(os.getenv("MIN_ORDER_SIZE_USDT", "10.0"))
     MAX_POSITION_SIZE_PERCENT: Decimal = Decimal(os.getenv("MAX_POSITION_SIZE_PERCENT", "10.0"))  # Higher % for single asset
     
@@ -68,7 +68,7 @@ class TradingConfig:
     # Scanner Configuration - VST-ONLY MODE
     SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "15"))  # Faster scanning for single asset
     MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "1000"))  # Lower threshold for VST
-    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1"))  # Only VST
+    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))  # Only VST
     
     # Timeframes Configuration
     ANALYSIS_TIMEFRAMES: List[str] = os.getenv("ANALYSIS_TIMEFRAMES", "2h,4h").split(",")
