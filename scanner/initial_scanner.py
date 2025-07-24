@@ -211,7 +211,7 @@ class InitialScanner:
         
         # Process in batches to avoid overwhelming the API, but save each asset immediately
         results = {}
-        max_concurrent = min(10, TradingConfig.MAX_ASSETS_TO_SCAN // 10)
+        max_concurrent = min(10, max(1, TradingConfig.MAX_ASSETS_TO_SCAN // 10))
         processed_count = 0
         
         for i in range(0, len(sorted_symbols), max_concurrent):

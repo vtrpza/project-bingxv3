@@ -232,3 +232,256 @@
 2025-07-24 06:46:00,669 - api.client - INFO - Private API access confirmed
 2025-07-24 06:46:00,672 - api.client - INFO - BingX client initialized successfully (Testnet: False)
 2025-07-24 06:46:00,672 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 06:46:17,486 - __main__ - INFO - 📡 Received shutdown signal
+2025-07-24 06:46:17,486 - __main__ - INFO - 🛑 Stopping BingX Trading Bot...
+2025-07-24 06:46:17,486 - __main__ - INFO - Trading monitor task cancelled
+2025-07-24 06:46:17,486 - trading.order_manager - INFO - Order monitoring stopped
+2025-07-24 06:46:17,486 - trading.order_manager - INFO - OrderManager stopped
+2025-07-24 06:46:17,486 - __main__ - INFO - ✅ order_manager stopped
+2025-07-24 06:46:17,487 - trading.risk_manager - INFO - Risk monitoring stopped
+2025-07-24 06:46:17,487 - trading.risk_manager - INFO - RiskManager stopped
+2025-07-24 06:46:17,487 - __main__ - INFO - ✅ risk_manager stopped
+2025-07-24 06:46:17,487 - trading.engine - INFO - TradingEngine stopped
+2025-07-24 06:46:17,487 - __main__ - INFO - ✅ trading_engine stopped
+2025-07-24 06:46:17,487 - __main__ - INFO - ✅ BingX Trading Bot stopped successfully
+2025-07-24 06:46:19,262 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:46:19,262 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:46:19,607 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:46:19,607 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:46:19,607 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:46:19,607 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:46:19,607 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:46:19,607 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:46:19,607 - database.connection - INFO - Using SQLite database
+2025-07-24 06:46:19,615 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:46:19,616 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:46:19,617 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:46:19,617 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:46:19,617 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:46:19,617 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:46:20,370 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:46:23,698 - api.client - INFO - Private API access confirmed
+2025-07-24 06:46:23,702 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:46:24,792 - __main__ - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 06:46:24,793 - __main__ - INFO - ⚙️ Initializing bot components...
+2025-07-24 06:46:24,793 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 06:46:24,793 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 06:46:24,793 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 06:46:24,793 - __main__ - INFO - ✅ Bot components initialized
+2025-07-24 06:46:24,794 - __main__ - INFO - ✅ Bot initialization completed successfully
+2025-07-24 06:46:24,794 - __main__ - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 06:46:24,808 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 06:46:24,809 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 06:46:24,811 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 06:46:24,813 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 06:46:26,933 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:46:31,087 - api.client - INFO - Private API access confirmed
+2025-07-24 06:46:31,090 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:46:31,438 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 06:46:31,438 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 06:46:31,438 - __main__ - INFO - 📡 Starting background tasks...
+2025-07-24 06:46:31,438 - __main__ - INFO - ✅ Background tasks started
+2025-07-24 06:46:31,438 - __main__ - INFO - ✅ BingX Trading Bot started successfully
+2025-07-24 06:46:31,438 - __main__ - INFO - 📊 Configuration: {'max_concurrent_trades': 1, 'min_order_size': 10.0, 'max_position_percent': 10.0, 'initial_stop_loss': 0.02, 'rsi_range': [35.0, 73.0], 'analysis_timeframes': ['2h', '4h'], 'trading_enabled': True, 'paper_trading': False, 'emergency_stop': False}
+2025-07-24 06:46:31,439 - __main__ - INFO - 🤖 Bot is running. Press Ctrl+C to stop.
+2025-07-24 06:46:31,439 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 06:46:31,439 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 06:46:31,441 - __main__ - INFO - 🔍 Starting asset scanner...
+2025-07-24 06:46:31,441 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 06:46:31,441 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 06:46:31,441 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 06:46:32,687 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:46:37,328 - api.client - INFO - Private API access confirmed
+2025-07-24 06:46:37,331 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:46:37,331 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 06:46:38,062 - api.client - INFO - Fetched 1513 USDT markets
+2025-07-24 06:46:38,063 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 06:46:38,066 - api.market_data - INFO - Fetched 1513 USDT markets
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Discovered 0 USDT pairs for validation
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Starting incremental validation of 0 assets...
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Processing 0 assets incrementally (0 priority)
+2025-07-24 06:46:38,066 - scanner.initial_scanner - ERROR - Error during asset validation: range() arg 3 must not be zero
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Results already persisted incrementally during validation process
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Initial scan completed: 0/0 assets valid (0.0% success rate) in 6.6s
+2025-07-24 06:46:38,066 - scanner.initial_scanner - INFO - Initial asset scan completed - 0/0 valid
+2025-07-24 06:46:38,068 - __main__ - WARNING - No valid assets found for scanning
+2025-07-24 06:46:38,069 - __main__ - INFO - 📈 Starting trading monitor...
+2025-07-24 06:47:37,846 - __main__ - WARNING - No valid assets found for scanning
+2025-07-24 06:47:56,167 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:47:56,167 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:47:56,176 - api.web_api - INFO - Initializing database...
+2025-07-24 06:47:56,176 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:47:56,176 - database.connection - INFO - Using SQLite database
+2025-07-24 06:47:56,184 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:47:56,184 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:47:56,185 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:47:56,185 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:47:56,185 - api.web_api - INFO - Background tasks started
+2025-07-24 06:48:24,527 - __main__ - INFO - 📡 Received shutdown signal
+2025-07-24 06:48:24,527 - __main__ - INFO - 🛑 Stopping BingX Trading Bot...
+2025-07-24 06:48:24,527 - __main__ - INFO - Scanner task cancelled
+2025-07-24 06:48:24,528 - __main__ - INFO - Trading monitor task cancelled
+2025-07-24 06:48:24,528 - trading.order_manager - INFO - Order monitoring stopped
+2025-07-24 06:48:24,528 - trading.order_manager - INFO - OrderManager stopped
+2025-07-24 06:48:24,528 - __main__ - INFO - ✅ order_manager stopped
+2025-07-24 06:48:24,528 - trading.risk_manager - INFO - Risk monitoring stopped
+2025-07-24 06:48:24,528 - trading.risk_manager - INFO - RiskManager stopped
+2025-07-24 06:48:24,528 - __main__ - INFO - ✅ risk_manager stopped
+2025-07-24 06:48:24,528 - trading.engine - INFO - TradingEngine stopped
+2025-07-24 06:48:24,529 - __main__ - INFO - ✅ trading_engine stopped
+2025-07-24 06:48:24,529 - __main__ - INFO - ✅ BingX Trading Bot stopped successfully
+2025-07-24 06:48:29,307 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:48:29,307 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:48:29,675 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:48:29,675 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:48:29,675 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:48:29,675 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:48:29,676 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:48:29,676 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:48:29,676 - database.connection - INFO - Using SQLite database
+2025-07-24 06:48:29,683 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:48:29,684 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:48:29,685 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:48:29,685 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:48:29,685 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:48:29,685 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:48:30,511 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:48:31,679 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:48:31,679 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:48:31,688 - api.web_api - INFO - Initializing database...
+2025-07-24 06:48:31,689 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:48:31,689 - database.connection - INFO - Using SQLite database
+2025-07-24 06:48:31,696 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:48:31,696 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:48:31,698 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:48:31,698 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:48:31,698 - api.web_api - INFO - Background tasks started
+2025-07-24 06:48:33,883 - api.client - INFO - Private API access confirmed
+2025-07-24 06:48:33,886 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:48:34,394 - __main__ - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 06:48:34,395 - __main__ - INFO - ⚙️ Initializing bot components...
+2025-07-24 06:48:34,395 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 06:48:34,395 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 06:48:34,395 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 06:48:34,395 - __main__ - INFO - ✅ Bot components initialized
+2025-07-24 06:48:34,395 - __main__ - INFO - ✅ Bot initialization completed successfully
+2025-07-24 06:48:34,396 - __main__ - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 06:48:34,409 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 06:48:34,409 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 06:48:34,411 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 06:48:34,413 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 06:48:35,190 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:48:38,585 - api.client - INFO - Private API access confirmed
+2025-07-24 06:48:38,588 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:48:38,917 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 06:48:38,917 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 06:48:38,918 - __main__ - INFO - 📡 Starting background tasks...
+2025-07-24 06:48:38,918 - __main__ - INFO - ✅ Background tasks started
+2025-07-24 06:48:38,918 - __main__ - INFO - ✅ BingX Trading Bot started successfully
+2025-07-24 06:48:38,918 - __main__ - INFO - 📊 Configuration: {'max_concurrent_trades': 1, 'min_order_size': 10.0, 'max_position_percent': 10.0, 'initial_stop_loss': 0.02, 'rsi_range': [35.0, 73.0], 'analysis_timeframes': ['2h', '4h'], 'trading_enabled': True, 'paper_trading': False, 'emergency_stop': False}
+2025-07-24 06:48:38,918 - __main__ - INFO - 🤖 Bot is running. Press Ctrl+C to stop.
+2025-07-24 06:48:38,918 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 06:48:38,918 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 06:48:38,921 - __main__ - INFO - 🔍 Starting asset scanner...
+2025-07-24 06:48:38,921 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 06:48:38,921 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 06:48:38,921 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 06:48:39,361 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:48:39,362 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:48:39,362 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:48:39,367 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:48:39,376 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:48:39,399 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:48:39,445 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:48:39,493 - api.web_api - INFO - Positions requested - returning empty structure
+2025-07-24 06:48:39,542 - api.web_api - INFO - Trades requested - returning empty structure
+2025-07-24 06:48:39,720 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:48:43,011 - api.client - INFO - Private API access confirmed
+2025-07-24 06:48:43,014 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:48:43,015 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 06:48:43,722 - api.client - INFO - Fetched 1513 USDT markets
+2025-07-24 06:48:43,723 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 06:48:43,726 - api.market_data - INFO - Fetched 1513 USDT markets
+2025-07-24 06:48:43,726 - scanner.initial_scanner - INFO - Discovered 0 USDT pairs for validation
+2025-07-24 06:48:43,726 - scanner.initial_scanner - INFO - Starting incremental validation of 0 assets...
+2025-07-24 06:48:43,726 - scanner.initial_scanner - INFO - Processing 0 assets incrementally (0 priority)
+2025-07-24 06:48:43,726 - scanner.initial_scanner - INFO - Incremental validation completed: 0 assets processed
+2025-07-24 06:48:43,727 - scanner.initial_scanner - INFO - Results already persisted incrementally during validation process
+2025-07-24 06:48:43,727 - scanner.initial_scanner - INFO - Initial scan completed: 0/0 assets valid (0.0% success rate) in 4.8s
+2025-07-24 06:48:43,727 - scanner.initial_scanner - INFO - Initial asset scan completed - 0/0 valid
+2025-07-24 06:48:43,729 - __main__ - WARNING - No valid assets found for scanning
+2025-07-24 06:48:43,729 - __main__ - INFO - 📈 Starting trading monitor...
+2025-07-24 06:48:47,609 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:48:47,611 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:48:49,650 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:48:50,679 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:48:50,681 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:48:52,754 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:48:54,806 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:49:01,135 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:49:01,137 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:49:02,016 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:49:02,016 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:49:02,117 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 06:49:03,585 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:49:03,586 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:49:03,958 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:49:03,958 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:49:03,958 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:49:03,958 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:49:03,958 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:49:03,958 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:49:03,958 - database.connection - INFO - Using SQLite database
+2025-07-24 06:49:03,966 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:49:03,967 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:49:03,968 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:49:03,968 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:49:03,968 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:49:03,968 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:49:05,807 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:49:10,293 - api.client - INFO - Private API access confirmed
+2025-07-24 06:49:10,296 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:49:10,615 - __main__ - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 06:49:10,615 - __main__ - INFO - ⚙️ Initializing bot components...
+2025-07-24 06:49:10,615 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 06:49:10,616 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 06:49:10,616 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 06:49:10,616 - __main__ - INFO - ✅ Bot components initialized
+2025-07-24 06:49:10,616 - __main__ - INFO - ✅ Bot initialization completed successfully
+2025-07-24 06:49:10,616 - __main__ - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 06:49:10,630 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 06:49:10,631 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 06:49:10,633 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 06:49:10,635 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 06:49:11,285 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:49:14,822 - api.client - INFO - Private API access confirmed
+2025-07-24 06:49:14,825 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:49:15,150 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 06:49:15,150 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 06:49:15,151 - __main__ - INFO - 📡 Starting background tasks...
+2025-07-24 06:49:15,151 - __main__ - INFO - ✅ Background tasks started
+2025-07-24 06:49:15,151 - __main__ - INFO - ✅ BingX Trading Bot started successfully
+2025-07-24 06:49:15,151 - __main__ - INFO - 📊 Configuration: {'max_concurrent_trades': 1, 'min_order_size': 10.0, 'max_position_percent': 10.0, 'initial_stop_loss': 0.02, 'rsi_range': [35.0, 73.0], 'analysis_timeframes': ['2h', '4h'], 'trading_enabled': True, 'paper_trading': False, 'emergency_stop': False}
+2025-07-24 06:49:15,151 - __main__ - INFO - 🤖 Bot is running. Press Ctrl+C to stop.
+2025-07-24 06:49:15,151 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 06:49:15,151 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 06:49:15,153 - __main__ - INFO - 🔍 Starting asset scanner...
+2025-07-24 06:49:15,153 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 06:49:15,153 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 06:49:15,153 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 06:49:15,966 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:49:19,715 - api.client - INFO - Private API access confirmed
+2025-07-24 06:49:19,718 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:49:19,719 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 06:49:20,418 - api.client - INFO - Fetched 1513 USDT markets
+2025-07-24 06:49:20,419 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 06:49:20,423 - api.market_data - INFO - Fetched 1513 USDT markets
+2025-07-24 06:49:20,423 - scanner.initial_scanner - INFO - Discovered 0 USDT pairs for validation
+2025-07-24 06:49:20,423 - scanner.initial_scanner - INFO - Starting incremental validation of 0 assets...
+2025-07-24 06:49:20,423 - scanner.initial_scanner - INFO - Processing 0 assets incrementally (0 priority)
+2025-07-24 06:49:20,423 - scanner.initial_scanner - INFO - Incremental validation completed: 0 assets processed
+2025-07-24 06:49:20,423 - scanner.initial_scanner - INFO - Results already persisted incrementally during validation process
+2025-07-24 06:49:20,424 - scanner.initial_scanner - INFO - Initial scan completed: 0/0 assets valid (0.0% success rate) in 5.3s
+2025-07-24 06:49:20,424 - scanner.initial_scanner - INFO - Initial asset scan completed - 0/0 valid
+2025-07-24 06:49:20,426 - __main__ - WARNING - No valid assets found for scanning
+2025-07-24 06:49:20,426 - __main__ - INFO - 📈 Starting trading monitor...
