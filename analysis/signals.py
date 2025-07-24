@@ -341,9 +341,9 @@ class SignalGenerator:
             signal_start = datetime.utcnow()
             
             # Analyze all rules
-            rule_1_result = await self.analyze_rule_1_crossover(candles_2h, candles_4h)
-            rule_2_result = await self.analyze_rule_2_distance(candles_2h, candles_4h)
-            rule_3_result = await self.analyze_rule_3_volume(candles_spot, candles_2h)
+            rule_1_result = self.analyze_rule_1_crossover(candles_2h, candles_4h)
+            rule_2_result = self.analyze_rule_2_distance(candles_2h, candles_4h)
+            rule_3_result = self.analyze_rule_3_volume(candles_spot, candles_2h)
             
             # Collect triggered rules
             triggered_rules = []
