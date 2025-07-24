@@ -125,7 +125,11 @@ class TradingBotApp:
             )
         finally:
             # Clear timeout and hide loading
-            clearTimeout(loading_timeout)
+            if loading_timeout:
+                try:
+                    js.clearTimeout(loading_timeout)
+                except:
+                    pass
             loading_overlay.style.display = "none"
             console.log("Loading completed - overlay hidden")
     
