@@ -202,7 +202,10 @@ async def get_asset_validation_table(
     sort_direction: str = "asc",
     filter_valid_only: bool = False,
     include_invalid: bool = True,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    risk_level_filter: Optional[str] = None,
+    priority_only: bool = False,
+    trading_enabled_only: bool = False
 ):
     """Get simplified asset validation table with server-side pagination and dynamic asset names"""
     try:
@@ -219,7 +222,14 @@ async def get_asset_validation_table(
         with get_session() as db:
             # Get filtered count for pagination
             filter_applied = filter_valid_only or not include_invalid
-            total_count = asset_repo.get_filtered_count(db, filter_valid_only=filter_applied, search=search)
+            total_count = asset_repo.get_filtered_count(
+                db, 
+                filter_valid_only=filter_applied, 
+                search=search,
+                risk_level_filter=risk_level_filter,
+                priority_only=priority_only,
+                trading_enabled_only=trading_enabled_only
+            )
             
             # Calculate pagination info
             total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
