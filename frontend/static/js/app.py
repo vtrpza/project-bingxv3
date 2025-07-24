@@ -1133,4 +1133,49 @@ window.handleScannerMessage = create_proxy(app.handle_scanner_message)
 # Initialize the application
 app = TradingBotApp()
 
+# Make functions globally available
+document.refreshData = create_proxy(refreshData)
+document.refreshValidationTable = create_proxy(refreshValidationTable)
+document.exportTableData = create_proxy(exportTableData)
+document.sortTable = create_proxy(sortTable)
+document.previousPage = create_proxy(previousPage)
+document.nextPage = create_proxy(nextPage)
+document.closePosition = create_proxy(closePosition)
+document.forceRevalidation = create_proxy(forceRevalidation)
+document.filterValidationTable = create_proxy(filterValidationTable)
+document.searchAssets = create_proxy(searchAssets)
+document.clearSearch = create_proxy(clearSearch)
+document.showNotification = create_proxy(ui_components.show_notification)
+
+# New server-side functions
+document.sortValidationTableServer = create_proxy(sortValidationTableServer)
+document.refreshValidationTablePage = create_proxy(refreshValidationTablePage)
+document.applyValidationTableFilters = create_proxy(applyValidationTableFilters)
+
+# Trading functions
+document.updateTradingDataTable = create_proxy(updateTradingDataTable)
+document.filterTradingDataTable = create_proxy(filterTradingDataTable)
+document.refreshTradingData = create_proxy(refreshTradingData)
+document.executeSignalTrade = create_proxy(executeSignalTrade)
+# Removed toggleAutoTrading from document proxy to avoid conflicts
+
+# Also make all functions available on window object for JavaScript compatibility
+window.showNotification = create_proxy(ui_components.show_notification)
+window.forceRevalidation = create_proxy(forceRevalidation)
+window.refreshValidationTable = create_proxy(refreshValidationTable)
+window.exportTableData = create_proxy(exportTableData)
+window.sortTable = create_proxy(sortTable)
+window.previousPage = create_proxy(previousPage)
+window.nextPage = create_proxy(nextPage)
+window.clearSearch = create_proxy(clearSearch)
+window.searchAssets = create_proxy(searchAssets)
+
+# Trading functions on window
+window.updateTradingDataTable = create_proxy(updateTradingDataTable)
+window.filterTradingDataTable = create_proxy(filterTradingDataTable)
+window.refreshTradingData = create_proxy(refreshTradingData)
+window.executeSignalTrade = create_proxy(executeSignalTrade)
+window.handleScannerMessage = create_proxy(app.handle_scanner_message)
+# Removed toggleAutoTrading from window proxy to avoid conflicts
+
 console.log("BingX Trading Bot Dashboard loaded successfully!")
