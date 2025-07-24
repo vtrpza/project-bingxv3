@@ -159,18 +159,41 @@ class AssetRepository(BaseRepository):
                                sort_by: str = "symbol", 
                                sort_direction: str = "asc",
                                filter_valid_only: bool = False,
+                               search: Optional[str] = None,
                                limit: Optional[int] = None,
                                offset: int = 0) -> List[Asset]:
-        """Get assets with sorting and filtering options."""
+        """Get assets with sorting, filtering and search options."""
         try:
             query = session.query(Asset)
             
-            # Apply filter
+            # Apply search filter
+            if search and search.strip():
+                search_term = f"%{search.strip().upper()}%"
+                query = query.filter(
+                    or_(
+                        Asset.symbol.ilike(search_term),
+                        Asset.base_currency.ilike(search_term),
+                        Asset.quote_currency.ilike(search_term)
+                    )
+                )
+            
+            # Apply validity filter
             if filter_valid_only:
                 query = query.filter(Asset.is_valid == True)
             
-            # Apply sorting
-            sort_column = getattr(Asset, sort_by, Asset.symbol)
+            # Apply sorting with proper column mapping
+            sort_mapping = {
+                "symbol": Asset.symbol,
+                "base_currency": Asset.base_currency, 
+                "quote_currency": Asset.quote_currency,
+                "is_valid": Asset.is_valid,
+                "last_validation": Asset.last_validation,
+                "created_at": Asset.created_at,
+                "updated_at": Asset.updated_at
+            }
+            
+            sort_column = sort_mapping.get(sort_by, Asset.symbol)
+            
             if sort_direction.lower() == "desc":
                 query = query.order_by(desc(sort_column))
             else:
@@ -187,12 +210,26 @@ class AssetRepository(BaseRepository):
             logger.error(f"Error getting sorted assets: {e}")
             return []
     
-    def get_filtered_count(self, session: Session, filter_valid_only: bool = False) -> int:
+    def get_filtered_count(self, session: Session, filter_valid_only: bool = False, search: Optional[str] = None) -> int:
         """Get count of assets with filters applied."""
         try:
             query = session.query(Asset)
+            
+            # Apply search filter
+            if search and search.strip():
+                search_term = f"%{search.strip().upper()}%"
+                query = query.filter(
+                    or_(
+                        Asset.symbol.ilike(search_term),
+                        Asset.base_currency.ilike(search_term),
+                        Asset.quote_currency.ilike(search_term)
+                    )
+                )
+            
+            # Apply validity filter
             if filter_valid_only:
                 query = query.filter(Asset.is_valid == True)
+                
             return query.count()
         except SQLAlchemyError as e:
             logger.error(f"Error counting filtered assets: {e}")

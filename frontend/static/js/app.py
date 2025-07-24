@@ -133,6 +133,34 @@ class TradingBotApp:
         finally:
             self.update_in_progress = False
     
+    async def search_and_update_table(self, search_term=""):
+        """Search and update validation table"""
+        try:
+            console.log(f"Performing search for: '{search_term}'")
+            
+            # Get search results from API
+            validation_data = await api_client.get_validation_table(
+                limit=None,
+                include_invalid=True,
+                search=search_term if search_term else None
+            )
+            
+            if validation_data:
+                ui_components.update_validation_table(validation_data)
+                
+                # Update search indicator
+                search_input = document.getElementById("symbol-search")
+                if search_input:
+                    if search_term:
+                        search_input.style.backgroundColor = "#e8f4fd"
+                        search_input.style.borderColor = "#0969da"
+                    else:
+                        search_input.style.backgroundColor = ""
+                        search_input.style.borderColor = ""
+                        
+        except Exception as e:
+            console.error(f"Error during search: {str(e)}")
+    
     def update_validation_stats(self, summary):
         """Update validation statistics in the UI"""
         try:
@@ -448,6 +476,35 @@ def filterValidationTable():
     """Global function to filter validation table"""
     ui_components.filter_validation_table()
 
+def searchAssets(event):
+    """Handle asset search with debouncing"""
+    search_term = event.target.value.strip()
+    
+    # Clear previous timeout if exists
+    from js import clearTimeout, setTimeout
+    if hasattr(searchAssets, 'timeout'):
+        clearTimeout(searchAssets.timeout)
+    
+    # Debounce search for 500ms
+    def perform_search():
+        console.log(f"Searching for: '{search_term}'")
+        try:
+            asyncio.create_task(app.search_and_update_table(search_term))
+        except Exception as e:
+            console.error(f"Search error: {e}")
+            # Fallback: show error notification
+            if hasattr(window, 'showNotification'):
+                window.showNotification("Erro de Pesquisa", f"Erro ao buscar: {e}", "error")
+    
+    searchAssets.timeout = setTimeout(create_proxy(perform_search), 500)
+
+def clearSearch():
+    """Clear search input and refresh table"""
+    search_input = document.getElementById("symbol-search")
+    if search_input:
+        search_input.value = ""
+        asyncio.create_task(app.search_and_update_table(""))
+
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)
 document.refreshValidationTable = create_proxy(refreshValidationTable)
@@ -458,6 +515,8 @@ document.nextPage = create_proxy(nextPage)
 document.closePosition = create_proxy(closePosition)
 document.forceRevalidation = create_proxy(forceRevalidation)
 document.filterValidationTable = create_proxy(filterValidationTable)
+document.searchAssets = create_proxy(searchAssets)
+document.clearSearch = create_proxy(clearSearch)
 document.showNotification = create_proxy(ui_components.show_notification)
 
 # Also make showNotification available on window object for JavaScript compatibility

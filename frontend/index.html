@@ -98,42 +98,50 @@
                 <div class="dashboard-section">
                     <h2>📊 Tabela de Todos os Símbolos</h2>
                     <div class="controls">
-                        <label>
-                            <input type="checkbox" id="show-only-valid" checked> Apenas válidos
-                        </label>
-                        <label>
-                            <input type="checkbox" id="priority-only"> Apenas prioritários
-                        </label>
-                        <label>
-                            <input type="checkbox" id="trading-enabled-only"> Trading habilitado
-                        </label>
-                        <select id="risk-level-filter">
-                            <option value="all">Todos os riscos</option>
-                            <option value="LOW">Risco baixo</option>
-                            <option value="MEDIUM">Risco médio</option>
-                            <option value="HIGH">Risco alto</option>
-                        </select>
-                        <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar Tabela</button>
-                        <button onclick="forceRevalidation()" class="revalidate-btn">🔄 Forçar Revalidação</button>
-                        <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
+                        <div class="search-container">
+                            <input type="text" id="symbol-search" placeholder="🔍 Buscar por símbolo (ex: BTC, ETH...)" onkeyup="searchAssets(event)">
+                            <button onclick="clearSearch()" class="clear-btn">✖</button>
+                        </div>
+                        <div class="filter-container">
+                            <label>
+                                <input type="checkbox" id="show-only-valid" checked> Apenas válidos
+                            </label>
+                            <label>
+                                <input type="checkbox" id="priority-only"> Apenas prioritários
+                            </label>
+                            <label>
+                                <input type="checkbox" id="trading-enabled-only"> Trading habilitado
+                            </label>
+                            <select id="risk-level-filter">
+                                <option value="all">Todos os riscos</option>
+                                <option value="LOW">Risco baixo</option>
+                                <option value="MEDIUM">Risco médio</option>
+                                <option value="HIGH">Risco alto</option>
+                            </select>
+                        </div>
+                        <div class="action-container">
+                            <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar</button>
+                            <button onclick="forceRevalidation()" class="revalidate-btn">🔄 Revalidar</button>
+                            <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
+                        </div>
                     </div>
                     
                     <div class="table-container">
                         <table class="validation-table" id="validation-table">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-sort="symbol">Símbolo</th>
-                                    <th class="sortable" data-sort="validation_status">Status</th>
-                                    <th class="sortable" data-sort="validation_score">Score</th>
-                                    <th class="sortable" data-sort="current_price">Preço</th>
-                                    <th class="sortable" data-sort="volume_24h_quote">Volume 24h</th>
-                                    <th class="sortable" data-sort="price_change_percent_24h">Variação %</th>
-                                    <th class="sortable" data-sort="spread_percent">Spread %</th>
-                                    <th class="sortable" data-sort="risk_level">Nível Risco</th>
-                                    <th class="sortable" data-sort="trading_enabled">Trading</th>
-                                    <th class="sortable" data-sort="data_quality_score">Qualidade</th>
-                                    <th class="sortable" data-sort="last_updated">Atualizado</th>
-                                    <th class="sortable" data-sort="age_days">Idade (dias)</th>
+                                    <th class="sortable" data-sort="symbol" onclick="sortTable('symbol')">Ativo</th>
+                                    <th class="sortable" data-sort="validation_status" onclick="sortTable('validation_status')">Status</th>
+                                    <th class="sortable" data-sort="validation_score" onclick="sortTable('validation_score')">Score</th>
+                                    <th class="sortable" data-sort="current_price" onclick="sortTable('current_price')">Preço</th>
+                                    <th class="sortable" data-sort="volume_24h_quote" onclick="sortTable('volume_24h_quote')">Volume 24h</th>
+                                    <th class="sortable" data-sort="price_change_percent_24h" onclick="sortTable('price_change_percent_24h')">Variação %</th>
+                                    <th class="sortable" data-sort="spread_percent" onclick="sortTable('spread_percent')">Spread %</th>
+                                    <th class="sortable" data-sort="risk_level" onclick="sortTable('risk_level')">Nível Risco</th>
+                                    <th class="sortable" data-sort="trading_enabled" onclick="sortTable('trading_enabled')">Trading</th>
+                                    <th class="sortable" data-sort="data_quality_score" onclick="sortTable('data_quality_score')">Qualidade</th>
+                                    <th class="sortable" data-sort="last_updated" onclick="sortTable('last_updated')">Atualizado</th>
+                                    <th class="sortable" data-sort="age_days" onclick="sortTable('age_days')">Idade (dias)</th>
                                 </tr>
                             </thead>
                             <tbody id="validation-table-body">
@@ -355,6 +363,34 @@
                 });
             }
         });
+        
+        // Enhanced search and clear functions
+        function searchAssets(event) {
+            console.log('JS searchAssets called');
+            if (typeof document.searchAssets === 'function') {
+                document.searchAssets(event);
+            } else {
+                console.warn('PyScript searchAssets not available yet');
+            }
+        }
+        
+        function clearSearch() {
+            console.log('JS clearSearch called');
+            const searchInput = document.getElementById('symbol-search');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.classList.remove('searching');
+            }
+            if (typeof document.clearSearch === 'function') {
+                document.clearSearch();
+            } else {
+                console.warn('PyScript clearSearch not available yet');
+            }
+        }
+        
+        // Make functions globally available
+        window.searchAssets = searchAssets;
+        window.clearSearch = clearSearch;
         
         // Safe notification wrapper that checks if PyScript is loaded
         function showNotificationSafe(title, message, type) {

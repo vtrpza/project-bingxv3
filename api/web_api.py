@@ -196,36 +196,52 @@ async def test_database():
 # Asset validation table endpoint
 @app.get("/api/assets/validation-table")
 async def get_asset_validation_table(
-    limit: Optional[int] = 25,
-    offset: Optional[int] = 0,
+    page: Optional[int] = 1,
+    per_page: Optional[int] = 25,
     sort_by: str = "symbol",
     sort_direction: str = "asc",
     filter_valid_only: bool = False,
-    include_invalid: bool = True
+    include_invalid: bool = True,
+    search: Optional[str] = None
 ):
-    """Get simplified asset validation table focused on analysis data only"""
+    """Get simplified asset validation table with server-side pagination and dynamic asset names"""
     try:
-        logger.info(f"Asset validation table requested - offset: {offset}, limit: {limit}, sort: {sort_by} {sort_direction}")
+        # Calculate offset from page and per_page
+        offset = (page - 1) * per_page if page > 1 else 0
+        limit = per_page
+        
+        logger.info(f"Asset validation table requested - page: {page}, per_page: {per_page}, sort: {sort_by} {sort_direction}")
         
         from database.connection import get_session
+        from utils.asset_info import asset_info_service
         asset_repo = AssetRepository()
         
         with get_session() as db:
             # Get filtered count for pagination
             filter_applied = filter_valid_only or not include_invalid
-            total_count = asset_repo.get_filtered_count(db, filter_valid_only=filter_applied)
+            total_count = asset_repo.get_filtered_count(db, filter_valid_only=filter_applied, search=search)
             
-            # Use new sorting method
+            # Calculate pagination info
+            total_pages = (total_count + per_page - 1) // per_page if total_count > 0 else 1
+            has_next = page < total_pages
+            has_previous = page > 1
+            
+            # Use new sorting method with search
             all_assets = asset_repo.get_assets_with_sorting(
                 db, 
                 sort_by=sort_by,
                 sort_direction=sort_direction,
                 filter_valid_only=filter_applied,
+                search=search,
                 limit=limit,
-                offset=offset or 0
+                offset=offset
             )
             
-            logger.info(f"Fetched {len(all_assets)} assets (total: {total_count})")
+            logger.info(f"Fetched {len(all_assets)} assets (total: {total_count}, page: {page}/{total_pages})")
+            
+            # Get asset names dynamically
+            symbols = [asset.symbol for asset in all_assets]
+            asset_names = await asset_info_service.get_asset_info_batch(symbols)
             
             table_data = []
             for asset in all_assets:
@@ -233,9 +249,37 @@ async def get_asset_validation_table(
                 val_data = asset.validation_data or {}
                 market_summary = val_data.get('market_summary', {})
                 
+                # Debug: log missing data for analysis
+                if not market_summary and asset.is_valid:
+                    logger.warning(f"Valid asset {asset.symbol} missing market_summary data")
+                
+                # Helper function to safely convert values
+                def safe_float(value, default=None):
+                    if value is None:
+                        return default
+                    try:
+                        return float(value)
+                    except (ValueError, TypeError):
+                        return default
+                
+                # Extract data with better fallbacks
+                current_price = safe_float(market_summary.get('price'))
+                volume_24h = safe_float(market_summary.get('quote_volume_24h'))
+                change_24h = safe_float(market_summary.get('change_24h'))
+                change_percent_24h = safe_float(market_summary.get('change_percent_24h'))
+                spread_percent = safe_float(market_summary.get('spread_percent'))
+                
+                # Calculate derived values
+                volatility_24h = abs(change_percent_24h) if change_percent_24h is not None else None
+                
+                # Get asset name dynamically
+                asset_info = asset_names.get(asset.symbol, {})
+                asset_name = asset_info.get('name', asset.base_currency)
+                
                 # Simplified data focused on validation analysis only
                 table_data.append({
                     "symbol": asset.symbol,
+                    "asset_name": asset_name,
                     "base_currency": asset.base_currency,
                     "quote_currency": asset.quote_currency,
                     "validation_status": "VALID" if asset.is_valid else "INVALID",
@@ -243,11 +287,11 @@ async def get_asset_validation_table(
                     "priority_asset": val_data.get('priority', False),
                     
                     # Market data for analysis
-                    "current_price": float(market_summary.get('price', 0)) if market_summary.get('price') else None,
-                    "price_change_24h": float(market_summary.get('change_24h', 0)) if market_summary.get('change_24h') else None,
-                    "price_change_percent_24h": float(market_summary.get('change_percent_24h', 0)) if market_summary.get('change_percent_24h') else None,
-                    "volume_24h_quote": float(market_summary.get('quote_volume_24h', 0)) if market_summary.get('quote_volume_24h') else None,
-                    "spread_percent": float(market_summary.get('spread_percent', 0)) if market_summary.get('spread_percent') else None,
+                    "current_price": current_price,
+                    "price_change_24h": change_24h,
+                    "price_change_percent_24h": change_percent_24h,
+                    "volume_24h_quote": volume_24h,
+                    "spread_percent": spread_percent,
                     
                     # Validation metadata
                     "last_updated": asset.last_validation.isoformat() if asset.last_validation else utc_now().isoformat(),
@@ -256,12 +300,12 @@ async def get_asset_validation_table(
                     
                     # Risk assessment for analysis
                     "risk_level": _calculate_risk_level(market_summary) if market_summary else "UNKNOWN",
-                    "volatility_24h": abs(float(market_summary.get('change_percent_24h', 0))) if market_summary.get('change_percent_24h') else None,
+                    "volatility_24h": volatility_24h,
                     "data_quality_score": _calculate_data_quality(val_data),
-                    "min_order_size": float(asset.min_order_size) if asset.min_order_size else None,
+                    "min_order_size": safe_float(asset.min_order_size),
                     
                     # Trading compatibility (for analysis, not execution)
-                    "trading_enabled": asset.is_valid and market_summary.get('quote_volume_24h', 0) > 10000,
+                    "trading_enabled": asset.is_valid and (volume_24h or 0) > 10000,
                     "market_cap_rank": val_data.get('market_cap_rank'),
                     "age_days": int(safe_datetime_subtract(utc_now(), asset.created_at) / 86400) if asset.created_at else None
                 })
@@ -286,7 +330,10 @@ async def get_asset_validation_table(
                 "has_next": (offset + len(table_data)) < total_count,
                 "has_previous": offset > 0,
                 "sort_by": sort_by,
-                "sort_direction": sort_direction
+                "sort_direction": sort_direction,
+                "search": search,
+                "filter_valid_only": filter_valid_only,
+                "include_invalid": include_invalid
             }
             
             return {

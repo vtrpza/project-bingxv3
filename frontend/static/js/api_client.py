@@ -77,13 +77,16 @@ class APIClient:
         """Get detailed information about a specific asset"""
         return await self.get(f"/assets/{symbol}")
     
-    async def get_validation_table(self, limit=None, offset=0, include_invalid=True):
+    async def get_validation_table(self, limit=None, offset=0, include_invalid=True, search=None, sort_by="symbol", sort_direction="asc"):
         """Get comprehensive asset validation table with all metrics
         
         Args:
             limit: Number of records per page (None = all records)
             offset: Starting record index for pagination
             include_invalid: Include invalid assets in results
+            search: Search term for filtering assets
+            sort_by: Column to sort by
+            sort_direction: Sort direction (asc/desc)
         """
         params = []
         if limit is not None:
@@ -91,6 +94,10 @@ class APIClient:
         if offset > 0:
             params.append(f"offset={offset}")
         params.append(f"include_invalid={str(include_invalid).lower()}")
+        if search and search.strip():
+            params.append(f"search={search.strip()}")
+        params.append(f"sort_by={sort_by}")
+        params.append(f"sort_direction={sort_direction}")
         query_string = "?" + "&".join(params) if params else ""
         return await self.get(f"/assets/validation-table{query_string}")
     

@@ -29,6 +29,28 @@ class UIComponents:
             return "0.00%"
     
     @staticmethod
+    def format_large_number(value):
+        """Format large numbers with K/M/B suffixes"""
+        if not value:
+            return "-"
+        
+        try:
+            value = float(value)
+            if value == 0:
+                return "-"
+            
+            if abs(value) >= 1_000_000_000:
+                return f"${value/1_000_000_000:.1f}B"
+            elif abs(value) >= 1_000_000:
+                return f"${value/1_000_000:.1f}M"
+            elif abs(value) >= 1_000:
+                return f"${value/1_000:.1f}K"
+            else:
+                return f"${value:.2f}"
+        except (ValueError, TypeError):
+            return "-"
+    
+    @staticmethod
     def format_datetime(dt_str):
         """Format datetime string to local time (UTC-3)"""
         if not dt_str:
@@ -382,72 +404,130 @@ class UIComponents:
             console.error(f"Error updating trades table: {str(e)}")
     
     @staticmethod
+    def get_asset_display_name(symbol):
+        """Get display name for asset with proper name mapping"""
+        asset_names = {
+            'BTC/USDT': 'Bitcoin',
+            'ETH/USDT': 'Ethereum',
+            'BNB/USDT': 'BNB',
+            'ADA/USDT': 'Cardano',
+            'XRP/USDT': 'XRP',
+            'SOL/USDT': 'Solana',
+            'DOT/USDT': 'Polkadot',
+            'MATIC/USDT': 'Polygon',
+            'LTC/USDT': 'Litecoin',
+            'LINK/USDT': 'Chainlink',
+            'UNI/USDT': 'Uniswap',
+            'ATOM/USDT': 'Cosmos',
+            'VET/USDT': 'VeChain',
+            'FIL/USDT': 'Filecoin',
+            'TRX/USDT': 'TRON',
+            'ETC/USDT': 'Ethereum Classic',
+            'XLM/USDT': 'Stellar',
+            'THETA/USDT': 'Theta Network',
+            'AAVE/USDT': 'Aave',
+            'EOS/USDT': 'EOS',
+            'NEAR/USDT': 'NEAR Protocol',
+            'ALGO/USDT': 'Algorand',
+            'XTZ/USDT': 'Tezos',
+            'EGLD/USDT': 'MultiversX',
+            'FTM/USDT': 'Fantom',
+            'SAND/USDT': 'The Sandbox',
+            'MANA/USDT': 'Decentraland',
+            'CRV/USDT': 'Curve DAO',
+            'COMP/USDT': 'Compound',
+            'YFI/USDT': 'yearn.finance',
+            'SUSHI/USDT': 'SushiSwap',
+            'ZEC/USDT': 'Zcash',
+            'DASH/USDT': 'Dash',
+            'NEO/USDT': 'NEO',
+            'IOTA/USDT': 'IOTA',
+            'QTUM/USDT': 'Qtum',
+            'OMG/USDT': 'OMG Network',
+            'ZIL/USDT': 'Zilliqa',
+            'BAT/USDT': 'Basic Attention',
+            'ZRX/USDT': '0x Protocol',
+            'WAVES/USDT': 'Waves',
+            'ICX/USDT': 'ICON',
+            'ONT/USDT': 'Ontology',
+            'DOGE/USDT': 'Dogecoin',
+            'SHIB/USDT': 'Shiba Inu'
+        }
+        return asset_names.get(symbol, symbol.split('/')[0])  # Fallback to base currency
+    
+    @staticmethod
     def render_validation_table_row(asset_data):
         """Render validation table row"""
         if not asset_data:
             return ""
         
-        # Extract data with fallbacks
+        # Extract data with safe conversions
         symbol = asset_data.get("symbol", "")
+        asset_name = UIComponents.get_asset_display_name(symbol)
         status = asset_data.get("validation_status", "PENDING")
         score = asset_data.get("validation_score", 0)
         last_updated = asset_data.get("last_updated", "")
+        
+        # Market data
         price = asset_data.get("current_price")
-        volume = asset_data.get("volume_24h_quote")
+        volume = asset_data.get("volume_24h_quote") 
+        change_percent = asset_data.get("price_change_percent_24h")
         spread = asset_data.get("spread_percent")
-        rsi_2h = asset_data.get("rsi_2h")
-        rsi_4h = asset_data.get("rsi_4h")
-        ma_dir_2h = asset_data.get("ma_direction_2h", "")
-        ma_dir_4h = asset_data.get("ma_direction_4h", "")
-        signal_2h = asset_data.get("signal_2h", "")
-        signal_4h = asset_data.get("signal_4h", "")
         risk = asset_data.get("risk_level", "UNKNOWN")
         volatility = asset_data.get("volatility_24h")
         quality = asset_data.get("data_quality_score", 0)
         priority = asset_data.get("priority_asset", False)
+        trading_enabled = asset_data.get("trading_enabled", False)
+        age_days = asset_data.get("age_days")
         
         # CSS classes
         status_class = f"status-{status.lower()}"
         risk_class = f"risk-{risk.lower()}"
         row_class = "priority-asset" if priority else ""
         
-        # Format values
-        price_str = UIComponents.format_currency(price) if price else "-"
-        volume_str = UIComponents.format_currency(volume, "") if volume else "-"
-        spread_str = f"{spread:.3f}" if spread else "-"
-        rsi_2h_str = f"{rsi_2h:.1f}" if rsi_2h else "-"
-        rsi_4h_str = f"{rsi_4h:.1f}" if rsi_4h else "-"
-        volatility_str = f"{volatility:.1f}" if volatility else "-"
+        # Format values with better fallbacks
+        price_str = UIComponents.format_currency(price) if price is not None else "-"
+        volume_str = UIComponents.format_large_number(volume) if volume is not None else "-"
         
-        # Direction indicators
-        dir_2h_class = f"direction-{ma_dir_2h.lower()}" if ma_dir_2h else ""
-        dir_4h_class = f"direction-{ma_dir_4h.lower()}" if ma_dir_4h else ""
+        # Format percentage change with color
+        if change_percent is not None:
+            change_class = "positive" if change_percent >= 0 else "negative"
+            change_str = f'<span class="{change_class}">{change_percent:+.2f}%</span>'
+        else:
+            change_str = "-"
+            
+        spread_str = f"{spread:.3f}%" if spread is not None else "-"
+        volatility_str = f"{volatility:.1f}%" if volatility is not None else "-"
+        age_str = f"{age_days}" if age_days is not None else "-"
         
-        # Signal indicators
-        signal_2h_class = f"signal-{signal_2h.lower()}" if signal_2h else "signal-none"
-        signal_4h_class = f"signal-{signal_4h.lower()}" if signal_4h else "signal-none"
+        # Trading status
+        trading_str = "✅" if trading_enabled else "❌"
+        
+        # Quality score as percentage
+        quality_str = f"{quality}%" if quality is not None else "-"
         
         # Format timestamp
         last_updated_str = UIComponents.format_datetime_full(last_updated)
         
         row_html = f'''
         <tr class="{row_class}" data-symbol="{symbol}">
-            <td>{symbol} {'🌟' if priority else ''}</td>
+            <td>
+                <div class="asset-info">
+                    <div class="asset-symbol">{symbol} {'🌟' if priority else ''}</div>
+                    <div class="asset-name">{asset_name}</div>
+                </div>
+            </td>
             <td class="{status_class}">{status}</td>
             <td>{score:.0f}</td>
-            <td class="timestamp">{last_updated_str}</td>
             <td>{price_str}</td>
-            <td>{volume_str}</td>
+            <td onclick="sortTable('volume_24h_quote')" style="cursor: pointer;">{volume_str}</td>
+            <td>{change_str}</td>
             <td>{spread_str}</td>
-            <td>{rsi_2h_str}</td>
-            <td>{rsi_4h_str}</td>
-            <td class="{dir_2h_class}">{ma_dir_2h or "-"}</td>
-            <td class="{dir_4h_class}">{ma_dir_4h or "-"}</td>
-            <td class="{signal_2h_class}">{signal_2h or "-"}</td>
-            <td class="{signal_4h_class}">{signal_4h or "-"}</td>
             <td class="{risk_class}">{risk}</td>
-            <td>{volatility_str}</td>
-            <td>{quality:.0f}%</td>
+            <td>{trading_str}</td>
+            <td>{quality_str}</td>
+            <td class="timestamp">{last_updated_str}</td>
+            <td>{age_str}</td>
         </tr>
         '''
         
