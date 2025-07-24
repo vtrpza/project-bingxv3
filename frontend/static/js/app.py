@@ -459,6 +459,9 @@ document.forceRevalidation = create_proxy(forceRevalidation)
 document.filterValidationTable = create_proxy(filterValidationTable)
 document.showNotification = create_proxy(ui_components.show_notification)
 
+# Also make showNotification available on window object for JavaScript compatibility
+window.showNotification = create_proxy(ui_components.show_notification)
+
 # Initialize the application
 app = TradingBotApp()
 

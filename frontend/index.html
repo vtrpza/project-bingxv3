@@ -344,6 +344,20 @@
             }
         });
         
+        // Safe notification wrapper that checks if PyScript is loaded
+        function showNotificationSafe(title, message, type) {
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(title, message, type);
+            } else {
+                // Fallback to console.log if PyScript isn't loaded yet
+                console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+                // Optionally, you can also use browser's native alert for critical messages
+                if (type === 'error') {
+                    alert(`${title}: ${message}`);
+                }
+            }
+        }
+        
         // Bot Control Functions
         async function startBot() {
             try {
@@ -355,12 +369,12 @@
                     document.getElementById('stop-bot-btn').disabled = false;
                     document.getElementById('start-trading-btn').disabled = false;
                     document.getElementById('bot-status').innerHTML = '🟢 Ativo';
-                    window.showNotification('Sucesso', 'Bot iniciado com sucesso!', 'success');
+                    showNotificationSafe('Sucesso', 'Bot iniciado com sucesso!', 'success');
                 } else {
-                    window.showNotification('Erro', 'Erro ao iniciar bot: ' + result.detail, 'error');
+                    showNotificationSafe('Erro', 'Erro ao iniciar bot: ' + result.detail, 'error');
                 }
             } catch (error) {
-                window.showNotification('Erro de Conexão', error.message, 'error');
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -376,12 +390,12 @@
                     document.getElementById('stop-trading-btn').disabled = true;
                     document.getElementById('bot-status').innerHTML = '🔴 Parado';
                     document.getElementById('trading-status').innerHTML = '🔴 Inativo';
-                    window.showNotification('Aviso', 'Bot parado com sucesso!', 'warning');
+                    showNotificationSafe('Aviso', 'Bot parado com sucesso!', 'warning');
                 } else {
-                    window.showNotification('Erro', 'Erro ao parar bot: ' + result.detail, 'error');
+                    showNotificationSafe('Erro', 'Erro ao parar bot: ' + result.detail, 'error');
                 }
             } catch (error) {
-                window.showNotification('Erro de Conexão', error.message, 'error');
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -394,12 +408,12 @@
                     document.getElementById('start-trading-btn').disabled = true;
                     document.getElementById('stop-trading-btn').disabled = false;
                     document.getElementById('trading-status').innerHTML = '🟢 Trading Ativo';
-                    window.showNotification('Sucesso', 'Trading iniciado com sucesso!', 'success');
+                    showNotificationSafe('Sucesso', 'Trading iniciado com sucesso!', 'success');
                 } else {
-                    window.showNotification('Erro', 'Erro ao iniciar trading: ' + result.detail, 'error');
+                    showNotificationSafe('Erro', 'Erro ao iniciar trading: ' + result.detail, 'error');
                 }
             } catch (error) {
-                window.showNotification('Erro de Conexão', error.message, 'error');
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -412,12 +426,12 @@
                     document.getElementById('start-trading-btn').disabled = false;
                     document.getElementById('stop-trading-btn').disabled = true;
                     document.getElementById('trading-status').innerHTML = '🔴 Inativo';
-                    window.showNotification('Aviso', 'Trading parado com sucesso!', 'warning');
+                    showNotificationSafe('Aviso', 'Trading parado com sucesso!', 'warning');
                 } else {
-                    window.showNotification('Erro', 'Erro ao parar trading: ' + result.detail, 'error');
+                    showNotificationSafe('Erro', 'Erro ao parar trading: ' + result.detail, 'error');
                 }
             } catch (error) {
-                window.showNotification('Erro de Conexão', error.message, 'error');
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
             }
         }
         
