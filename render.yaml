@@ -3,6 +3,7 @@ services:
   - type: web
     name: bingx-trading-bot
     runtime: python
+    port: 10000
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
