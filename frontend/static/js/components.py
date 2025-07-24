@@ -595,8 +595,22 @@ class UIComponents:
     
     @staticmethod
     def sort_validation_table(column):
-        """Sort validation table using server-side sorting"""
+        """Sort validation table using client-side sorting on currently loaded data"""
         try:
+            console.log(f"Client-side sorting by column: {column}")
+            
+            # Get current table body
+            tbody = document.getElementById("validation-table-body")
+            if not tbody:
+                console.error("Table body not found for sorting")
+                return
+            
+            # Get all current rows
+            rows = tbody.querySelectorAll("tr")
+            if len(rows) == 0:
+                console.log("No rows to sort")
+                return
+            
             # Toggle sort direction if same column
             current_sort_column = getattr(UIComponents, '_sort_column', None)
             current_sort_direction = getattr(UIComponents, '_sort_direction', 'asc')
@@ -610,15 +624,124 @@ class UIComponents:
             UIComponents._sort_column = column
             UIComponents._sort_direction = new_direction
             
-            # Use server-side sorting
-            from js import document
-            if hasattr(document, 'sortValidationTableServer'):
-                document.sortValidationTableServer(column, new_direction)
-            else:
-                console.warn("sortValidationTableServer function not available")
+            # Convert rows to list for sorting
+            rows_list = []
+            for i in range(len(rows)):
+                rows_list.append(rows[i])
+            
+            # Get column index from table header
+            column_index = UIComponents._get_column_index(column)
+            if column_index == -1:
+                console.error(f"Column {column} not found in table headers")
+                return
+            
+            # Sort rows based on column content
+            def sort_key(row):
+                cells = row.querySelectorAll("td")
+                if column_index < len(cells):
+                    cell_text = cells[column_index].textContent.strip()
+                    return UIComponents._get_sort_value(cell_text, column)
+                return ""
+            
+            # Sort the rows
+            reverse_order = (new_direction == 'desc')
+            rows_list.sort(key=sort_key, reverse=reverse_order)
+            
+            # Clear tbody and re-append sorted rows
+            tbody.innerHTML = ""
+            for row in rows_list:
+                tbody.appendChild(row)
+            
+            # Update visual indicators
+            UIComponents._update_sort_indicators(column, new_direction)
+            
+            console.log(f"Table sorted by {column} ({new_direction})")
                     
         except Exception as e:
             console.error(f"Error sorting table: {str(e)}")
+    
+    @staticmethod
+    def _get_column_index(column):
+        """Get the index of a column in the table"""
+        try:
+            # Map column names to their positions in the table
+            column_mapping = {
+                "symbol": 0,
+                "validation_status": 1, 
+                "validation_score": 2,
+                "current_price": 3,
+                "volume_24h_quote": 4,
+                "price_change_percent_24h": 5,
+                "spread_percent": 6,
+                "risk_level": 7,
+                "trading_enabled": 8,
+                "data_quality_score": 9,
+                "last_updated": 10,
+                "age_days": 11
+            }
+            return column_mapping.get(column, -1)
+        except Exception as e:
+            console.error(f"Error getting column index: {e}")
+            return -1
+    
+    @staticmethod
+    def _get_sort_value(cell_text, column):
+        """Convert cell text to sortable value based on column type"""
+        try:
+            # Handle different data types for proper sorting
+            if column in ["validation_score", "current_price", "volume_24h_quote", "spread_percent", "data_quality_score", "age_days"]:
+                # Numeric columns - extract numbers
+                import re
+                numbers = re.findall(r'[\d,.-]+', cell_text.replace('$', '').replace('%', '').replace(',', ''))
+                if numbers:
+                    try:
+                        return float(numbers[0])
+                    except ValueError:
+                        return 0
+                return 0
+            elif column == "price_change_percent_24h":
+                # Handle percentage with + or - sign
+                import re
+                match = re.search(r'[+-]?[\d.]+', cell_text.replace('%', ''))
+                if match:
+                    try:
+                        return float(match.group())
+                    except ValueError:
+                        return 0
+                return 0
+            else:
+                # Text columns - return as is for alphabetical sorting
+                return cell_text.lower()
+        except Exception as e:
+            console.error(f"Error getting sort value: {e}")
+            return cell_text.lower() if cell_text else ""
+    
+    @staticmethod
+    def _update_sort_indicators(column, direction):
+        """Update visual sort indicators in table headers"""
+        try:
+            # Remove all existing sort indicators
+            headers = document.querySelectorAll(".sortable")
+            for header in headers:
+                header.classList.remove("asc", "desc")
+                # Remove existing sort arrows
+                existing_arrows = header.querySelectorAll(".sort-arrow")
+                for arrow in existing_arrows:
+                    arrow.remove()
+            
+            # Add indicator to current column
+            current_header = document.querySelector(f'.sortable[data-sort="{column}"]')
+            if current_header:
+                current_header.classList.add(direction)
+                
+                # Add visual arrow
+                arrow = document.createElement("span")
+                arrow.className = "sort-arrow"
+                arrow.innerHTML = " ↓" if direction == "desc" else " ↑"
+                current_header.appendChild(arrow)
+                
+        except Exception as e:
+            console.error(f"Error updating sort indicators: {e}")
     
     @staticmethod
     def change_table_page(direction):
