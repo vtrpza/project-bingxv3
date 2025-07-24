@@ -5,7 +5,7 @@ Coordinates all frontend functionality and real-time updates
 
 import asyncio
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from js import document, console, setInterval, clearInterval, setTimeout
 from pyodide.ffi import create_proxy
 
@@ -153,11 +153,12 @@ class TradingBotApp:
             if last_update:
                 update_element = document.getElementById("last-update")
                 if update_element:
-                    # Parse ISO timestamp and format
+                    # Parse ISO timestamp and format to UTC-3
                     try:
-                        from datetime import datetime
                         dt = datetime.fromisoformat(last_update.replace('Z', '+00:00'))
-                        update_element.textContent = dt.strftime("%H:%M:%S")
+                        # Convert to UTC-3
+                        dt_utc3 = dt - timedelta(hours=3)
+                        update_element.textContent = dt_utc3.strftime("%H:%M:%S (UTC-3)")
                     except:
                         update_element.textContent = "Agora"
                         

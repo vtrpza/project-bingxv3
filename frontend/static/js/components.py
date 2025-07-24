@@ -3,7 +3,7 @@ UI Components for BingX Trading Bot Frontend
 Handles rendering of different dashboard sections
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from js import document, console
 
 
@@ -30,13 +30,43 @@ class UIComponents:
     
     @staticmethod
     def format_datetime(dt_str):
-        """Format datetime string"""
+        """Format datetime string to local time (UTC-3)"""
         if not dt_str:
             return "-"
         try:
-            # Parse ISO format datetime
+            # Parse ISO format datetime (assumes UTC)
             dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
-            return dt.strftime("%d/%m %H:%M")
+            # Convert to UTC-3 (Brazil time)
+            dt_utc3 = dt - timedelta(hours=3)
+            return dt_utc3.strftime("%d/%m %H:%M")
+        except (ValueError, AttributeError):
+            return dt_str
+    
+    @staticmethod
+    def format_datetime_full(dt_str):
+        """Format datetime string to full local time (UTC-3) with seconds"""
+        if not dt_str:
+            return "-"
+        try:
+            # Parse ISO format datetime (assumes UTC)
+            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            # Convert to UTC-3 (Brazil time)
+            dt_utc3 = dt - timedelta(hours=3)
+            return dt_utc3.strftime("%d/%m/%Y %H:%M:%S")
+        except (ValueError, AttributeError):
+            return dt_str
+    
+    @staticmethod
+    def format_datetime_with_timezone(dt_str):
+        """Format datetime string with timezone indicator"""
+        if not dt_str:
+            return "-"
+        try:
+            # Parse ISO format datetime (assumes UTC)
+            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            # Convert to UTC-3 (Brazil time)
+            dt_utc3 = dt - timedelta(hours=3)
+            return dt_utc3.strftime("%d/%m %H:%M") + " (UTC-3)"
         except (ValueError, AttributeError):
             return dt_str
     
@@ -319,6 +349,7 @@ class UIComponents:
         symbol = asset_data.get("symbol", "")
         status = asset_data.get("validation_status", "PENDING")
         score = asset_data.get("validation_score", 0)
+        last_updated = asset_data.get("last_updated", "")
         price = asset_data.get("current_price")
         volume = asset_data.get("volume_24h_quote")
         spread = asset_data.get("spread_percent")
@@ -354,11 +385,15 @@ class UIComponents:
         signal_2h_class = f"signal-{signal_2h.lower()}" if signal_2h else "signal-none"
         signal_4h_class = f"signal-{signal_4h.lower()}" if signal_4h else "signal-none"
         
+        # Format timestamp
+        last_updated_str = UIComponents.format_datetime_full(last_updated)
+        
         row_html = f'''
         <tr class="{row_class}" data-symbol="{symbol}">
             <td>{symbol} {'🌟' if priority else ''}</td>
             <td class="{status_class}">{status}</td>
             <td>{score:.0f}</td>
+            <td class="timestamp">{last_updated_str}</td>
             <td>{price_str}</td>
             <td>{volume_str}</td>
             <td>{spread_str}</td>
@@ -585,7 +620,7 @@ class UIComponents:
             
             # CSV headers
             headers = [
-                "Symbol", "Status", "Score", "Price", "Volume_24h", "Spread_%",
+                "Symbol", "Status", "Score", "Last_Updated_UTC-3", "Price", "Volume_24h", "Spread_%",
                 "RSI_2h", "RSI_4h", "MA_Dir_2h", "MA_Dir_4h", "Signal_2h", "Signal_4h",
                 "Risk_Level", "Volatility_24h", "Data_Quality", "Priority"
             ]
@@ -598,6 +633,7 @@ class UIComponents:
                     asset.get("symbol", ""),
                     asset.get("validation_status", ""),
                     str(asset.get("validation_score", 0)),
+                    UIComponents.format_datetime_full(asset.get("last_updated", "")),
                     str(asset.get("current_price", "")),
                     str(asset.get("volume_24h_quote", "")),
                     str(asset.get("spread_percent", "")),
