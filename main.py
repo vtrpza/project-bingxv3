@@ -241,12 +241,13 @@ class TradingBot:
         
         try:
             # Initial scan to validate assets
-            await self.scanner.perform_initial_scan()
+            await self.scanner.scan_all_assets()
             
             while self.is_running:
                 try:
-                    # Continuous scanning for trading signals
-                    valid_assets = await self.scanner.get_valid_assets_for_scanning()
+                    # Get valid assets from database
+                    with get_session() as session:
+                        valid_assets = self.asset_repo.get_valid_assets(session)
                     
                     if valid_assets:
                         logger.debug(f"Scanning {len(valid_assets)} valid assets for signals")

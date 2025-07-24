@@ -19,3 +19,216 @@
 2025-07-24 06:28:37,958 - database.connection - INFO - No DATABASE_URL found, using SQLite for local development
 2025-07-24 06:28:37,958 - database.connection - INFO - Using SQLite database
 2025-07-24 06:28:37,966 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:29:52,462 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:29:52,463 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:34:21,145 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:34:21,145 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:34:26,240 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:34:26,241 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:37:52,607 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:37:52,608 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:38:14,846 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:38:14,846 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:38:15,236 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:38:15,236 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:38:15,236 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:38:15,236 - __main__ - ERROR - ❌ Failed to initialize bot: Missing required environment variables: ['DATABASE_URL']
+2025-07-24 06:38:15,236 - __main__ - ERROR - ❌ Fatal error: Missing required environment variables: ['DATABASE_URL']
+2025-07-24 06:38:21,554 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:38:21,554 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:38:21,941 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:38:21,941 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:38:21,941 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:38:21,941 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:38:21,941 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:38:21,941 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:38:21,941 - database.connection - INFO - Using SQLite database
+2025-07-24 06:38:21,949 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:38:21,950 - database.connection - ERROR - Failed to create tables: (in table 'assets', column 'id'): Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x712efc7422a0> can't render element of type UUID
+2025-07-24 06:38:21,950 - __main__ - ERROR - ❌ Database initialization failed: Failed to create database tables
+2025-07-24 06:38:21,950 - __main__ - ERROR - ❌ Failed to initialize bot: Failed to create database tables
+2025-07-24 06:38:21,950 - __main__ - ERROR - ❌ Fatal error: Failed to create database tables
+2025-07-24 06:39:19,941 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:39:19,941 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:39:27,920 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:39:27,920 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:39:28,399 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:39:28,399 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:39:28,399 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:39:28,400 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:39:28,400 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:39:28,400 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:39:28,400 - database.connection - INFO - Using SQLite database
+2025-07-24 06:39:28,408 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:39:28,410 - database.connection - ERROR - Failed to create tables: (in table 'assets', column 'id'): Compiler <sqlalchemy.dialects.sqlite.base.SQLiteTypeCompiler object at 0x7c32f193dee0> can't render element of type UUID
+2025-07-24 06:39:28,410 - __main__ - ERROR - ❌ Database initialization failed: Failed to create database tables
+2025-07-24 06:39:28,410 - __main__ - ERROR - ❌ Failed to initialize bot: Failed to create database tables
+2025-07-24 06:39:28,410 - __main__ - ERROR - ❌ Fatal error: Failed to create database tables
+2025-07-24 06:39:36,583 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:39:36,583 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:39:39,964 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:39:39,964 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:39:40,341 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:39:40,342 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:39:40,342 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:39:40,342 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:39:40,342 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:39:40,342 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:39:40,342 - database.connection - INFO - Using SQLite database
+2025-07-24 06:39:40,350 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:39:40,567 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:39:40,568 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:39:40,568 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:39:40,568 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:39:40,568 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:39:41,940 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:39:42,252 - api.client - ERROR - Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349981788}
+2025-07-24 06:39:42,252 - api.client - WARNING - Private API test failed (continuing anyway): Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349981788}
+2025-07-24 06:39:42,255 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:39:43,240 - api.client - ERROR - Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349982080}
+2025-07-24 06:39:43,240 - api.client - ERROR - Error fetching balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349982080}
+2025-07-24 06:39:43,240 - __main__ - ERROR - ❌ API client initialization failed: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349982080}
+2025-07-24 06:39:43,240 - __main__ - ERROR - ❌ Failed to initialize bot: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349982080}
+2025-07-24 06:39:43,240 - __main__ - ERROR - ❌ Fatal error: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753349982080}
+2025-07-24 06:41:00,489 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:41:00,490 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:42:17,178 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:42:17,178 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:42:24,756 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:42:24,756 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:43:35,518 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:43:35,519 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:43:35,871 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:43:35,871 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:43:35,871 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:43:35,871 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:43:35,872 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:43:35,872 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:43:35,872 - database.connection - INFO - Using SQLite database
+2025-07-24 06:43:35,880 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:43:35,981 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:43:35,982 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:43:35,982 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:43:35,982 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:43:35,982 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:43:36,736 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:43:37,059 - api.client - ERROR - Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350216636}
+2025-07-24 06:43:37,060 - api.client - WARNING - Private API test failed (continuing anyway): Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350216636}
+2025-07-24 06:43:37,062 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:43:38,147 - api.client - ERROR - Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350217723}
+2025-07-24 06:43:38,147 - api.client - ERROR - Error fetching balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350217723}
+2025-07-24 06:43:38,147 - __main__ - ERROR - ❌ API client initialization failed: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350217723}
+2025-07-24 06:43:38,147 - __main__ - ERROR - ❌ Failed to initialize bot: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350217723}
+2025-07-24 06:43:38,147 - __main__ - ERROR - ❌ Fatal error: Failed to fetch balance: Exchange error: bingx {"code":100413,"msg":"Incorrect apiKey, please check your valid api key in https://bingx.com/en/account/api","timestamp":1753350217723}
+2025-07-24 06:44:38,291 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:44:38,291 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:44:38,651 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:44:38,651 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:44:38,651 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:44:38,652 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:44:38,652 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:44:38,652 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:44:38,652 - database.connection - INFO - Using SQLite database
+2025-07-24 06:44:38,660 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:44:38,661 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:44:38,661 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:44:38,662 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:44:38,662 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:44:38,662 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:44:39,454 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:44:42,895 - api.client - INFO - Private API access confirmed
+2025-07-24 06:44:42,898 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:44:43,223 - __main__ - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 06:44:43,223 - __main__ - INFO - ⚙️ Initializing bot components...
+2025-07-24 06:44:43,223 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 06:44:43,223 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 06:44:43,224 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 06:44:43,224 - __main__ - INFO - ✅ Bot components initialized
+2025-07-24 06:44:43,224 - __main__ - INFO - ✅ Bot initialization completed successfully
+2025-07-24 06:44:43,224 - __main__ - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 06:44:43,241 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 06:44:43,241 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 06:44:43,243 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 06:44:43,247 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 06:44:45,086 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:44:49,117 - api.client - INFO - Private API access confirmed
+2025-07-24 06:44:49,120 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:44:49,426 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 06:44:49,426 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 06:44:49,426 - __main__ - INFO - 📡 Starting background tasks...
+2025-07-24 06:44:49,426 - __main__ - INFO - ✅ Background tasks started
+2025-07-24 06:44:49,426 - __main__ - INFO - ✅ BingX Trading Bot started successfully
+2025-07-24 06:44:49,426 - __main__ - INFO - 📊 Configuration: {'max_concurrent_trades': 1, 'min_order_size': 10.0, 'max_position_percent': 10.0, 'initial_stop_loss': 0.02, 'rsi_range': [35.0, 73.0], 'analysis_timeframes': ['2h', '4h'], 'trading_enabled': True, 'paper_trading': False, 'emergency_stop': False}
+2025-07-24 06:44:49,426 - __main__ - INFO - 🤖 Bot is running. Press Ctrl+C to stop.
+2025-07-24 06:44:49,427 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 06:44:49,427 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 06:44:49,428 - __main__ - INFO - 🔍 Starting asset scanner...
+2025-07-24 06:44:49,428 - __main__ - ERROR - Scanner task error: 'InitialScanner' object has no attribute 'perform_initial_scan'
+2025-07-24 06:44:49,428 - __main__ - INFO - 📈 Starting trading monitor...
+2025-07-24 06:45:09,436 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:19,320 - __main__ - INFO - 📊 Trading Status - Active: 0, Balance: 0.00 USDT, Risk Score: 0.30
+2025-07-24 06:45:19,325 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:29,329 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:39,333 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:46,267 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:45:46,267 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:45:46,643 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:45:46,644 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:45:46,644 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:45:46,644 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:45:46,644 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:45:46,644 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:45:46,644 - database.connection - INFO - Using SQLite database
+2025-07-24 06:45:46,653 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:45:46,654 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:45:46,654 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:45:46,654 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:45:46,655 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:45:46,655 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:45:47,390 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:45:49,211 - __main__ - INFO - 📊 Trading Status - Active: 0, Balance: 0.00 USDT, Risk Score: 0.30
+2025-07-24 06:45:49,224 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:50,721 - api.client - INFO - Private API access confirmed
+2025-07-24 06:45:50,724 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:45:51,047 - __main__ - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 06:45:51,047 - __main__ - INFO - ⚙️ Initializing bot components...
+2025-07-24 06:45:51,047 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 06:45:51,048 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 06:45:51,048 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 06:45:51,048 - __main__ - INFO - ✅ Bot components initialized
+2025-07-24 06:45:51,048 - __main__ - INFO - ✅ Bot initialization completed successfully
+2025-07-24 06:45:51,048 - __main__ - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 06:45:51,063 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 06:45:51,063 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 06:45:51,065 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 06:45:51,068 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 06:45:51,829 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:45:55,318 - api.client - INFO - Private API access confirmed
+2025-07-24 06:45:55,321 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:45:55,648 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 06:45:55,648 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 06:45:55,648 - __main__ - INFO - 📡 Starting background tasks...
+2025-07-24 06:45:55,648 - __main__ - INFO - ✅ Background tasks started
+2025-07-24 06:45:55,648 - __main__ - INFO - ✅ BingX Trading Bot started successfully
+2025-07-24 06:45:55,648 - __main__ - INFO - 📊 Configuration: {'max_concurrent_trades': 1, 'min_order_size': 10.0, 'max_position_percent': 10.0, 'initial_stop_loss': 0.02, 'rsi_range': [35.0, 73.0], 'analysis_timeframes': ['2h', '4h'], 'trading_enabled': True, 'paper_trading': False, 'emergency_stop': False}
+2025-07-24 06:45:55,649 - __main__ - INFO - 🤖 Bot is running. Press Ctrl+C to stop.
+2025-07-24 06:45:55,649 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 06:45:55,649 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 06:45:55,650 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:45:55,650 - __main__ - INFO - 🔍 Starting asset scanner...
+2025-07-24 06:45:55,650 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 06:45:55,650 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 06:45:55,651 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 06:45:56,395 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 06:45:59,230 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:46:00,669 - api.client - INFO - Private API access confirmed
+2025-07-24 06:46:00,672 - api.client - INFO - BingX client initialized successfully (Testnet: False)
+2025-07-24 06:46:00,672 - api.market_data - INFO - BingX client initialized successfully
