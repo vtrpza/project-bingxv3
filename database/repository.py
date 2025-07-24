@@ -681,6 +681,58 @@ class TradeRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error getting trades (symbol={symbol}, status={status}, limit={limit}): {e}")
             return []
+    
+    def get_open_trades(self, session: Session = None) -> List[Trade]:
+        """Get all open trades - compatibility wrapper for get_open_positions.""" 
+        try:
+            if session is None:
+                # If no session provided, create one (for backward compatibility)
+                with get_session() as db:
+                    return self.get_open_positions(db)
+            else:
+                return self.get_open_positions(session)
+        except Exception as e:
+            logger.error(f"Error getting open trades: {e}")
+            return []
+    
+    def get_open_trades_by_asset(self, session: Session, asset_id: str) -> List[Trade]:
+        """Get open trades for a specific asset."""
+        try:
+            return self.get_open_positions(session, asset_id=asset_id)
+        except Exception as e:
+            logger.error(f"Error getting open trades by asset {asset_id}: {e}")
+            return []
+    
+    def get_trades_today(self, session: Session = None) -> List[Trade]:
+        """Get trades from today."""
+        try:
+            from datetime import date
+            if session is None:
+                with get_session() as db:
+                    return self.get_trades_by_date(db, date.today())
+            else:
+                return self.get_trades_by_date(session, date.today())
+        except Exception as e:
+            logger.error(f"Error getting today's trades: {e}")
+            return []
+    
+    def update_trade_quantity(self, trade_id: str, new_quantity: float, realized_pnl: float = None):
+        """Update trade quantity and add realized P&L (for partial closes)."""
+        try:
+            with get_session() as session:
+                trade = self.get_by_id(session, trade_id)
+                if trade:
+                    trade.quantity = new_quantity
+                    if realized_pnl:
+                        # Add realized P&L to fees field as a running total
+                        current_realized = trade.fees or Decimal('0')
+                        trade.fees = current_realized + Decimal(str(realized_pnl))
+                    session.commit()
+                    return trade
+            return None
+        except Exception as e:
+            logger.error(f"Error updating trade quantity {trade_id}: {e}")
+            return None
 
 
 class SignalRepository(BaseRepository):

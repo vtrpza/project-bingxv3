@@ -837,6 +837,77 @@ async def get_trades(
         logger.error(f"Error fetching trades: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/trading/trades")
+async def get_trading_trades(
+    symbol: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Get trading history with enhanced trade information"""
+    try:
+        logger.info(f"Trading trades requested - symbol: {symbol}, status: {status}, limit: {limit}")
+        
+        trades = repo.get_trades(
+            db,
+            symbol=symbol,
+            status=status,
+            limit=limit
+        )
+        
+        trading_trades = []
+        for trade in trades:
+            # Calculate additional trade metrics
+            duration = None
+            if trade.entry_time and trade.exit_time:
+                duration_seconds = (trade.exit_time - trade.entry_time).total_seconds()
+                duration = f"{int(duration_seconds // 3600)}h {int((duration_seconds % 3600) // 60)}m"
+            elif trade.entry_time:
+                duration_seconds = (utc_now() - trade.entry_time).total_seconds()
+                duration = f"{int(duration_seconds // 3600)}h {int((duration_seconds % 3600) // 60)}m"
+            
+            trade_data = {
+                "id": str(trade.id),
+                "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
+                "side": trade.side,
+                "amount": float(trade.quantity) if trade.quantity else 0,
+                "entry_price": float(trade.entry_price) if trade.entry_price else 0,
+                "exit_price": float(trade.exit_price) if trade.exit_price else None,
+                "stop_loss": float(trade.stop_loss) if trade.stop_loss else None,
+                "take_profit": float(trade.take_profit) if trade.take_profit else None,
+                "status": trade.status,
+                "entry_reason": trade.entry_reason,
+                "exit_reason": trade.exit_reason,
+                "entry_time": trade.entry_time.isoformat() if trade.entry_time else None,
+                "exit_time": trade.exit_time.isoformat() if trade.exit_time else None,
+                "duration": duration,
+                "pnl": float(trade.pnl) if trade.pnl else None,
+                "pnl_percentage": float(trade.pnl_percentage) if trade.pnl_percentage else None,
+                "fees": float(trade.fees) if trade.fees else None
+            }
+            
+            trading_trades.append(trade_data)
+        
+        return {
+            "success": True,
+            "trades": trading_trades,
+            "total": len(trading_trades),
+            "timestamp": utc_now().isoformat(),
+            "metadata": {
+                "endpoint_version": "1.0",
+                "data_type": "trading_history",
+                "filters_applied": {
+                    "symbol": symbol,
+                    "status": status,
+                    "limit": limit
+                }
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error fetching trading trades: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching trades: {str(e)}")
+
 # Position endpoints
 @app.get("/api/positions")
 async def get_positions(
@@ -1376,7 +1447,7 @@ async def get_active_positions(
         logger.info("Fetching active trading positions")
         
         # Get open trades from database
-        open_trades = trade_repo.get_open_trades()
+        open_trades = trade_repo.get_open_trades(db)
         
         positions = []
         for trade in open_trades:
