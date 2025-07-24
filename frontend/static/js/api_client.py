@@ -77,23 +77,23 @@ class APIClient:
         """Get detailed information about a specific asset"""
         return await self.get(f"/assets/{symbol}")
     
-    async def get_validation_table(self, limit=None, offset=0, include_invalid=True, search=None, sort_by="symbol", sort_direction="asc"):
-        """Get comprehensive asset validation table with all metrics
+    async def get_validation_table(self, page=1, per_page=25, include_invalid=True, search=None, sort_by="symbol", sort_direction="asc", filter_valid_only=False):
+        """Get comprehensive asset validation table with server-side pagination
         
         Args:
-            limit: Number of records per page (None = all records)
-            offset: Starting record index for pagination
+            page: Page number (1-based)
+            per_page: Number of records per page
             include_invalid: Include invalid assets in results
             search: Search term for filtering assets
             sort_by: Column to sort by
             sort_direction: Sort direction (asc/desc)
+            filter_valid_only: Show only valid assets
         """
         params = []
-        if limit is not None:
-            params.append(f"limit={limit}")
-        if offset > 0:
-            params.append(f"offset={offset}")
+        params.append(f"page={page}")
+        params.append(f"per_page={per_page}")
         params.append(f"include_invalid={str(include_invalid).lower()}")
+        params.append(f"filter_valid_only={str(filter_valid_only).lower()}")
         if search and search.strip():
             params.append(f"search={search.strip()}")
         params.append(f"sort_by={sort_by}")
@@ -102,8 +102,11 @@ class APIClient:
         return await self.get(f"/assets/validation-table{query_string}")
     
     async def get_validation_table_all(self, include_invalid=True):
-        """Get ALL assets for revalidation (no pagination limit)"""
-        params = [f"include_invalid={str(include_invalid).lower()}"]
+        """Get ALL assets for revalidation (using large page size)"""
+        params = []
+        params.append(f"page=1")
+        params.append(f"per_page=10000")  # Large page size to get all
+        params.append(f"include_invalid={str(include_invalid).lower()}")
         query_string = "?" + "&".join(params)
         return await self.get(f"/assets/validation-table{query_string}")
 

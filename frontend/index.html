@@ -130,18 +130,54 @@
                         <table class="validation-table" id="validation-table">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-sort="symbol" onclick="sortTable('symbol')">Ativo</th>
-                                    <th class="sortable" data-sort="validation_status" onclick="sortTable('validation_status')">Status</th>
-                                    <th class="sortable" data-sort="validation_score" onclick="sortTable('validation_score')">Score</th>
-                                    <th class="sortable" data-sort="current_price" onclick="sortTable('current_price')">Preço</th>
-                                    <th class="sortable" data-sort="volume_24h_quote" onclick="sortTable('volume_24h_quote')">Volume 24h</th>
-                                    <th class="sortable" data-sort="price_change_percent_24h" onclick="sortTable('price_change_percent_24h')">Variação %</th>
-                                    <th class="sortable" data-sort="spread_percent" onclick="sortTable('spread_percent')">Spread %</th>
-                                    <th class="sortable" data-sort="risk_level" onclick="sortTable('risk_level')">Nível Risco</th>
-                                    <th class="sortable" data-sort="trading_enabled" onclick="sortTable('trading_enabled')">Trading</th>
-                                    <th class="sortable" data-sort="data_quality_score" onclick="sortTable('data_quality_score')">Qualidade</th>
-                                    <th class="sortable" data-sort="last_updated" onclick="sortTable('last_updated')">Atualizado</th>
-                                    <th class="sortable" data-sort="age_days" onclick="sortTable('age_days')">Idade (dias)</th>
+                                    <th class="sortable tooltip-container" data-sort="symbol" onclick="sortTable('symbol')" aria-describedby="tooltip-symbol">
+                                        Ativo
+                                        <div class="tooltip" id="tooltip-symbol" role="tooltip">Símbolo e nome do ativo (ex: BTC/USDT - Bitcoin)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="validation_status" onclick="sortTable('validation_status')" aria-describedby="tooltip-status">
+                                        Status
+                                        <div class="tooltip" id="tooltip-status" role="tooltip">Status da validação: VALID (aprovado para trading) ou INVALID (rejeitado)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="validation_score" onclick="sortTable('validation_score')" aria-describedby="tooltip-score">
+                                        Score
+                                        <div class="tooltip" id="tooltip-score" role="tooltip">Pontuação de validação (0-100): quanto maior, melhor a qualidade do ativo</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="current_price" onclick="sortTable('current_price')">
+                                        Preço
+                                        <div class="tooltip">Preço atual do ativo em USDT na exchange</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="volume_24h_quote" onclick="sortTable('volume_24h_quote')" aria-describedby="tooltip-volume">
+                                        Volume 24h
+                                        <div class="tooltip" id="tooltip-volume" role="tooltip">Volume de negociação em USDT nas últimas 24 horas (indicador de liquidez)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="price_change_percent_24h" onclick="sortTable('price_change_percent_24h')">
+                                        Variação %
+                                        <div class="tooltip">Variação percentual do preço nas últimas 24 horas (+ alta, - baixa)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="spread_percent" onclick="sortTable('spread_percent')">
+                                        Spread %
+                                        <div class="tooltip">Diferença entre preço de compra e venda (menor spread = melhor liquidez)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="risk_level" onclick="sortTable('risk_level')">
+                                        Nível Risco
+                                        <div class="tooltip">Avaliação de risco: LOW (baixo), MEDIUM (médio), HIGH (alto) baseado em volatilidade e liquidez</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="trading_enabled" onclick="sortTable('trading_enabled')">
+                                        Trading
+                                        <div class="tooltip">Se o ativo está habilitado para trading automático (✅ sim, ❌ não)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="data_quality_score" onclick="sortTable('data_quality_score')">
+                                        Qualidade
+                                        <div class="tooltip">Qualidade dos dados do ativo (0-100%): completude e consistência das informações</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="last_updated" onclick="sortTable('last_updated')">
+                                        Atualizado
+                                        <div class="tooltip">Data e hora da última atualização dos dados do ativo (UTC-3)</div>
+                                    </th>
+                                    <th class="sortable tooltip-container" data-sort="age_days" onclick="sortTable('age_days')">
+                                        Idade (dias)
+                                        <div class="tooltip">Há quantos dias o ativo foi adicionado ao sistema de monitoramento</div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody id="validation-table-body">

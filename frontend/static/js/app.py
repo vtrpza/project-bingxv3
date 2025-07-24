@@ -93,8 +93,8 @@ class TradingBotApp:
         except Exception as e:
             console.error(f"Error updating dashboard summary: {str(e)}")
     
-    async def update_validation_table(self):
-        """Update asset validation table with debounce and cache"""
+    async def update_validation_table(self, page=1):
+        """Update asset validation table with server-side pagination"""
         # Evita atualizações simultâneas
         if self.update_in_progress:
             console.log("Validation table update already in progress, skipping...")
@@ -102,16 +102,22 @@ class TradingBotApp:
             
         try:
             self.update_in_progress = True
-            console.log("Updating validation table...")
+            console.log(f"Updating validation table page {page}...")
             
-            # Get validation table data with no limit to get all assets
-            validation_data = await api_client.get_validation_table(limit=None, include_invalid=True)
+            # Get validation table data with pagination
+            validation_data = await api_client.get_validation_table(
+                page=page,
+                per_page=25,
+                include_invalid=True
+            )
+            
             if validation_data:
                 # Verificar se os dados realmente mudaram
                 current_timestamp = validation_data.get("summary", {}).get("last_updated")
                 
                 if (self.last_validation_data is not None and 
-                    self.last_validation_timestamp == current_timestamp):
+                    self.last_validation_timestamp == current_timestamp and
+                    page == 1):  # Only skip if same page and timestamp
                     console.log("Validation data unchanged, skipping UI update")
                     return
                 
@@ -124,23 +130,25 @@ class TradingBotApp:
                 
                 # Update summary stats
                 summary = validation_data.get("summary", {})
+                pagination = validation_data.get("pagination", {})
                 self.update_validation_stats(summary)
                 
-                console.log(f"Validation table updated - Valid: {summary.get('valid_assets', 0)}, Total: {summary.get('total_assets', 0)}")
+                console.log(f"Validation table updated - Page {pagination.get('current_page', 1)}/{pagination.get('total_pages', 1)}, Total: {summary.get('total_assets', 0)}")
                 
         except Exception as e:
             console.error(f"Error updating validation table: {str(e)}")
         finally:
             self.update_in_progress = False
     
-    async def search_and_update_table(self, search_term=""):
-        """Search and update validation table"""
+    async def search_and_update_table(self, search_term="", page=1):
+        """Search and update validation table with server-side pagination"""
         try:
-            console.log(f"Performing search for: '{search_term}'")
+            console.log(f"Performing search for: '{search_term}' on page {page}")
             
-            # Get search results from API
+            # Get search results from API with pagination
             validation_data = await api_client.get_validation_table(
-                limit=None,
+                page=page,
+                per_page=25,
                 include_invalid=True,
                 search=search_term if search_term else None
             )
@@ -160,6 +168,86 @@ class TradingBotApp:
                         
         except Exception as e:
             console.error(f"Error during search: {str(e)}")
+    
+    async def sort_validation_table_server(self, column, direction):
+        """Sort validation table using server-side sorting"""
+        try:
+            console.log(f"Server-side sorting: {column} {direction}")
+            
+            # Get current search term
+            search_input = document.getElementById("symbol-search")
+            search_term = search_input.value.strip() if search_input else ""
+            
+            # Get sorted data from API
+            validation_data = await api_client.get_validation_table(
+                page=1,  # Reset to first page on sort
+                per_page=25,
+                sort_by=column,
+                sort_direction=direction,
+                include_invalid=True,
+                search=search_term if search_term else None
+            )
+            
+            if validation_data:
+                ui_components.update_validation_table(validation_data)
+                
+        except Exception as e:
+            console.error(f"Error sorting table: {str(e)}")
+    
+    async def refresh_validation_table_page(self, page):
+        """Refresh validation table for specific page"""
+        try:
+            console.log(f"Refreshing validation table page {page}")
+            
+            # Get current search and sort
+            search_input = document.getElementById("symbol-search")
+            search_term = search_input.value.strip() if search_input else ""
+            
+            current_sort = getattr(ui_components.UIComponents, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
+            
+            # Get page data from API
+            validation_data = await api_client.get_validation_table(
+                page=page,
+                per_page=25,
+                sort_by=current_sort.get('column', 'symbol'),
+                sort_direction=current_sort.get('direction', 'asc'),
+                include_invalid=True,
+                search=search_term if search_term else None
+            )
+            
+            if validation_data:
+                ui_components.update_validation_table(validation_data)
+                
+        except Exception as e:
+            console.error(f"Error refreshing page: {str(e)}")
+    
+    async def apply_validation_table_filters(self, filters):
+        """Apply filters to validation table"""
+        try:
+            console.log(f"Applying filters: {filters}")
+            
+            # Get current search and sort
+            search_input = document.getElementById("symbol-search")
+            search_term = search_input.value.strip() if search_input else ""
+            
+            current_sort = getattr(ui_components.UIComponents, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
+            
+            # Get filtered data from API
+            validation_data = await api_client.get_validation_table(
+                page=1,  # Reset to first page on filter
+                per_page=25,
+                sort_by=current_sort.get('column', 'symbol'),
+                sort_direction=current_sort.get('direction', 'asc'),
+                filter_valid_only=filters.get('filter_valid_only', False),
+                include_invalid=not filters.get('filter_valid_only', False),
+                search=search_term if search_term else None
+            )
+            
+            if validation_data:
+                ui_components.update_validation_table(validation_data)
+                
+        except Exception as e:
+            console.error(f"Error applying filters: {str(e)}")
     
     def update_validation_stats(self, summary):
         """Update validation statistics in the UI"""
@@ -503,7 +591,19 @@ def clearSearch():
     search_input = document.getElementById("symbol-search")
     if search_input:
         search_input.value = ""
-        asyncio.create_task(app.search_and_update_table(""))
+        asyncio.create_task(app.search_and_update_table("", 1))
+
+def sortValidationTableServer(column, direction):
+    """Global function for server-side sorting"""
+    asyncio.create_task(app.sort_validation_table_server(column, direction))
+
+def refreshValidationTablePage(page):
+    """Global function to refresh specific page"""
+    asyncio.create_task(app.refresh_validation_table_page(page))
+
+def applyValidationTableFilters(filters):
+    """Global function to apply filters"""
+    asyncio.create_task(app.apply_validation_table_filters(filters))
 
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)
@@ -518,6 +618,11 @@ document.filterValidationTable = create_proxy(filterValidationTable)
 document.searchAssets = create_proxy(searchAssets)
 document.clearSearch = create_proxy(clearSearch)
 document.showNotification = create_proxy(ui_components.show_notification)
+
+# New server-side functions
+document.sortValidationTableServer = create_proxy(sortValidationTableServer)
+document.refreshValidationTablePage = create_proxy(refreshValidationTablePage)
+document.applyValidationTableFilters = create_proxy(applyValidationTableFilters)
 
 # Also make showNotification available on window object for JavaScript compatibility
 window.showNotification = create_proxy(ui_components.show_notification)

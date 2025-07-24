@@ -404,56 +404,15 @@ class UIComponents:
             console.error(f"Error updating trades table: {str(e)}")
     
     @staticmethod
-    def get_asset_display_name(symbol):
-        """Get display name for asset with proper name mapping"""
-        asset_names = {
-            'BTC/USDT': 'Bitcoin',
-            'ETH/USDT': 'Ethereum',
-            'BNB/USDT': 'BNB',
-            'ADA/USDT': 'Cardano',
-            'XRP/USDT': 'XRP',
-            'SOL/USDT': 'Solana',
-            'DOT/USDT': 'Polkadot',
-            'MATIC/USDT': 'Polygon',
-            'LTC/USDT': 'Litecoin',
-            'LINK/USDT': 'Chainlink',
-            'UNI/USDT': 'Uniswap',
-            'ATOM/USDT': 'Cosmos',
-            'VET/USDT': 'VeChain',
-            'FIL/USDT': 'Filecoin',
-            'TRX/USDT': 'TRON',
-            'ETC/USDT': 'Ethereum Classic',
-            'XLM/USDT': 'Stellar',
-            'THETA/USDT': 'Theta Network',
-            'AAVE/USDT': 'Aave',
-            'EOS/USDT': 'EOS',
-            'NEAR/USDT': 'NEAR Protocol',
-            'ALGO/USDT': 'Algorand',
-            'XTZ/USDT': 'Tezos',
-            'EGLD/USDT': 'MultiversX',
-            'FTM/USDT': 'Fantom',
-            'SAND/USDT': 'The Sandbox',
-            'MANA/USDT': 'Decentraland',
-            'CRV/USDT': 'Curve DAO',
-            'COMP/USDT': 'Compound',
-            'YFI/USDT': 'yearn.finance',
-            'SUSHI/USDT': 'SushiSwap',
-            'ZEC/USDT': 'Zcash',
-            'DASH/USDT': 'Dash',
-            'NEO/USDT': 'NEO',
-            'IOTA/USDT': 'IOTA',
-            'QTUM/USDT': 'Qtum',
-            'OMG/USDT': 'OMG Network',
-            'ZIL/USDT': 'Zilliqa',
-            'BAT/USDT': 'Basic Attention',
-            'ZRX/USDT': '0x Protocol',
-            'WAVES/USDT': 'Waves',
-            'ICX/USDT': 'ICON',
-            'ONT/USDT': 'Ontology',
-            'DOGE/USDT': 'Dogecoin',
-            'SHIB/USDT': 'Shiba Inu'
-        }
-        return asset_names.get(symbol, symbol.split('/')[0])  # Fallback to base currency
+    def get_asset_display_name(asset_data):
+        """Get display name for asset from API data or fallback"""
+        # Use asset_name from API if available
+        if 'asset_name' in asset_data:
+            return asset_data['asset_name']
+        
+        # Fallback to symbol parsing
+        symbol = asset_data.get('symbol', '')
+        return symbol.split('/')[0] if '/' in symbol else symbol
     
     @staticmethod
     def render_validation_table_row(asset_data):
@@ -463,7 +422,7 @@ class UIComponents:
         
         # Extract data with safe conversions
         symbol = asset_data.get("symbol", "")
-        asset_name = UIComponents.get_asset_display_name(symbol)
+        asset_name = UIComponents.get_asset_display_name(asset_data)
         status = asset_data.get("validation_status", "PENDING")
         score = asset_data.get("validation_score", 0)
         last_updated = asset_data.get("last_updated", "")

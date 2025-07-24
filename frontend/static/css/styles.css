@@ -1146,7 +1146,7 @@ input:focus {
     user-select: none;
     position: relative;
     transition: var(--transition);
-    padding-right: 20px !important;
+    padding-right: 24px !important; /* Increased for tooltip + sort icon */
 }
 
 .sortable:hover {
@@ -1217,6 +1217,7 @@ input:focus {
     top: 0;
     z-index: 10;
     white-space: nowrap;
+    overflow: visible; /* Allow tooltips to show outside */
 }
 
 .validation-table td {
@@ -1230,6 +1231,115 @@ input:focus {
 .validation-table tr:hover {
     background: var(--bg-secondary);
     transition: background-color 0.2s ease;
+}
+
+/* === TOOLTIPS === */
+.tooltip-container {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: nowrap;
+    max-width: 280px;
+    white-space: normal;
+    text-align: left;
+    z-index: 1001; /* Above sticky header */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease, transform 0.3s ease;
+    transform: translateX(-50%) translateY(5px);
+    pointer-events: none;
+}
+
+.tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-bottom-color: var(--border-color);
+}
+
+.tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: var(--bg-primary);
+    margin-top: 1px;
+}
+
+.tooltip-container:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Tooltip positioning adjustments for edge cases */
+.tooltip-container:first-child .tooltip {
+    left: 0;
+    transform: translateX(0);
+}
+
+.tooltip-container:first-child .tooltip::before,
+.tooltip-container:first-child .tooltip::after {
+    left: 20px;
+    transform: translateX(0);
+}
+
+.tooltip-container:last-child .tooltip {
+    right: 0;
+    left: auto;
+    transform: translateX(0);
+}
+
+.tooltip-container:last-child .tooltip::before,
+.tooltip-container:last-child .tooltip::after {
+    right: 20px;
+    left: auto;
+    transform: translateX(0);
+}
+
+/* Tooltip hover delay */
+.tooltip-container .tooltip {
+    transition-delay: 0.3s;
+}
+
+.tooltip-container:hover .tooltip {
+    transition-delay: 0s;
+}
+
+/* Special tooltip styles for different data types */
+.tooltip.warning {
+    border-color: var(--accent-warning);
+    background-color: rgba(240, 136, 62, 0.1);
+}
+
+.tooltip.info {
+    border-color: var(--accent-info);
+    background-color: rgba(31, 111, 235, 0.1);
+}
+
+.tooltip.success {
+    border-color: var(--accent-buy);
+    background-color: rgba(46, 160, 67, 0.1);
 }
 
 /* Responsive table */
@@ -1249,5 +1359,27 @@ input:focus {
     
     .asset-name {
         font-size: 0.7rem;
+    }
+    
+    /* Adjust tooltips for smaller screens */
+    .tooltip {
+        max-width: 240px;
+        font-size: 0.7rem;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+@media (max-width: 768px) {
+    /* Hide tooltips on mobile to avoid interference with touch */
+    .tooltip {
+        display: none;
+    }
+    
+    /* Add a help icon instead */
+    .tooltip-container::after {
+        content: ' ⓘ';
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-left: 2px;
     }
 }

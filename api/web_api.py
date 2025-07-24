@@ -316,19 +316,16 @@ async def get_asset_validation_table(
             priority_assets_on_page = len([d for d in table_data if d['priority_asset']])
             trading_enabled_assets = len([d for d in table_data if d.get('trading_enabled', False)])
             
-            # Add pagination metadata with proper calculations
-            current_page = (offset // limit) + 1 if limit and limit > 0 else 1
-            total_pages = ((total_count - 1) // limit) + 1 if limit and limit > 0 else 1
-            
+            # Enhanced pagination metadata
             pagination = {
-                "current_page": current_page,
+                "current_page": page,
                 "total_pages": total_pages,
-                "page_size": limit or total_count,
+                "page_size": per_page,
                 "total_records": total_count,
                 "showing_records": len(table_data),
                 "offset": offset,
-                "has_next": (offset + len(table_data)) < total_count,
-                "has_previous": offset > 0,
+                "has_next": has_next,
+                "has_previous": has_previous,
                 "sort_by": sort_by,
                 "sort_direction": sort_direction,
                 "search": search,
