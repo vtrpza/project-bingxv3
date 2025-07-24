@@ -13,16 +13,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 
-# Database-agnostic types
-try:
-    from sqlalchemy.dialects.postgresql import UUID, JSONB
-    # Use PostgreSQL-specific types when available
-    UUIDType = UUID(as_uuid=True)
-    JSONType = JSONB
-except ImportError:
-    # Fallback to generic types for SQLite
+# Database-agnostic types - determine at runtime
+import os
+database_url = os.getenv("DATABASE_URL", "")
+
+if database_url.startswith("sqlite"):
+    # SQLite-compatible types
     UUIDType = String(36)
     JSONType = JSON
+else:
+    # PostgreSQL types
+    try:
+        from sqlalchemy.dialects.postgresql import UUID, JSONB
+        UUIDType = UUID(as_uuid=True)
+        JSONType = JSONB
+    except ImportError:
+        UUIDType = String(36)
+        JSONType = JSON
 
 # Check if we're using SQLite (for UUID handling)
 def get_uuid():
