@@ -120,8 +120,9 @@ class InitialScanner:
             # Step 4: Process validation results
             await self._process_validation_results(validation_results, result)
             
-            # Step 5: Persist results to database
-            await self._persist_scan_results(result)
+            # Step 5: Results already persisted incrementally during validation
+            # This step is now optional and used only for final summary logging
+            logger.info("Results already persisted incrementally during validation process")
             
             # Calculate final metrics
             scan_end = datetime.utcnow()
@@ -179,18 +180,181 @@ class InitialScanner:
         return priority_symbols + sorted(other_symbols)
     
     async def _validate_discovered_assets(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Validate all discovered assets concurrently."""
-        logger.info(f"Starting validation of {len(symbols)} assets...")
+        """Validate all discovered assets with incremental database saving."""
+        logger.info(f"Starting incremental validation of {len(symbols)} assets...")
         
         try:
-            # Use validator's concurrent validation
-            return await self.validator.validate_multiple_assets(
-                symbols, 
-                max_concurrent=min(10, TradingConfig.MAX_ASSETS_TO_SCAN // 10)
-            )
+            # Use incremental validation with immediate database saving
+            return await self._validate_and_save_incremental(symbols)
         except Exception as e:
             logger.error(f"Error during asset validation: {e}")
             return {}
+    
+    async def _validate_and_save_incremental(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Validate assets incrementally, saving each result to database immediately."""
+        import asyncio
+        from config.trading_config import TradingConfig
+        
+        # Sort symbols to prioritize important ones
+        priority_symbols = [s for s in symbols if s in self.validator.criteria.PRIORITY_SYMBOLS]
+        other_symbols = [s for s in symbols if s not in self.validator.criteria.PRIORITY_SYMBOLS]
+        sorted_symbols = priority_symbols + other_symbols
+        
+        logger.info(f"Processing {len(sorted_symbols)} assets incrementally ({len(priority_symbols)} priority)")
+        
+        # Process in batches to avoid overwhelming the API, but save each asset immediately
+        results = {}
+        max_concurrent = min(10, TradingConfig.MAX_ASSETS_TO_SCAN // 10)
+        processed_count = 0
+        
+        for i in range(0, len(sorted_symbols), max_concurrent):
+            batch = sorted_symbols[i:i + max_concurrent]
+            
+            try:
+                # Create tasks for concurrent validation
+                tasks = [self._validate_and_save_single_asset(symbol) for symbol in batch]
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Process results and update counters
+                for j, result in enumerate(batch_results):
+                    symbol = batch[j] 
+                    processed_count += 1
+                    
+                    if isinstance(result, Exception):
+                        logger.error(f"Error validating {symbol}: {result}")
+                        # Create a failed validation result
+                        validation_result = {
+                            'symbol': symbol,
+                            'is_valid': False,
+                            'reason': f"Validation exception: {str(result)}",
+                            'validation_timestamp': datetime.utcnow().isoformat(),
+                            'validation_duration_seconds': 0
+                        }
+                        results[symbol] = validation_result
+                        
+                        # Try to save the failed result to database
+                        try:
+                            await self._save_validation_result_to_db(symbol, validation_result)
+                        except Exception as save_error:
+                            logger.error(f"Failed to save error result for {symbol}: {save_error}")
+                    else:
+                        results[symbol] = result
+                
+                # Progress logging every 25 assets
+                if processed_count % 25 == 0 or processed_count == len(sorted_symbols):
+                    valid_count = sum(1 for r in results.values() if r.get('is_valid', False))
+                    logger.info(f"Progress: {processed_count}/{len(sorted_symbols)} assets processed "
+                               f"({valid_count} valid, {processed_count - valid_count} invalid)")
+                
+                # Small delay between batches to be respectful to API
+                if i + max_concurrent < len(sorted_symbols):
+                    await asyncio.sleep(1)
+                    
+            except Exception as e:
+                logger.error(f"Error processing batch {i//max_concurrent + 1}: {e}")
+                # Continue with next batch even if this one fails
+                continue
+        
+        logger.info(f"Incremental validation completed: {len(results)} assets processed")
+        return results
+    
+    async def _validate_and_save_single_asset(self, symbol: str) -> Dict[str, Any]:
+        """Validate a single asset and immediately save result to database."""
+        try:
+            # Validate the asset using existing validator
+            validation_result = await self.validator.validate_asset(symbol)
+            
+            # Save result to database immediately
+            await self._save_validation_result_to_db(symbol, validation_result)
+            
+            return validation_result
+            
+        except Exception as e:
+            logger.error(f"Error in validate_and_save for {symbol}: {e}")
+            # Return a failed validation result
+            return {
+                'symbol': symbol,
+                'is_valid': False,
+                'reason': f"Processing error: {str(e)}",
+                'validation_timestamp': datetime.utcnow().isoformat(),
+                'validation_duration_seconds': 0
+            }
+    
+    async def _save_validation_result_to_db(self, symbol: str, validation_result: Dict[str, Any]):
+        """Save a single validation result to database immediately."""
+        try:
+            # Convert any Decimal objects to float for JSON storage
+            def convert_decimals(obj):
+                if isinstance(obj, dict):
+                    return {k: convert_decimals(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [convert_decimals(v) for v in obj]
+                elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
+                    return float(obj)
+                else:
+                    return obj
+            
+            # Prepare validation data for database
+            is_valid = validation_result.get('is_valid', False)
+            validation_data = convert_decimals(validation_result.get('data', {}))
+            
+            # Enhanced validation data with metadata
+            db_validation_data = {
+                'validation_timestamp': validation_result.get('validation_timestamp'),
+                'validation_duration': validation_result.get('validation_duration_seconds', 0),
+                'validation_checks': validation_data.get('validation_checks', {}),
+                'market_summary': validation_data.get('market_summary', {}),
+                'volume_analysis': validation_data.get('volume_analysis', {}),
+                'priority': symbol in self.validator.criteria.PRIORITY_SYMBOLS,
+                'is_valid': is_valid,
+                'reason': validation_result.get('reason') if not is_valid else None
+            }
+            
+            # Save to database in its own transaction
+            with get_session() as session:
+                # Update or create asset with validation status
+                asset = self.asset_repo.update_validation_status(
+                    session,
+                    symbol=symbol,
+                    is_valid=is_valid,
+                    validation_data=db_validation_data
+                )
+                
+                # If asset was created/updated successfully and doesn't exist, create the base record
+                if asset and not self.asset_repo.get_by_symbol(session, symbol):
+                    try:
+                        base_currency, quote_currency = symbol.split('/')
+                        
+                        # Get minimum order size from market data if available
+                        market_summary = validation_data.get('market_summary', {})
+                        min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
+                        if isinstance(min_order_size, (int, float, str)):
+                            min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
+                        
+                        self.asset_repo.create(
+                            session,
+                            symbol=symbol,
+                            base_currency=base_currency,
+                            quote_currency=quote_currency,
+                            is_valid=is_valid,
+                            min_order_size=min_order_size,
+                            last_validation=datetime.utcnow(),
+                            validation_data=db_validation_data
+                        )
+                        
+                    except Exception as create_error:
+                        logger.warning(f"Could not create asset record for {symbol}: {create_error}")
+                        # Continue anyway as the validation status was saved
+                
+                # Commit the transaction
+                session.commit()
+                
+                logger.debug(f"Saved {'valid' if is_valid else 'invalid'} asset {symbol} to database")
+                
+        except Exception as e:
+            logger.error(f"Failed to save validation result for {symbol}: {e}")
+            # Don't raise the exception - let the scan continue with other assets
+            pass
     
     async def _process_validation_results(self, validation_results: Dict[str, Dict[str, Any]], 
                                         result: InitialScanResult):
