@@ -160,10 +160,7 @@ class TradingBot:
         
         try:
             # Initialize scanner
-            self.scanner = InitialScanner(
-                client=self.client,
-                asset_repo=self.asset_repo
-            )
+            self.scanner = InitialScanner()
             
             # Initialize order manager
             self.order_manager = OrderManager(
