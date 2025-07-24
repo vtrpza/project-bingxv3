@@ -896,3 +896,23 @@
 2025-07-24 06:58:10,143 - api.web_api - INFO - Database initialization completed successfully
 2025-07-24 06:58:10,143 - api.web_api - INFO - Background tasks started
 2025-07-24 06:58:11,116 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:15,116 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:58:15,116 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:58:15,116 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:58:16,962 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:58:16,962 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:58:17,063 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 06:58:17,832 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:58:17,832 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:58:17,847 - api.web_api - INFO - Initializing database...
+2025-07-24 06:58:17,847 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:58:17,847 - database.connection - INFO - Using SQLite database
+2025-07-24 06:58:17,858 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:58:17,859 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:58:17,860 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:58:17,860 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:58:17,861 - api.web_api - INFO - Background tasks started
+2025-07-24 06:58:17,863 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:17,883 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:19,176 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:58:21,199 - api.web_api - INFO - Dashboard summary requested - returning basic structure

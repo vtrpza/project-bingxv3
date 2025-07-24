@@ -75,7 +75,7 @@ class ScannerWorker:
                 for asset in valid_assets:
                     try:
                         # Get current market data
-                        client = await get_client()
+                        client = get_client()
                         ticker = await client.fetch_ticker(asset.symbol)
                         
                         # Get historical data for indicators
