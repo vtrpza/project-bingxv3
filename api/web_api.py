@@ -165,6 +165,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def _safe_get_candle_price(candles, fallback_price):
+    """Safely extract close price from candle data"""
+    try:
+        if candles and len(candles) >= 1 and len(candles[-1]) > 4:
+            return float(candles[-1][4])  # Close price
+    except (IndexError, TypeError, ValueError):
+        pass
+    return fallback_price
+
 # Static files
 frontend_path = Path(__file__).parent.parent / "frontend"
 static_path = frontend_path / "static"
@@ -1242,13 +1251,33 @@ async def get_trading_live_data(
                 indicators_2h = indicator_repo.get_latest_indicators_by_timeframe(db, asset.id, '2h')
                 indicators_4h = indicator_repo.get_latest_indicators_by_timeframe(db, asset.id, '4h')
                 
-                # Get OHLCV data for candle colors
-                candles_2h = await client.fetch_ohlcv(asset.symbol, '2h', 2)  # Last 2 candles
-                candles_4h = await client.fetch_ohlcv(asset.symbol, '4h', 2)  # Last 2 candles
+                # Get OHLCV data for candle colors with safe access
+                candles_2h = []
+                candles_4h = []
+                try:
+                    candles_2h = await client.fetch_ohlcv(asset.symbol, '2h', 2)  # Last 2 candles
+                    candles_4h = await client.fetch_ohlcv(asset.symbol, '4h', 2)  # Last 2 candles
+                except Exception as e:
+                    logger.warning(f"Failed to fetch candles for {asset.symbol}: {e}")
                 
-                # Determine candle colors
-                candle_2h_color = "🟢" if len(candles_2h) >= 2 and candles_2h[-1][4] > candles_2h[-1][1] else "🔴"
-                candle_4h_color = "🟢" if len(candles_4h) >= 2 and candles_4h[-1][4] > candles_4h[-1][1] else "🔴"
+                # Safely determine candle colors
+                candle_2h_color = "🔴"  # Default
+                if candles_2h and len(candles_2h) >= 1 and len(candles_2h[-1]) > 4:
+                    try:
+                        close_price = candles_2h[-1][4]
+                        open_price = candles_2h[-1][1]
+                        candle_2h_color = "🟢" if close_price > open_price else "🔴"
+                    except (IndexError, TypeError):
+                        pass
+                
+                candle_4h_color = "🔴"  # Default
+                if candles_4h and len(candles_4h) >= 1 and len(candles_4h[-1]) > 4:
+                    try:
+                        close_price = candles_4h[-1][4]
+                        open_price = candles_4h[-1][1]
+                        candle_4h_color = "🟢" if close_price > open_price else "🔴"
+                    except (IndexError, TypeError):
+                        pass
                 
                 # Calculate signals based on current indicators
                 signal_type, signal_strength = _calculate_current_signal(
@@ -1288,14 +1317,14 @@ async def get_trading_live_data(
                         "volume": volume_24h
                     },
                     "timeframe_2h": {
-                        "price": candles_2h[-1][4] if candles_2h else current_price,
+                        "price": self._safe_get_candle_price(candles_2h, current_price),
                         "mm1": float(indicators_2h.mm1) if indicators_2h and indicators_2h.mm1 else None,
                         "center": float(indicators_2h.center) if indicators_2h and indicators_2h.center else None,
                         "rsi": float(indicators_2h.rsi) if indicators_2h and indicators_2h.rsi else None,
                         "candle_color": candle_2h_color
                     },
                     "timeframe_4h": {
-                        "price": candles_4h[-1][4] if candles_4h else current_price,
+                        "price": self._safe_get_candle_price(candles_4h, current_price),
                         "mm1": float(indicators_4h.mm1) if indicators_4h and indicators_4h.mm1 else None,
                         "center": float(indicators_4h.center) if indicators_4h and indicators_4h.center else None,
                         "rsi": float(indicators_4h.rsi) if indicators_4h and indicators_4h.rsi else None,
