@@ -77,7 +77,7 @@ class APIClient:
         """Get detailed information about a specific asset"""
         return await self.get(f"/assets/{symbol}")
     
-    async def get_validation_table(self, page=1, per_page=25, include_invalid=True, search=None, sort_by="symbol", sort_direction="asc", filter_valid_only=False):
+    async def get_validation_table(self, page=1, per_page=25, include_invalid=True, search=None, sort_by="symbol", sort_direction="asc", filter_valid_only=False, risk_level_filter=None, priority_only=False, trading_enabled_only=False):
         """Get comprehensive asset validation table with server-side pagination
         
         Args:
