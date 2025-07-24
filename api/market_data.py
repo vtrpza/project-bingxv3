@@ -47,6 +47,32 @@ class MarketDataAPI:
                 # In production, you might want to raise the error
                 pass
     
+    async def get_valid_symbols(self) -> List[str]:
+        """Get list of valid trading symbols from BingX."""
+        try:
+            await self._ensure_client_initialized()
+            
+            # Get all markets and filter for active USDT pairs
+            markets = await self.client.exchange.fetch_markets()
+            valid_symbols = []
+            
+            for market in markets:
+                if (market.get('quote') == 'USDT' and 
+                    market.get('active', False) and
+                    market.get('type') in ['spot', 'swap']):
+                    valid_symbols.append(market['symbol'])
+            
+            logger.info(f"Found {len(valid_symbols)} valid USDT trading pairs")
+            return valid_symbols
+            
+        except Exception as e:
+            logger.error(f"Error fetching valid symbols: {e}")
+            # Return common symbols as fallback
+            return [
+                'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'DOT/USDT',
+                'LINK/USDT', 'UNI/USDT', 'SOL/USDT', 'AVAX/USDT', 'MATIC/USDT'
+            ]
+
     async def get_usdt_markets(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
         """Get all USDT trading pairs with caching."""
         await self._ensure_client_initialized()
