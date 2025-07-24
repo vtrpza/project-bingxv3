@@ -9606,3 +9606,180 @@ RuntimeError: Database not initialized - call init_database() first
 2025-07-24 05:49:07,233 - scanner.initial_scanner - ERROR - Failed to save validation result for AIN/USDT: Database not initialized - call init_database() first
 2025-07-24 05:49:07,835 - scanner.initial_scanner - ERROR - Failed to save validation result for AIOT/USDT: Database not initialized - call init_database() first
 2025-07-24 05:49:09,050 - scanner.initial_scanner - ERROR - Failed to save validation result for AIOZ/USDT: Database not initialized - call init_database() first
+2025-07-24 05:52:12,390 - api.market_data - ERROR - Error fetching valid symbols: object list can't be used in 'await' expression
+2025-07-24 05:57:11,239 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:57:11,239 - api.client - ERROR - Error fetching ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:57:11,239 - api.market_data - ERROR - Error fetching market summary for 1000000BOB/USDT: Failed to fetch ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:57:11,844 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:57:11,844 - api.client - ERROR - Error fetching ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:57:11,844 - api.market_data - ERROR - Error fetching market summary for 10000WHY/USDT: Failed to fetch ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:57:11,849 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:57:11,849 - api.client - ERROR - Error fetching ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:57:11,849 - api.market_data - ERROR - Error fetching market summary for 10000SATS/USDT: Failed to fetch ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:57:11,853 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:57:11,853 - api.client - ERROR - Error fetching ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:57:11,853 - api.market_data - ERROR - Error fetching market summary for 1000000MOG/USDT: Failed to fetch ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:57:14,001 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:57:14,001 - api.client - ERROR - Error fetching ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:57:14,001 - api.market_data - ERROR - Error fetching market summary for 1000PEPE/USDT: Failed to fetch ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:57:14,005 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:57:14,005 - api.client - ERROR - Error fetching ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:57:14,005 - api.market_data - ERROR - Error fetching market summary for 1000CHEEMS/USDT: Failed to fetch ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:57:14,010 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:57:14,011 - api.client - ERROR - Error fetching ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:57:14,011 - api.market_data - ERROR - Error fetching market summary for 1000CAT/USDT: Failed to fetch ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:57:14,015 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:57:14,016 - api.client - ERROR - Error fetching ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:57:14,016 - api.market_data - ERROR - Error fetching market summary for 1000BONK/USDT: Failed to fetch ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:58:35,810 - api.client - ERROR - Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 05:58:35,810 - api.client - ERROR - Error fetching ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 05:58:35,810 - api.market_data - ERROR - Error fetching market summary for ALTCOIN/USDT: Failed to fetch ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 05:59:41,427 - api.client - ERROR - Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 05:59:41,427 - api.client - ERROR - Error fetching ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 05:59:41,427 - api.market_data - ERROR - Error fetching market summary for AVAAI/USDT: Failed to fetch ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 05:59:46,525 - api.client - ERROR - Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 05:59:46,525 - api.client - ERROR - Error fetching ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 05:59:46,525 - api.market_data - ERROR - Error fetching market summary for AXL/USDT: Failed to fetch ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 06:00:21,704 - api.client - ERROR - Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:00:21,704 - api.client - ERROR - Error fetching ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:00:21,704 - api.market_data - ERROR - Error fetching market summary for BB/USDT: Failed to fetch ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:00:27,237 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753347626923}
+2025-07-24 06:00:27,237 - api.client - ERROR - Error fetching ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753347626923}
+2025-07-24 06:00:27,237 - api.market_data - ERROR - Error fetching market summary for BEAM/USDT: Failed to fetch ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753347626923}
+2025-07-24 06:00:37,642 - api.client - ERROR - Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:00:37,642 - api.client - ERROR - Error fetching ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:00:37,642 - api.market_data - ERROR - Error fetching market summary for BID/USDT: Failed to fetch ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:01:47,745 - api.client - ERROR - Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:01:47,745 - api.client - ERROR - Error fetching ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:01:47,745 - api.market_data - ERROR - Error fetching market summary for CBK/USDT: Failed to fetch ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:02:03,422 - database.connection - ERROR - Unexpected error in database session: 'AssetRepository' object has no attribute 'get_count'
+2025-07-24 06:02:03,423 - api.web_api - ERROR - Error generating validation table: 'AssetRepository' object has no attribute 'get_count'
+2025-07-24 06:02:03,423 - api.web_api - ERROR - Full traceback: Traceback (most recent call last):
+  File "/home/vhnpo/project-bingxv3/api/web_api.py", line 196, in get_asset_validation_table
+    total_count = asset_repo.get_count(db)
+                  ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'AssetRepository' object has no attribute 'get_count'
+
+2025-07-24 06:02:13,596 - database.connection - ERROR - Unexpected error in database session: 'AssetRepository' object has no attribute 'get_count'
+2025-07-24 06:02:13,597 - api.web_api - ERROR - Error generating validation table: 'AssetRepository' object has no attribute 'get_count'
+2025-07-24 06:02:13,597 - api.web_api - ERROR - Full traceback: Traceback (most recent call last):
+  File "/home/vhnpo/project-bingxv3/api/web_api.py", line 196, in get_asset_validation_table
+    total_count = asset_repo.get_count(db)
+                  ^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'AssetRepository' object has no attribute 'get_count'
+
+2025-07-24 06:02:25,005 - api.market_data - ERROR - Error analyzing volume for COA/USDT: Insufficient data for volume analysis: 23 < 24
+2025-07-24 06:04:03,216 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 06:04:03,216 - api.client - ERROR - Error fetching ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 06:04:03,217 - api.market_data - ERROR - Error fetching market summary for 1000000BOB/USDT: Failed to fetch ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 06:04:03,772 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 06:04:03,772 - api.client - ERROR - Error fetching ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 06:04:03,772 - api.market_data - ERROR - Error fetching market summary for 10000WHY/USDT: Failed to fetch ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 06:04:03,778 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 06:04:03,778 - api.client - ERROR - Error fetching ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 06:04:03,778 - api.market_data - ERROR - Error fetching market summary for 10000SATS/USDT: Failed to fetch ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 06:04:03,784 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 06:04:03,784 - api.client - ERROR - Error fetching ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 06:04:03,785 - api.market_data - ERROR - Error fetching market summary for 1000000MOG/USDT: Failed to fetch ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 06:04:06,239 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 06:04:06,239 - api.client - ERROR - Error fetching ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 06:04:06,239 - api.market_data - ERROR - Error fetching market summary for 1000CHEEMS/USDT: Failed to fetch ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 06:04:06,250 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 06:04:06,250 - api.client - ERROR - Error fetching ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 06:04:06,250 - api.market_data - ERROR - Error fetching market summary for 1000PEPE/USDT: Failed to fetch ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 06:04:06,257 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 06:04:06,257 - api.client - ERROR - Error fetching ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 06:04:06,257 - api.market_data - ERROR - Error fetching market summary for 1000CAT/USDT: Failed to fetch ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 06:04:06,266 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 06:04:06,266 - api.client - ERROR - Error fetching ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 06:04:06,266 - api.market_data - ERROR - Error fetching market summary for 1000BONK/USDT: Failed to fetch ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 06:05:14,866 - api.client - ERROR - Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 06:05:14,867 - api.client - ERROR - Error fetching ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 06:05:14,867 - api.market_data - ERROR - Error fetching market summary for ALTCOIN/USDT: Failed to fetch ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 06:06:20,649 - api.client - ERROR - Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 06:06:20,649 - api.client - ERROR - Error fetching ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 06:06:20,649 - api.market_data - ERROR - Error fetching market summary for AVAAI/USDT: Failed to fetch ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 06:06:25,574 - api.client - ERROR - Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 06:06:25,574 - api.client - ERROR - Error fetching ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 06:06:25,574 - api.market_data - ERROR - Error fetching market summary for AXL/USDT: Failed to fetch ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 06:07:01,170 - api.client - ERROR - Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:07:01,170 - api.client - ERROR - Error fetching ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:07:01,170 - api.market_data - ERROR - Error fetching market summary for BB/USDT: Failed to fetch ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 06:07:05,985 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348025653}
+2025-07-24 06:07:05,985 - api.client - ERROR - Error fetching ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348025653}
+2025-07-24 06:07:05,985 - api.market_data - ERROR - Error fetching market summary for BEAM/USDT: Failed to fetch ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348025653}
+2025-07-24 06:07:17,064 - api.client - ERROR - Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:07:17,064 - api.client - ERROR - Error fetching ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:07:17,065 - api.market_data - ERROR - Error fetching market summary for BID/USDT: Failed to fetch ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 06:08:26,808 - api.client - ERROR - Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:08:26,809 - api.client - ERROR - Error fetching ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:08:26,809 - api.market_data - ERROR - Error fetching market summary for CBK/USDT: Failed to fetch ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 06:09:03,966 - api.market_data - ERROR - Error analyzing volume for COA/USDT: Insufficient data for volume analysis: 23 < 24
+2025-07-24 06:10:32,846 - api.client - ERROR - Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 06:10:32,846 - api.client - ERROR - Error fetching ticker for DOLO/USDT: Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 06:10:32,846 - api.market_data - ERROR - Error fetching market summary for DOLO/USDT: Failed to fetch ticker for DOLO/USDT: Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 06:10:43,598 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348243183}
+2025-07-24 06:10:43,599 - api.client - ERROR - Error fetching ticker for DUSK/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348243183}
+2025-07-24 06:10:43,599 - api.market_data - ERROR - Error fetching market summary for DUSK/USDT: Failed to fetch ticker for DUSK/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348243183}
+2025-07-24 06:11:03,165 - api.client - ERROR - Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 06:11:03,165 - api.client - ERROR - Error fetching ticker for ELX/USDT: Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 06:11:03,165 - api.market_data - ERROR - Error fetching market summary for ELX/USDT: Failed to fetch ticker for ELX/USDT: Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 06:11:48,854 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348308384}
+2025-07-24 06:11:48,854 - api.client - ERROR - Error fetching ticker for FIDA/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348308384}
+2025-07-24 06:11:48,854 - api.market_data - ERROR - Error fetching market summary for FIDA/USDT: Failed to fetch ticker for FIDA/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348308384}
+2025-07-24 06:12:24,894 - api.client - ERROR - Exchange error: bingx does not have market symbol FRAG/USDT
+2025-07-24 06:12:24,894 - api.client - ERROR - Error fetching ticker for FRAG/USDT: Exchange error: bingx does not have market symbol FRAG/USDT
+2025-07-24 06:12:24,895 - api.market_data - ERROR - Error fetching market summary for FRAG/USDT: Failed to fetch ticker for FRAG/USDT: Exchange error: bingx does not have market symbol FRAG/USDT
+2025-07-24 06:12:29,875 - api.client - ERROR - Exchange error: bingx does not have market symbol FUNTOKEN/USDT
+2025-07-24 06:12:29,875 - api.client - ERROR - Error fetching ticker for FUNTOKEN/USDT: Exchange error: bingx does not have market symbol FUNTOKEN/USDT
+2025-07-24 06:12:29,875 - api.market_data - ERROR - Error fetching market summary for FUNTOKEN/USDT: Failed to fetch ticker for FUNTOKEN/USDT: Exchange error: bingx does not have market symbol FUNTOKEN/USDT
+2025-07-24 06:13:29,550 - api.client - ERROR - Exchange error: bingx does not have market symbol GUN/USDT
+2025-07-24 06:13:29,550 - api.client - ERROR - Error fetching ticker for GUN/USDT: Exchange error: bingx does not have market symbol GUN/USDT
+2025-07-24 06:13:29,550 - api.market_data - ERROR - Error fetching market summary for GUN/USDT: Failed to fetch ticker for GUN/USDT: Exchange error: bingx does not have market symbol GUN/USDT
+2025-07-24 06:13:55,810 - api.client - ERROR - Exchange error: bingx does not have market symbol HIVE/USDT
+2025-07-24 06:13:55,810 - api.client - ERROR - Error fetching ticker for HIVE/USDT: Exchange error: bingx does not have market symbol HIVE/USDT
+2025-07-24 06:13:55,810 - api.market_data - ERROR - Error fetching market summary for HIVE/USDT: Failed to fetch ticker for HIVE/USDT: Exchange error: bingx does not have market symbol HIVE/USDT
+2025-07-24 06:19:20,284 - api.client - ERROR - Exchange error: bingx does not have market symbol MOODENG/USDT
+2025-07-24 06:19:20,284 - api.client - ERROR - Error fetching ticker for MOODENG/USDT: Exchange error: bingx does not have market symbol MOODENG/USDT
+2025-07-24 06:19:20,284 - api.market_data - ERROR - Error fetching market summary for MOODENG/USDT: Failed to fetch ticker for MOODENG/USDT: Exchange error: bingx does not have market symbol MOODENG/USDT
+2025-07-24 06:20:45,889 - api.client - ERROR - Exchange error: bingx does not have market symbol ONG/USDT
+2025-07-24 06:20:45,889 - api.client - ERROR - Error fetching ticker for ONG/USDT: Exchange error: bingx does not have market symbol ONG/USDT
+2025-07-24 06:20:45,889 - api.market_data - ERROR - Error fetching market summary for ONG/USDT: Failed to fetch ticker for ONG/USDT: Exchange error: bingx does not have market symbol ONG/USDT
+2025-07-24 06:21:35,477 - api.client - ERROR - Exchange error: bingx does not have market symbol PI/USDT
+2025-07-24 06:21:35,477 - api.client - ERROR - Error fetching ticker for PI/USDT: Exchange error: bingx does not have market symbol PI/USDT
+2025-07-24 06:21:35,477 - api.market_data - ERROR - Error fetching market summary for PI/USDT: Failed to fetch ticker for PI/USDT: Exchange error: bingx does not have market symbol PI/USDT
+2025-07-24 06:21:36,703 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348896335}
+2025-07-24 06:21:36,703 - api.client - ERROR - Error fetching ticker for PHA/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348896335}
+2025-07-24 06:21:36,703 - api.market_data - ERROR - Error fetching market summary for PHA/USDT: Failed to fetch ticker for PHA/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753348896335}
+2025-07-24 06:22:07,018 - api.client - ERROR - Exchange error: bingx does not have market symbol PORT3/USDT
+2025-07-24 06:22:07,019 - api.client - ERROR - Error fetching ticker for PORT3/USDT: Exchange error: bingx does not have market symbol PORT3/USDT
+2025-07-24 06:22:07,019 - api.market_data - ERROR - Error fetching market summary for PORT3/USDT: Failed to fetch ticker for PORT3/USDT: Exchange error: bingx does not have market symbol PORT3/USDT
+2025-07-24 06:23:32,236 - api.client - ERROR - Exchange error: bingx does not have market symbol ROAM/USDT
+2025-07-24 06:23:32,236 - api.client - ERROR - Error fetching ticker for ROAM/USDT: Exchange error: bingx does not have market symbol ROAM/USDT
+2025-07-24 06:23:32,237 - api.market_data - ERROR - Error fetching market summary for ROAM/USDT: Failed to fetch ticker for ROAM/USDT: Exchange error: bingx does not have market symbol ROAM/USDT
+2025-07-24 06:23:32,551 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349012209}
+2025-07-24 06:23:32,551 - api.client - ERROR - Error fetching ticker for RLC/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349012209}
+2025-07-24 06:23:32,551 - api.market_data - ERROR - Error fetching market summary for RLC/USDT: Failed to fetch ticker for RLC/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349012209}
+2025-07-24 06:23:37,937 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349017549}
+2025-07-24 06:23:37,937 - api.client - ERROR - Error fetching ticker for ROSE/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349017549}
+2025-07-24 06:23:37,937 - api.market_data - ERROR - Error fetching market summary for ROSE/USDT: Failed to fetch ticker for ROSE/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349017549}
+2025-07-24 06:23:48,890 - api.market_data - ERROR - Error analyzing volume for RUDI/USDT: Insufficient data for volume analysis: 7 < 24
+2025-07-24 06:23:56,902 - api.client - ERROR - Exchange error: bingx does not have market symbol SAGA/USDT
+2025-07-24 06:23:56,903 - api.client - ERROR - Error fetching ticker for SAGA/USDT: Exchange error: bingx does not have market symbol SAGA/USDT
+2025-07-24 06:23:56,903 - api.market_data - ERROR - Error fetching market summary for SAGA/USDT: Failed to fetch ticker for SAGA/USDT: Exchange error: bingx does not have market symbol SAGA/USDT
+2025-07-24 06:24:42,335 - api.client - ERROR - Exchange error: bingx does not have market symbol SKATE/USDT
+2025-07-24 06:24:42,336 - api.client - ERROR - Error fetching ticker for SKATE/USDT: Exchange error: bingx does not have market symbol SKATE/USDT
+2025-07-24 06:24:42,336 - api.market_data - ERROR - Error fetching market summary for SKATE/USDT: Failed to fetch ticker for SKATE/USDT: Exchange error: bingx does not have market symbol SKATE/USDT
+2025-07-24 06:25:03,451 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349103100}
+2025-07-24 06:25:03,451 - api.client - ERROR - Error fetching ticker for SNT/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349103100}
+2025-07-24 06:25:03,451 - api.market_data - ERROR - Error fetching market summary for SNT/USDT: Failed to fetch ticker for SNT/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753349103100}
+2025-07-24 06:26:34,654 - api.client - ERROR - Exchange error: bingx does not have market symbol TAI/USDT
+2025-07-24 06:26:34,654 - api.client - ERROR - Error fetching ticker for TAI/USDT: Exchange error: bingx does not have market symbol TAI/USDT
+2025-07-24 06:26:34,655 - api.market_data - ERROR - Error fetching market summary for TAI/USDT: Failed to fetch ticker for TAI/USDT: Exchange error: bingx does not have market symbol TAI/USDT
+2025-07-24 06:27:19,890 - api.client - ERROR - Exchange error: bingx does not have market symbol TROLLSOL/USDT
+2025-07-24 06:27:19,890 - api.client - ERROR - Error fetching ticker for TROLLSOL/USDT: Exchange error: bingx does not have market symbol TROLLSOL/USDT
+2025-07-24 06:27:19,890 - api.market_data - ERROR - Error fetching market summary for TROLLSOL/USDT: Failed to fetch ticker for TROLLSOL/USDT: Exchange error: bingx does not have market symbol TROLLSOL/USDT
+2025-07-24 06:28:06,752 - api.market_data - ERROR - Error analyzing volume for VALENTINE/USDT: Insufficient data for volume analysis: 6 < 24
+2025-07-24 06:28:34,978 - api.client - ERROR - Exchange error: bingx does not have market symbol VTHO/USDT
+2025-07-24 06:28:34,978 - api.client - ERROR - Error fetching ticker for VTHO/USDT: Exchange error: bingx does not have market symbol VTHO/USDT
+2025-07-24 06:28:34,978 - api.market_data - ERROR - Error fetching market summary for VTHO/USDT: Failed to fetch ticker for VTHO/USDT: Exchange error: bingx does not have market symbol VTHO/USDT

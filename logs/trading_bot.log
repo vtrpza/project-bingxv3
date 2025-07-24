@@ -1,0 +1,21 @@
+2025-07-24 06:27:57,794 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:27:57,794 - config.settings - ERROR - Configuration validation failed:
+- Either DATABASE_URL or DB_PASSWORD must be provided
+2025-07-24 06:28:16,355 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:28:16,355 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:28:19,672 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:28:19,673 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:28:26,924 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:28:26,924 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:28:30,819 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:28:30,819 - config.settings - ERROR - Configuration validation failed:
+- DATABASE_URL must be provided in production environment
+2025-07-24 06:28:37,745 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:28:37,745 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 06:28:37,958 - scanner.initial_scanner - INFO - VST-only mode: Found target symbol VST/USDT
+2025-07-24 06:28:37,958 - database.connection - INFO - No DATABASE_URL found, using SQLite for local development
+2025-07-24 06:28:37,958 - database.connection - INFO - Using SQLite database
+2025-07-24 06:28:37,966 - database.connection - INFO - Database connection established successfully

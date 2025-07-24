@@ -22,40 +22,49 @@ class DatabaseManager:
         self.engine = None
         self.SessionLocal = None
         self._initialized = False
+        self.is_sqlite = False
     
     def initialize(self) -> bool:
         """Initialize database connection."""
         try:
-            # Database configuration from environment
-            db_config = {
-                "host": os.getenv("DB_HOST", "localhost"),
-                "port": os.getenv("DB_PORT", "5432"),
-                "database": os.getenv("DB_NAME", "bingx_trading"),
-                "user": os.getenv("DB_USER", "trading_bot"),
-                "password": os.getenv("DB_PASSWORD"),
-            }
+            # Check if DATABASE_URL is provided (Render/Heroku style)
+            database_url = os.getenv("DATABASE_URL")
             
-            # Validate required environment variables
-            if not db_config["password"]:
-                raise ValueError("DB_PASSWORD environment variable is required")
+            if not database_url:
+                # Fallback to SQLite for easy local development
+                logger.info("No DATABASE_URL found, using SQLite for local development")
+                database_url = "sqlite:///vst_trading.db"
+            else:
+                logger.info("Using DATABASE_URL from environment")
             
-            # Create database URL
-            database_url = (
-                f"postgresql://{db_config['user']}:{db_config['password']}"
-                f"@{db_config['host']}:{db_config['port']}/{db_config['database']}"
-            )
+            # Handle SQLite vs PostgreSQL differences
+            if database_url.startswith("sqlite"):
+                self.is_sqlite = True
+                logger.info("Using SQLite database")
+            else:
+                self.is_sqlite = False
+                logger.info("Using PostgreSQL database")
             
-            # Create engine with connection pooling
-            self.engine = create_engine(
-                database_url,
-                poolclass=QueuePool,
-                pool_size=20,
-                max_overflow=40,
-                pool_timeout=30,
-                pool_recycle=3600,
-                echo=os.getenv("DB_ECHO", "false").lower() == "true",
-                future=True
-            )
+            # Create engine with appropriate configuration
+            if self.is_sqlite:
+                # SQLite configuration (simple, no pooling needed)
+                self.engine = create_engine(
+                    database_url,
+                    echo=os.getenv("DB_ECHO", "false").lower() == "true",
+                    future=True
+                )
+            else:
+                # PostgreSQL configuration (with connection pooling)
+                self.engine = create_engine(
+                    database_url,
+                    poolclass=QueuePool,
+                    pool_size=20,
+                    max_overflow=40,
+                    pool_timeout=30,
+                    pool_recycle=3600,
+                    echo=os.getenv("DB_ECHO", "false").lower() == "true",
+                    future=True
+                )
             
             # Create session factory
             self.SessionLocal = sessionmaker(

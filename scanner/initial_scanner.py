@@ -157,18 +157,18 @@ class InitialScanner:
         """Extract USDT trading pair symbols from market data with validation."""
         symbols = []
         
-        # For now, skip the valid symbols check in sync method to avoid asyncio.run
-        # This will be handled by the validation process later
-        valid_symbols_set = set()
+        # VST-ONLY CONFIGURATION - Only trade VST/USDT
+        target_symbol = 'VST/USDT'
         
         for market in markets:
             try:
                 symbol = market.get('symbol')
                 if (symbol and 
-                    symbol.endswith('/USDT') and 
-                    market.get('active', False) and
-                    (not valid_symbols_set or symbol in valid_symbols_set)):
+                    symbol == target_symbol and  # Only VST/USDT
+                    market.get('active', False)):
                     symbols.append(symbol)
+                    logger.info(f"VST-only mode: Found target symbol {symbol}")
+                    break  # Exit early since we only want VST
             except Exception as e:
                 logger.warning(f"Error processing market data: {e}")
                 continue

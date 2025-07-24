@@ -17,10 +17,10 @@ class TrailingStopLevel:
 class TradingConfig:
     """Trading strategy and risk management parameters."""
     
-    # Position Sizing & Limits
-    MAX_CONCURRENT_TRADES: int = int(os.getenv("MAX_CONCURRENT_TRADES", "5"))
+    # Position Sizing & Limits - VST-ONLY MODE
+    MAX_CONCURRENT_TRADES: int = int(os.getenv("MAX_CONCURRENT_TRADES", "1"))  # Only 1 trade for VST
     MIN_ORDER_SIZE_USDT: Decimal = Decimal(os.getenv("MIN_ORDER_SIZE_USDT", "10.0"))
-    MAX_POSITION_SIZE_PERCENT: Decimal = Decimal(os.getenv("MAX_POSITION_SIZE_PERCENT", "2.0"))  # % of total balance
+    MAX_POSITION_SIZE_PERCENT: Decimal = Decimal(os.getenv("MAX_POSITION_SIZE_PERCENT", "10.0"))  # Higher % for single asset
     
     # Risk Management
     INITIAL_STOP_LOSS_PERCENT: Decimal = Decimal(os.getenv("INITIAL_STOP_LOSS_PERCENT", "0.02"))  # 2%
@@ -65,10 +65,10 @@ class TradingConfig:
     VOLUME_SPIKE_THRESHOLD: Decimal = Decimal(os.getenv("VOLUME_SPIKE_THRESHOLD", "2.0"))  # 2x average volume
     VOLUME_SPIKE_LOOKBACK: int = int(os.getenv("VOLUME_SPIKE_LOOKBACK", "20"))  # Periods to look back for average
     
-    # Scanner Configuration
-    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "30"))
-    MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "10000"))  # Minimum 24h volume - reduced for perpetuals
-    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "100"))
+    # Scanner Configuration - VST-ONLY MODE
+    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "15"))  # Faster scanning for single asset
+    MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "1000"))  # Lower threshold for VST
+    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1"))  # Only VST
     
     # Timeframes Configuration
     ANALYSIS_TIMEFRAMES: List[str] = os.getenv("ANALYSIS_TIMEFRAMES", "2h,4h").split(",")

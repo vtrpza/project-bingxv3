@@ -94,9 +94,10 @@ class Settings:
         if not cls.BINGX_SECRET_KEY:
             errors.append("BINGX_SECRET_KEY environment variable is required")
         
-        # Database configuration
-        if not cls.DATABASE_URL and not cls.DB_PASSWORD:
-            errors.append("Either DATABASE_URL or DB_PASSWORD must be provided")
+        # Database configuration - Allow SQLite fallback for easy deployment
+        # DATABASE_URL or DB_PASSWORD required only in production
+        if cls.is_production() and not cls.DATABASE_URL and not cls.DB_PASSWORD:
+            errors.append("DATABASE_URL must be provided in production environment")
         
         # Validate numeric ranges
         if cls.DB_POOL_SIZE < 1:
