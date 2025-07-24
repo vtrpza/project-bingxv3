@@ -4394,3 +4394,444 @@ NameError: name 'offset' is not defined
 2025-07-24 14:12:49,867 - performance.performance - INFO - Operation timing: fetch_ohlcv
 2025-07-24 14:12:49,877 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
 2025-07-24 14:12:49,878 - api.web_api - INFO - Fetched 25 assets (total: 35, page: 1/2)
+2025-07-24 14:12:51,044 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:51,500 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:52,865 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:53,191 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:54,514 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:54,827 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:56,145 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:56,451 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:57,775 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:58,083 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:59,405 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:12:59,716 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:12:59,725 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:12:59,726 - api.web_api - INFO - Fetched 25 assets (total: 39, page: 1/2)
+2025-07-24 14:13:01,041 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:01,347 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:02,666 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:02,990 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:04,307 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:04,625 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:05,977 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:06,292 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:07,846 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:08,152 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:09,487 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:09,805 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:09,859 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:09,861 - api.web_api - INFO - Fetched 25 assets (total: 43, page: 1/2)
+2025-07-24 14:13:11,143 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:11,464 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:12,806 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:13,120 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:14,443 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:14,781 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:16,107 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:16,495 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:17,833 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:18,145 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:19,465 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:19,783 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:20,186 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:20,188 - api.web_api - INFO - Fetched 25 assets (total: 47, page: 1/2)
+2025-07-24 14:13:20,972 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:21,406 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:22,752 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:23,060 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:24,453 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:24,766 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:26,113 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:26,422 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:27,777 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:28,156 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:29,473 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:29,789 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:29,800 - scanner.initial_scanner - INFO - Progress: 75/1516 assets processed (39 valid, 36 invalid)
+2025-07-24 14:13:30,203 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:30,205 - api.web_api - INFO - Fetched 25 assets (total: 51, page: 1/3)
+2025-07-24 14:13:31,133 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:31,455 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:32,782 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:33,095 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:34,416 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:34,724 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:36,045 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:36,365 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:37,715 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:38,024 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:39,339 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:39,688 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:39,695 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:39,697 - api.web_api - INFO - Fetched 25 assets (total: 55, page: 1/3)
+2025-07-24 14:13:41,005 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:41,311 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:41,319 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:41,321 - api.web_api - INFO - Fetched 25 assets (total: 56, page: 1/3)
+2025-07-24 14:13:42,630 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:42,980 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:44,300 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:44,622 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:45,979 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:46,294 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:47,647 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:48,203 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:49,523 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:49,845 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:49,853 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:49,854 - api.web_api - INFO - Fetched 25 assets (total: 59, page: 1/3)
+2025-07-24 14:13:51,046 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:51,346 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:52,667 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:52,978 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:54,290 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:54,599 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:55,918 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:56,244 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:57,554 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:57,873 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:59,199 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:13:59,515 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:13:59,523 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:13:59,525 - api.web_api - INFO - Fetched 25 assets (total: 64, page: 1/3)
+2025-07-24 14:14:00,864 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:01,180 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:02,498 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:02,817 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:04,137 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:04,456 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:05,464 - api.client - ERROR - Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:14:05,464 - api.client - ERROR - Error fetching ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:14:05,465 - api.market_data - ERROR - Error fetching market summary for ALTCOIN/USDT: Failed to fetch ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:14:06,786 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:07,137 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:08,451 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:08,763 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:09,389 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:09,391 - api.web_api - INFO - Fetched 25 assets (total: 68, page: 1/3)
+2025-07-24 14:14:10,095 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:10,466 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:10,474 - scanner.initial_scanner - INFO - Progress: 100/1516 assets processed (56 valid, 44 invalid)
+2025-07-24 14:14:10,678 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:10,681 - api.web_api - INFO - Fetched 25 assets (total: 69, page: 1/3)
+2025-07-24 14:14:11,791 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:12,106 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:13,434 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:13,751 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:15,067 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:15,380 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:16,714 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:17,018 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:18,345 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:18,675 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:19,530 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:19,532 - api.web_api - INFO - Fetched 25 assets (total: 73, page: 1/3)
+2025-07-24 14:14:19,989 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:20,344 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:21,515 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:21,809 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:23,123 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:23,442 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:24,768 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:25,092 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:26,412 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:26,727 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:26,735 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:26,737 - api.web_api - INFO - Fetched 25 assets (total: 77, page: 1/4)
+2025-07-24 14:14:28,034 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:28,352 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:29,345 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:29,346 - api.web_api - INFO - Fetched 25 assets (total: 77, page: 1/4)
+2025-07-24 14:14:29,660 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:29,996 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:31,329 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:31,639 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:32,963 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:33,270 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:34,591 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:34,904 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:36,219 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:36,556 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:37,880 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:38,194 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:39,517 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:39,847 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:39,855 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:39,857 - api.web_api - INFO - Fetched 25 assets (total: 83, page: 1/4)
+2025-07-24 14:14:41,165 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:41,479 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:41,487 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:41,488 - api.web_api - INFO - Fetched 25 assets (total: 84, page: 1/4)
+2025-07-24 14:14:42,137 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:42,138 - api.web_api - INFO - Fetched 25 assets (total: 84, page: 1/4)
+2025-07-24 14:14:42,794 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:43,109 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:44,467 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:44,804 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:46,120 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:46,444 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:47,762 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:48,074 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:49,396 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:49,697 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:49,705 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:49,707 - api.web_api - INFO - Fetched 25 assets (total: 87, page: 1/4)
+2025-07-24 14:14:50,875 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:51,180 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:51,187 - scanner.initial_scanner - INFO - Progress: 125/1516 assets processed (75 valid, 50 invalid)
+2025-07-24 14:14:52,497 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:52,829 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:54,159 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:54,480 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:54,831 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:54,833 - api.web_api - INFO - Fetched 25 assets (total: 89, page: 1/4)
+2025-07-24 14:14:55,806 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:56,100 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:57,417 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:57,734 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:59,053 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:14:59,372 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:14:59,379 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:14:59,381 - api.web_api - INFO - Fetched 25 assets (total: 91, page: 1/4)
+2025-07-24 14:15:00,705 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:01,028 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:02,345 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:02,650 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:03,969 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:04,283 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:05,592 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:05,938 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:07,262 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:07,582 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:08,899 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:09,221 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:10,556 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:10,897 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:11,231 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:11,232 - api.web_api - INFO - Fetched 25 assets (total: 96, page: 1/4)
+2025-07-24 14:15:12,224 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:12,524 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:13,836 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:14,144 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:15,522 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:15,823 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:15,824 - api.market_data - ERROR - Error analyzing volume for ASP/USDT: Insufficient data for volume analysis: 8 < 24
+2025-07-24 14:15:17,146 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:17,478 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:18,836 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:19,237 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:20,448 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:20,877 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:21,421 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:21,424 - api.web_api - INFO - Fetched 25 assets (total: 100, page: 1/4)
+2025-07-24 14:15:22,199 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:22,530 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:23,854 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:24,172 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:25,502 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:25,810 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:27,141 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:27,470 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:28,810 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:29,167 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:30,487 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:30,813 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:30,830 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:30,831 - api.web_api - INFO - Fetched 25 assets (total: 103, page: 1/5)
+2025-07-24 14:15:32,138 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:32,445 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:32,475 - scanner.initial_scanner - INFO - Progress: 150/1516 assets processed (89 valid, 61 invalid)
+2025-07-24 14:15:33,778 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:34,086 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:35,414 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:35,733 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:37,076 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:37,396 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:38,766 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:39,101 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:40,476 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:40,805 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:40,831 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:40,833 - api.web_api - INFO - Fetched 25 assets (total: 108, page: 1/5)
+2025-07-24 14:15:40,934 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:40,935 - api.web_api - INFO - Fetched 25 assets (total: 108, page: 1/5)
+2025-07-24 14:15:42,145 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:42,469 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:43,811 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:44,115 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:45,474 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:45,772 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:47,110 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:47,423 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:48,737 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:49,062 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:50,255 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:50,637 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:50,663 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:50,665 - api.web_api - INFO - Fetched 25 assets (total: 113, page: 1/5)
+2025-07-24 14:15:51,960 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:52,321 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:53,367 - api.client - ERROR - Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 14:15:53,367 - api.client - ERROR - Error fetching ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 14:15:53,367 - api.market_data - ERROR - Error fetching market summary for AVAAI/USDT: Failed to fetch ticker for AVAAI/USDT: Exchange error: bingx does not have market symbol AVAAI/USDT
+2025-07-24 14:15:54,707 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:55,017 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:56,387 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:56,707 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:56,751 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:15:56,753 - api.web_api - INFO - Fetched 25 assets (total: 116, page: 1/5)
+2025-07-24 14:15:58,057 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:15:58,376 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:15:59,707 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:00,028 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:00,306 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:00,309 - api.web_api - INFO - Fetched 25 assets (total: 118, page: 1/5)
+2025-07-24 14:16:00,400 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:00,402 - api.web_api - INFO - Fetched 25 assets (total: 118, page: 1/5)
+2025-07-24 14:16:01,363 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:01,664 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:02,706 - api.client - ERROR - Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 14:16:02,706 - api.client - ERROR - Error fetching ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 14:16:02,706 - api.market_data - ERROR - Error fetching market summary for AXL/USDT: Failed to fetch ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-24 14:16:04,081 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:04,391 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:05,711 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:06,064 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:06,083 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:06,085 - api.web_api - INFO - Fetched 25 assets (total: 120, page: 1/5)
+2025-07-24 14:16:07,384 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:07,698 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:08,529 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:08,532 - api.web_api - INFO - Fetched 25 assets (total: 121, page: 1/5)
+2025-07-24 14:16:09,046 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:09,359 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:09,916 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:09,918 - api.web_api - INFO - Fetched 25 assets (total: 122, page: 1/5)
+2025-07-24 14:16:10,483 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:10,485 - api.web_api - INFO - Fetched 25 assets (total: 123, page: 1/5)
+2025-07-24 14:16:11,078 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:11,080 - api.web_api - INFO - Fetched 25 assets (total: 123, page: 1/5)
+2025-07-24 14:16:11,442 - scanner.initial_scanner - INFO - Progress: 175/1516 assets processed (104 valid, 71 invalid)
+2025-07-24 14:16:12,759 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:13,090 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:14,494 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:14,803 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:16,136 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:16,447 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:17,185 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:17,186 - api.web_api - INFO - Fetched 25 assets (total: 125, page: 1/5)
+2025-07-24 14:16:17,788 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:18,153 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:19,493 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:19,801 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:20,474 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:20,476 - api.web_api - INFO - Fetched 25 assets (total: 126, page: 1/6)
+2025-07-24 14:16:21,016 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:21,320 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:22,638 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:22,951 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:24,292 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:24,629 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:25,971 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:26,275 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:27,633 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:27,971 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:29,342 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:29,672 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:31,053 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:31,452 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:32,000 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:32,003 - api.web_api - INFO - Fetched 25 assets (total: 131, page: 1/6)
+2025-07-24 14:16:32,804 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:33,120 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:34,614 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:34,958 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:36,343 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:36,767 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:38,234 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:38,587 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:40,027 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:40,389 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:41,122 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:41,124 - api.web_api - INFO - Fetched 25 assets (total: 135, page: 1/6)
+2025-07-24 14:16:41,750 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:42,093 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:42,134 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:42,138 - api.web_api - INFO - Fetched 25 assets (total: 135, page: 1/6)
+2025-07-24 14:16:43,453 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:43,834 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:45,210 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:45,548 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:46,983 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:47,320 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:48,701 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:49,077 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:50,726 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:51,062 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:52,389 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:52,699 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:52,847 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:16:52,850 - api.web_api - INFO - Fetched 25 assets (total: 140, page: 1/6)
+2025-07-24 14:16:54,062 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:54,373 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:54,424 - scanner.initial_scanner - INFO - Progress: 200/1516 assets processed (121 valid, 79 invalid)
+2025-07-24 14:16:55,810 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:56,525 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:58,392 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:16:58,751 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:16:59,790 - api.client - ERROR - Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 14:16:59,790 - api.client - ERROR - Error fetching ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 14:16:59,790 - api.market_data - ERROR - Error fetching market summary for BB/USDT: Failed to fetch ticker for BB/USDT: Exchange error: bingx does not have market symbol BB/USDT
+2025-07-24 14:17:01,144 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:17:01,572 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:17:02,956 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:17:03,379 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:17:03,857 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:17:03,859 - api.web_api - INFO - Fetched 25 assets (total: 145, page: 1/6)
+2025-07-24 14:17:04,729 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:17:05,056 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:17:06,445 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:17:06,758 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:17:08,151 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:17:08,470 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:17:09,840 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753377429399}
+2025-07-24 14:17:09,840 - api.client - ERROR - Error fetching ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753377429399}
+2025-07-24 14:17:09,840 - api.market_data - ERROR - Error fetching market summary for BEAM/USDT: Failed to fetch ticker for BEAM/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753377429399}
+2025-07-24 14:17:10,470 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:17:10,470 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:17:10,571 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:17:11,551 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:17:11,551 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:17:11,564 - api.web_api - INFO - Starting up with 1.51s delay to prevent deadlocks...
+2025-07-24 14:17:13,074 - api.web_api - INFO - Initializing database...
+2025-07-24 14:17:13,074 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:17:13,074 - database.connection - INFO - Using SQLite database
+2025-07-24 14:17:13,083 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:17:13,083 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:17:13,083 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:17:13,083 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:17:13,083 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:17:13,307 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:17:13,308 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:17:13,733 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:17:13,734 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:17:13,734 - api.web_api - INFO - Background tasks started
+2025-07-24 14:17:13,736 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:17:13,851 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:17:16,140 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:17:16,141 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:17:16,141 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:17:24,019 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:17:24,020 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:17:31,102 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:17:31,104 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:17:34,162 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:17:34,163 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:17:37,548 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:17:37,548 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:17:37,648 - api.web_api - INFO - FastAPI server shutting down

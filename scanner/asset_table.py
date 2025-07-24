@@ -15,6 +15,8 @@ from scanner.validator import get_asset_validator
 from config.trading_config import TradingConfig
 from utils.logger import get_logger
 from utils.formatters import PriceFormatter
+from utils.rate_limiter import get_rate_limiter
+from utils.smart_cache import get_smart_cache, cached
 from database.repository import AssetRepository
 
 logger = get_logger(__name__)
@@ -122,7 +124,11 @@ class AssetValidationTable:
         self.asset_repo = AssetRepository()
         self.config = TradingConfig()
         
-        # Cache for performance
+        # Performance optimizations
+        self.rate_limiter = get_rate_limiter()
+        self.cache = get_smart_cache()
+        
+        # Legacy cache for backward compatibility
         self._market_data_cache = {}
         self._indicators_cache = {}
         
@@ -174,10 +180,13 @@ class AssetValidationTable:
             )
     
     async def _collect_market_data(self, metrics: AssetMetrics) -> None:
-        """Collect comprehensive market data."""
+        """Collect comprehensive market data with caching."""
         try:
-            # Get market summary
-            market_summary = await self.market_api.get_market_summary(metrics.symbol)
+            # Use cache to avoid redundant API calls
+            market_summary = await self.cache.get_or_fetch(
+                'market_summary', metrics.symbol,
+                lambda: self._fetch_market_summary_with_rate_limit(metrics.symbol)
+            )
             
             # Basic price data
             metrics.current_price = market_summary.get('price')
@@ -197,8 +206,12 @@ class AssetValidationTable:
             # Volatility
             metrics.volatility_24h = market_summary.get('volatility_24h')
             
-            # Calculate volume change if available
-            volume_analysis = await self.market_api.get_volume_analysis(metrics.symbol, '1h', 24)
+            # Calculate volume change if available (cached)
+            volume_analysis = await self.cache.get_or_fetch(
+                'volume_analysis', f"{metrics.symbol}_1h_24",
+                lambda: self._fetch_volume_analysis_with_rate_limit(metrics.symbol, '1h', 24)
+            )
+            
             if volume_analysis:
                 avg_volume = Decimal(str(volume_analysis.get('average_volume', 0)))
                 current_volume = metrics.volume_24h_quote or Decimal('0')
@@ -228,23 +241,41 @@ class AssetValidationTable:
             metrics.validation_reasons.append(f"Market data error: {str(e)}")
     
     async def _collect_technical_indicators(self, metrics: AssetMetrics) -> None:
-        """Collect technical indicators for all timeframes."""
+        """Collect technical indicators for all timeframes with caching and parallel processing."""
         try:
             timeframes = ['spot', '2h', '4h']
             
+            # Parallel fetch of candle data with caching
+            candle_tasks = []
             for timeframe in timeframes:
+                if timeframe == 'spot':
+                    task = self.cache.get_or_fetch(
+                        'candles', f"{metrics.symbol}_1m_50",
+                        lambda tf=timeframe: self._fetch_candles_with_rate_limit(metrics.symbol, '1m', 50)
+                    )
+                else:
+                    task = self.cache.get_or_fetch(
+                        'candles', f"{metrics.symbol}_{timeframe}_50",
+                        lambda tf=timeframe: self._fetch_candles_with_rate_limit(metrics.symbol, timeframe, 50)
+                    )
+                candle_tasks.append(task)
+            
+            # Execute candle fetching in parallel
+            candle_results = await asyncio.gather(*candle_tasks, return_exceptions=True)
+            
+            # Process results for each timeframe
+            for i, timeframe in enumerate(timeframes):
                 try:
-                    # Get candle data
-                    if timeframe == 'spot':
-                        candles = await self.market_api.get_candles(metrics.symbol, '1m', 50)
-                    else:
-                        candles = await self.market_api.get_candles(metrics.symbol, timeframe, 50)
-                    
-                    if not candles:
+                    candles = candle_results[i]
+                    if isinstance(candles, Exception) or not candles:
+                        logger.warning(f"Failed to get candles for {metrics.symbol} {timeframe}: {candles if isinstance(candles, Exception) else 'No data'}")
                         continue
                     
-                    # Calculate indicators
-                    indicators = self.technical_indicators.calculate_all_indicators(candles)
+                    # Calculate indicators (can be cached separately)
+                    indicators = await self.cache.get_or_fetch(
+                        'indicators', f"{metrics.symbol}_{timeframe}",
+                        lambda: self.technical_indicators.calculate_all_indicators(candles)
+                    )
                     
                     # Store by timeframe
                     if timeframe == 'spot':
@@ -545,14 +576,29 @@ class AssetValidationTable:
         except Exception:
             return Decimal('0')
     
+    async def _fetch_market_summary_with_rate_limit(self, symbol: str) -> Dict[str, Any]:
+        """Fetch market summary with rate limiting."""
+        await self.rate_limiter.acquire('market_data')
+        return await self.market_api.get_market_summary(symbol)
+    
+    async def _fetch_volume_analysis_with_rate_limit(self, symbol: str, timeframe: str, periods: int) -> Dict[str, Any]:
+        """Fetch volume analysis with rate limiting."""
+        await self.rate_limiter.acquire('market_data')
+        return await self.market_api.get_volume_analysis(symbol, timeframe, periods)
+    
+    async def _fetch_candles_with_rate_limit(self, symbol: str, timeframe: str, limit: int) -> List[Dict[str, Any]]:
+        """Fetch candles with rate limiting."""
+        await self.rate_limiter.acquire('market_data')
+        return await self.market_api.get_candles(symbol, timeframe, limit)
+    
     async def generate_validation_table(self, symbols: List[str], 
-                                      max_concurrent: int = 10) -> List[AssetMetrics]:
-        """Generate comprehensive validation table for multiple assets."""
-        logger.info(f"Generating validation table for {len(symbols)} assets")
+                                      max_concurrent: int = 20) -> List[AssetMetrics]:
+        """Generate comprehensive validation table for multiple assets with optimized performance."""
+        logger.info(f"Generating validation table for {len(symbols)} assets (optimized)")
         
         results = []
         
-        # Process in batches for API rate limiting
+        # Optimized batch processing - larger batches, smarter rate limiting
         for i in range(0, len(symbols), max_concurrent):
             batch = symbols[i:i + max_concurrent]
             
@@ -579,9 +625,20 @@ class AssetValidationTable:
                 
                 logger.info(f"Completed batch {i//max_concurrent + 1}: {len(batch)} assets")
                 
-                # Rate limiting delay
+                # Intelligent rate limiting delay based on batch size and rate limiter stats
                 if i + max_concurrent < len(symbols):
-                    await asyncio.sleep(1)
+                    stats = self.rate_limiter.get_stats()
+                    market_utilization = stats.get('market_data', {}).get('utilization_percent', 0)
+                    
+                    # Adaptive delay: less delay if utilization is low
+                    if market_utilization < 60:
+                        delay = 0.2  # Aggressive - use more of available capacity
+                    elif market_utilization < 80:
+                        delay = 0.5  # Moderate delay
+                    else:
+                        delay = 1.0  # Conservative delay
+                    
+                    await asyncio.sleep(delay)
                     
             except Exception as e:
                 logger.error(f"Error processing batch starting at index {i}: {e}")
@@ -600,7 +657,14 @@ class AssetValidationTable:
         # Sort results by validation score (highest first)
         results.sort(key=lambda x: x.validation_score or Decimal('0'), reverse=True)
         
+        # Log performance stats
+        cache_stats = self.cache.get_stats()
+        rate_stats = self.rate_limiter.get_stats()
+        
         logger.info(f"Validation table generated: {len(results)} assets processed")
+        logger.info(f"Cache performance: {cache_stats['hit_rate_percent']}% hit rate, {cache_stats['hits']} hits, {cache_stats['misses']} misses")
+        logger.info(f"Rate limiting: Market data {rate_stats.get('market_data', {}).get('utilization_percent', 0):.1f}% utilization")
+        
         return results
     
     def format_table_for_display(self, metrics_list: List[AssetMetrics]) -> str:

@@ -15,6 +15,8 @@ from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger
 from utils.formatters import DataFormatter
 from utils.datetime_utils import utc_now, safe_datetime_subtract
+from utils.rate_limiter import get_rate_limiter
+from utils.smart_cache import get_smart_cache
 
 logger = get_logger(__name__)
 
@@ -87,6 +89,8 @@ class InitialScanner:
         self.validator = get_asset_validator()
         self.asset_repo = AssetRepository()
         self.client = get_client()
+        self.rate_limiter = get_rate_limiter()
+        self.cache = get_smart_cache()
         
     async def scan_all_assets(self, force_refresh: bool = False, 
                             max_assets: Optional[int] = None) -> InitialScanResult:
@@ -190,14 +194,14 @@ class InitialScanner:
         logger.info(f"Starting incremental validation of {len(symbols)} assets...")
         
         try:
-            # Use incremental validation with immediate database saving
-            return await self._validate_and_save_incremental(symbols)
+            # Use bulk validation with optimized database operations
+            return await self._validate_and_save_bulk(symbols)
         except Exception as e:
             logger.error(f"Error during asset validation: {e}")
             return {}
     
-    async def _validate_and_save_incremental(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Validate assets incrementally, saving each result to database immediately."""
+    async def _validate_and_save_bulk(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Validate assets with bulk database operations for maximum performance."""
         import asyncio
         from config.trading_config import TradingConfig
         
@@ -206,22 +210,26 @@ class InitialScanner:
         other_symbols = [s for s in symbols if s not in self.validator.criteria.PRIORITY_SYMBOLS]
         sorted_symbols = priority_symbols + other_symbols
         
-        logger.info(f"Processing {len(sorted_symbols)} assets incrementally ({len(priority_symbols)} priority)")
+        logger.info(f"Processing {len(sorted_symbols)} assets with bulk operations ({len(priority_symbols)} priority)")
         
-        # Process in batches to avoid overwhelming the API, but save each asset immediately
+        # Optimized batch processing
         results = {}
-        max_concurrent = min(10, max(1, TradingConfig.MAX_ASSETS_TO_SCAN // 10))
+        max_concurrent = min(25, max(15, TradingConfig.MAX_ASSETS_TO_SCAN // 20))  # Larger batches
         processed_count = 0
+        
+        # Collect all validation results first, then save in bulk
+        all_validation_results = []
         
         for i in range(0, len(sorted_symbols), max_concurrent):
             batch = sorted_symbols[i:i + max_concurrent]
             
             try:
                 # Create tasks for concurrent validation
-                tasks = [self._validate_and_save_single_asset(symbol) for symbol in batch]
+                tasks = [self._validate_single_asset_optimized(symbol) for symbol in batch]
                 batch_results = await asyncio.gather(*tasks, return_exceptions=True)
                 
-                # Process results and update counters
+                # Process results
+                batch_validation_data = []
                 for j, result in enumerate(batch_results):
                     symbol = batch[j] 
                     processed_count += 1
@@ -237,46 +245,69 @@ class InitialScanner:
                             'validation_duration_seconds': 0
                         }
                         results[symbol] = validation_result
-                        
-                        # Try to save the failed result to database
-                        try:
-                            await self._save_validation_result_to_db(symbol, validation_result)
-                        except Exception as save_error:
-                            logger.error(f"Failed to save error result for {symbol}: {save_error}")
+                        batch_validation_data.append((symbol, validation_result))
                     else:
                         results[symbol] = result
+                        batch_validation_data.append((symbol, result))
                 
-                # Progress logging every 25 assets
-                if processed_count % 25 == 0 or processed_count == len(sorted_symbols):
+                # Bulk save this batch
+                if batch_validation_data:
+                    await self._bulk_save_validation_results(batch_validation_data)
+                
+                # Progress logging every 50 assets
+                if processed_count % 50 == 0 or processed_count == len(sorted_symbols):
                     valid_count = sum(1 for r in results.values() if r.get('is_valid', False))
                     logger.info(f"Progress: {processed_count}/{len(sorted_symbols)} assets processed "
                                f"({valid_count} valid, {processed_count - valid_count} invalid)")
                 
-                # Small delay between batches to be respectful to API
+                # Intelligent delay based on rate limiter utilization
                 if i + max_concurrent < len(sorted_symbols):
-                    await asyncio.sleep(1)
+                    stats = self.rate_limiter.get_stats()
+                    market_utilization = stats.get('market_data', {}).get('utilization_percent', 0)
+                    
+                    if market_utilization < 50:
+                        delay = 0.1  # Very aggressive
+                    elif market_utilization < 70:
+                        delay = 0.3  # Moderate
+                    else:
+                        delay = 0.8  # Conservative
+                    
+                    await asyncio.sleep(delay)
                     
             except Exception as e:
                 logger.error(f"Error processing batch {i//max_concurrent + 1}: {e}")
                 # Continue with next batch even if this one fails
                 continue
         
-        logger.info(f"Incremental validation completed: {len(results)} assets processed")
+        # Log performance statistics
+        cache_stats = self.cache.get_stats()
+        rate_stats = self.rate_limiter.get_stats()
+        
+        logger.info(f"Bulk validation completed: {len(results)} assets processed")
+        logger.info(f"Cache performance: {cache_stats['hit_rate_percent']}% hit rate")
+        logger.info(f"Rate limiting: {rate_stats.get('market_data', {}).get('utilization_percent', 0):.1f}% utilization")
+        
         return results
     
-    async def _validate_and_save_single_asset(self, symbol: str) -> Dict[str, Any]:
-        """Validate a single asset and immediately save result to database."""
+    async def _validate_single_asset_optimized(self, symbol: str) -> Dict[str, Any]:
+        """Validate a single asset with caching and optimized API calls."""
         try:
-            # Validate the asset using existing validator
+            # Check cache first
+            cached_result = self.cache.get('validation', symbol)
+            if cached_result:
+                logger.debug(f"Using cached validation for {symbol}")
+                return cached_result
+            
+            # Validate the asset using existing validator with rate limiting
             validation_result = await self.validator.validate_asset(symbol)
             
-            # Save result to database immediately
-            await self._save_validation_result_to_db(symbol, validation_result)
+            # Cache the result for future use
+            self.cache.set('validation', symbol, validation_result)
             
             return validation_result
             
         except Exception as e:
-            logger.error(f"Error in validate_and_save for {symbol}: {e}")
+            logger.error(f"Error in optimized validation for {symbol}: {e}")
             # Return a failed validation result
             return {
                 'symbol': symbol,
@@ -286,8 +317,101 @@ class InitialScanner:
                 'validation_duration_seconds': 0
             }
     
+    async def _bulk_save_validation_results(self, validation_data_list: List[Tuple[str, Dict[str, Any]]]):
+        """Save multiple validation results in a single database transaction."""
+        if not validation_data_list:
+            return
+            
+        try:
+            from utils.converters import convert_decimals
+            
+            # Prepare all data for bulk insert/update
+            bulk_update_data = []
+            bulk_insert_data = []
+            
+            for symbol, validation_result in validation_data_list:
+                is_valid = validation_result.get('is_valid', False)
+                validation_data = convert_decimals(validation_result.get('data', {}))
+                
+                # Enhanced validation data with metadata
+                db_validation_data = {
+                    'validation_timestamp': validation_result.get('validation_timestamp'),
+                    'validation_duration': validation_result.get('validation_duration_seconds', 0),
+                    'validation_checks': validation_data.get('validation_checks', {}),
+                    'market_summary': validation_data.get('market_summary', {}),
+                    'volume_analysis': validation_data.get('volume_analysis', {}),
+                    'priority': symbol in self.validator.criteria.PRIORITY_SYMBOLS,
+                    'is_valid': is_valid,
+                    'reason': validation_result.get('reason') if not is_valid else None
+                }
+                
+                # Prepare for bulk operations
+                bulk_update_data.append({
+                    'symbol': symbol,
+                    'is_valid': is_valid,
+                    'validation_data': db_validation_data
+                })
+                
+                # Prepare asset creation data if needed
+                if '/' in symbol:
+                    try:
+                        base_currency, quote_currency = symbol.split('/')
+                        market_summary = validation_data.get('market_summary', {})
+                        min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
+                        if isinstance(min_order_size, (int, float, str)):
+                            min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
+                        
+                        bulk_insert_data.append({
+                            'symbol': symbol,
+                            'base_currency': base_currency,
+                            'quote_currency': quote_currency,
+                            'is_valid': is_valid,
+                            'min_order_size': min_order_size,
+                            'last_validation': utc_now(),
+                            'validation_data': db_validation_data
+                        })
+                    except Exception as prep_error:
+                        logger.warning(f"Could not prepare asset data for {symbol}: {prep_error}")
+            
+            # Execute bulk operations in a single transaction
+            with get_session() as session:
+                # Bulk update validation statuses
+                for update_data in bulk_update_data:
+                    try:
+                        self.asset_repo.update_validation_status(
+                            session,
+                            symbol=update_data['symbol'],
+                            is_valid=update_data['is_valid'],
+                            validation_data=update_data['validation_data']
+                        )
+                    except Exception as update_error:
+                        logger.warning(f"Could not update validation for {update_data['symbol']}: {update_error}")
+                
+                # Bulk create assets that don't exist
+                for insert_data in bulk_insert_data:
+                    try:
+                        existing = self.asset_repo.get_by_symbol(session, insert_data['symbol'])
+                        if not existing:
+                            self.asset_repo.create(session, **insert_data)
+                    except Exception as insert_error:
+                        logger.warning(f"Could not create asset {insert_data['symbol']}: {insert_error}")
+                
+                # Commit all changes in one transaction
+                session.commit()
+                
+            logger.debug(f"Bulk saved {len(validation_data_list)} validation results")
+            
+        except Exception as e:
+            logger.error(f"Failed to bulk save validation results: {e}")
+            # Fallback to individual saves if bulk fails
+            for symbol, validation_result in validation_data_list:
+                try:
+                    await self._save_validation_result_to_db(symbol, validation_result)
+                except Exception as fallback_error:
+                    logger.error(f"Fallback save failed for {symbol}: {fallback_error}")
+    
     async def _save_validation_result_to_db(self, symbol: str, validation_result: Dict[str, Any]):
-        """Save a single validation result to database immediately."""
+        """Save a single validation result to database (fallback method)."""
         try:
             # Import convert_decimals utility function
             from utils.converters import convert_decimals

@@ -21,6 +21,8 @@ from database.repository import AssetRepository, IndicatorRepository, SignalRepo
 from api.client import get_client, initialize_client
 from config.trading_config import TradingConfig
 from utils.logger import get_logger
+from utils.rate_limiter import get_rate_limiter
+from utils.smart_cache import get_smart_cache
 
 logger = get_logger(__name__)
 
@@ -35,6 +37,8 @@ class ScannerWorker:
         self.asset_repo = AssetRepository()
         self.indicator_repo = IndicatorRepository()
         self.signal_repo = SignalRepository()
+        self.rate_limiter = get_rate_limiter()
+        self.cache = get_smart_cache()
         
     async def initialize(self):
         """Initialize the scanner worker."""
@@ -57,9 +61,9 @@ class ScannerWorker:
             return False
     
     async def scan_cycle(self):
-        """Execute one complete scan cycle."""
+        """Execute one complete scan cycle with optimized concurrent processing."""
         try:
-            logger.info("🔄 Starting scan cycle...")
+            logger.info("🔄 Starting optimized scan cycle...")
             
             with get_session() as session:
                 # Get valid assets
@@ -68,51 +72,116 @@ class ScannerWorker:
                     logger.warning("No valid assets found for scanning")
                     return
                 
-                logger.info(f"📊 Scanning {len(valid_assets)} valid assets...")
+                logger.info(f"📊 Scanning {len(valid_assets)} valid assets concurrently...")
                 
+                # Process assets in concurrent batches
+                max_concurrent = min(15, len(valid_assets))  # Optimize batch size
                 signals_generated = 0
                 
-                for asset in valid_assets:
-                    try:
-                        # Get current market data
-                        client = get_client()
-                        ticker = await client.fetch_ticker(asset.symbol)
-                        
-                        # Get historical data for indicators
-                        ohlcv_2h = await client.fetch_ohlcv(asset.symbol, '2h', 100)
-                        ohlcv_4h = await client.fetch_ohlcv(asset.symbol, '4h', 100)
-                        
-                        if not ohlcv_2h or not ohlcv_4h:
-                            continue
-                            
-                        # Calculate indicators
-                        indicators_2h = self.indicator_calc.calculate_all(ohlcv_2h)
-                        indicators_4h = self.indicator_calc.calculate_all(ohlcv_4h)
-                        
-                        # Store indicators
-                        await self._store_indicators(session, asset, indicators_2h, '2h')
-                        await self._store_indicators(session, asset, indicators_4h, '4h')
-                        
-                        # Check for trading signals
-                        signal = await self._check_trading_signals(
-                            asset, ticker, indicators_2h, indicators_4h
-                        )
-                        
-                        if signal:
-                            # Store signal
-                            await self._store_signal(session, asset, signal)
+                for i in range(0, len(valid_assets), max_concurrent):
+                    batch = valid_assets[i:i + max_concurrent]
+                    
+                    # Process batch concurrently
+                    batch_tasks = [
+                        self._process_single_asset_optimized(asset, session)
+                        for asset in batch
+                    ]
+                    
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    
+                    # Process results
+                    for j, result in enumerate(batch_results):
+                        asset = batch[j]
+                        if isinstance(result, Exception):
+                            logger.error(f"Error scanning {asset.symbol}: {result}")
+                        elif result:
                             signals_generated += 1
-                            logger.info(f"🎯 Signal generated for {asset.symbol}: {signal['type']}")
-                            
-                    except Exception as e:
-                        logger.error(f"Error scanning {asset.symbol}: {e}")
-                        continue
+                            logger.info(f"🎯 Signal generated for {asset.symbol}: {result['type']}")
+                    
+                    # Intelligent delay between batches
+                    if i + max_concurrent < len(valid_assets):
+                        stats = self.rate_limiter.get_stats()
+                        utilization = stats.get('market_data', {}).get('utilization_percent', 0)
+                        delay = 0.1 if utilization < 60 else 0.3
+                        await asyncio.sleep(delay)
                 
                 session.commit()
-                logger.info(f"✅ Scan cycle completed - {signals_generated} signals generated")
+                
+                # Log performance stats
+                cache_stats = self.cache.get_stats()
+                rate_stats = self.rate_limiter.get_stats()
+                
+                logger.info(f"✅ Optimized scan cycle completed - {signals_generated} signals generated")
+                logger.info(f"Cache hit rate: {cache_stats['hit_rate_percent']}%")
+                logger.info(f"Rate limiter utilization: {rate_stats.get('market_data', {}).get('utilization_percent', 0):.1f}%")
                 
         except Exception as e:
             logger.error(f"❌ Error in scan cycle: {e}")
+    
+    async def _process_single_asset_optimized(self, asset, session):
+        """Process a single asset with caching and rate limiting."""
+        try:
+            client = get_client()
+            
+            # Use cached data when possible
+            ticker = await self.cache.get_or_fetch(
+                'ticker', asset.symbol,
+                lambda: self._fetch_ticker_with_rate_limit(client, asset.symbol)
+            )
+            
+            # Get OHLCV data with caching
+            ohlcv_2h = await self.cache.get_or_fetch(
+                'candles', f"{asset.symbol}_2h_100",
+                lambda: self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '2h', 100)
+            )
+            
+            ohlcv_4h = await self.cache.get_or_fetch(
+                'candles', f"{asset.symbol}_4h_100", 
+                lambda: self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '4h', 100)
+            )
+            
+            if not ohlcv_2h or not ohlcv_4h:
+                return None
+            
+            # Calculate indicators with caching
+            indicators_2h = await self.cache.get_or_fetch(
+                'indicators', f"{asset.symbol}_2h",
+                lambda: self.indicator_calc.calculate_all(ohlcv_2h)
+            )
+            
+            indicators_4h = await self.cache.get_or_fetch(
+                'indicators', f"{asset.symbol}_4h",
+                lambda: self.indicator_calc.calculate_all(ohlcv_4h)
+            )
+            
+            # Store indicators
+            await self._store_indicators(session, asset, indicators_2h, '2h')
+            await self._store_indicators(session, asset, indicators_4h, '4h')
+            
+            # Check for trading signals
+            signal = await self._check_trading_signals(
+                asset, ticker, indicators_2h, indicators_4h
+            )
+            
+            if signal:
+                await self._store_signal(session, asset, signal)
+                return signal
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error in optimized processing for {asset.symbol}: {e}")
+            return None
+    
+    async def _fetch_ticker_with_rate_limit(self, client, symbol):
+        """Fetch ticker with rate limiting."""
+        await self.rate_limiter.acquire('market_data')
+        return await client.fetch_ticker(symbol)
+    
+    async def _fetch_ohlcv_with_rate_limit(self, client, symbol, timeframe, limit):
+        """Fetch OHLCV data with rate limiting."""
+        await self.rate_limiter.acquire('market_data')
+        return await client.fetch_ohlcv(symbol, timeframe, limit)
     
     async def _store_indicators(self, session, asset, indicators, timeframe):
         """Store calculated indicators in database."""
