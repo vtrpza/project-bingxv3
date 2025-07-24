@@ -335,8 +335,17 @@ async def get_asset_validation_table(
         
         logger.info(f"Asset validation table requested - page: {page}, per_page: {per_page}, sort: {sort_by} {sort_direction}")
         
-        from database.connection import get_session
+        from database.connection import get_session, init_database
         from utils.asset_info import asset_info_service
+        
+        # Ensure database is initialized
+        try:
+            init_database()
+            logger.debug("Database initialization successful or already initialized")
+        except Exception as init_error:
+            logger.warning(f"Database initialization issue: {init_error}")
+            # Try to continue - some functions may still work without full initialization
+        
         asset_repo = AssetRepository()
         
         with get_session() as db:
@@ -1212,6 +1221,13 @@ async def get_trading_live_data(
     try:
         logger.info(f"Trading live data requested - symbols: {symbols}, limit: {limit}")
         
+        # Ensure database is initialized (in case position tracking is needed)
+        from database.connection import init_database
+        try:
+            init_database()
+        except Exception as init_error:
+            logger.debug(f"Database initialization: {init_error}")
+        
         # Initialize BingX client for real-time data
         from api.client import get_client
         try:
@@ -1237,6 +1253,43 @@ async def get_trading_live_data(
             ][:limit]
             logger.info(f"Using default major trading pairs: {symbol_list}")
         
+        # Helper function to safely get candle color
+        def get_candle_color(candles):
+            """Safely extract candle color from OHLCV data"""
+            try:
+                if not candles or not isinstance(candles, list) or len(candles) == 0:
+                    return "🔴"
+                
+                latest_candle = candles[-1]
+                if not isinstance(latest_candle, (list, tuple)) or len(latest_candle) < 5:
+                    return "🔴"
+                
+                # OHLCV format: [timestamp, open, high, low, close, volume]
+                open_price = float(latest_candle[1])
+                close_price = float(latest_candle[4])
+                return "🟢" if close_price > open_price else "🔴"
+                
+            except (IndexError, TypeError, ValueError, KeyError) as e:
+                logger.debug(f"Error getting candle color: {e}")
+                return "🔴"
+        
+        # Helper function to calculate SMA
+        def calculate_simple_sma(candles, period=9):
+            """Calculate Simple Moving Average safely"""
+            try:
+                if not candles or len(candles) < period:
+                    return None
+                closes = []
+                for candle in candles[-period:]:
+                    if isinstance(candle, (list, tuple)) and len(candle) >= 5:
+                        closes.append(float(candle[4]))  # close price
+                if len(closes) == period:
+                    return sum(closes) / len(closes)
+                return None
+            except (IndexError, ValueError, TypeError) as e:
+                logger.debug(f"Error calculating SMA: {e}")
+                return None
+        
         trading_data = []
         
         # Process each symbol with direct CCXT calls
@@ -1249,6 +1302,7 @@ async def get_trading_live_data(
                 if not ticker or not ticker.get('last'):
                     logger.warning(f"Symbol {symbol} returned empty/invalid ticker - skipping")
                     continue
+                    
                 # Extract price and volume data
                 current_price = float(ticker['last']) if ticker.get('last') else 0.0
                 volume_24h = float(ticker['quoteVolume']) if ticker.get('quoteVolume') else 0.0
@@ -1264,38 +1318,15 @@ async def get_trading_live_data(
                     candles_1h = await client.fetch_ohlcv(symbol, '1h', 21)  # For MM indicators
                     candles_2h = await client.fetch_ohlcv(symbol, '2h', 21)
                     candles_4h = await client.fetch_ohlcv(symbol, '4h', 21)
+                    logger.debug(f"Fetched candles for {symbol}: 1h={len(candles_1h)}, 2h={len(candles_2h)}, 4h={len(candles_4h)}")
                 except Exception as e:
                     logger.warning(f"Failed to fetch candle data for {symbol}: {e}")
                     # Continue with available data
                 
-                # Calculate candle colors (green/red) from OHLCV data
-                def get_candle_color(candles):
-                    if candles and len(candles) >= 1:
-                        try:
-                            latest_candle = candles[-1]
-                            if len(latest_candle) >= 5:  # [timestamp, open, high, low, close, volume]
-                                open_price = float(latest_candle[1])
-                                close_price = float(latest_candle[4])
-                                return "🟢" if close_price > open_price else "🔴"
-                        except (IndexError, TypeError, ValueError):
-                            pass
-                    return "🔴"  # Default
-                
                 candle_2h_color = get_candle_color(candles_2h)
                 candle_4h_color = get_candle_color(candles_4h)
                 
-                # Calculate basic technical indicators from candle data
-                def calculate_simple_sma(candles, period=9):
-                    """Calculate Simple Moving Average"""
-                    if not candles or len(candles) < period:
-                        return None
-                    try:
-                        closes = [float(candle[4]) for candle in candles[-period:]]
-                        return sum(closes) / len(closes)
-                    except (IndexError, ValueError, TypeError):
-                        return None
-                
-                # Calculate basic indicators
+                # Calculate basic indicators using safe function
                 sma_1h = calculate_simple_sma(candles_1h, 9)
                 sma_2h = calculate_simple_sma(candles_2h, 9)
                 sma_4h = calculate_simple_sma(candles_4h, 9)
@@ -1322,7 +1353,7 @@ async def get_trading_live_data(
                     logger.debug(f"No position data available for {symbol}: {e}")
                 
                 # Build simplified trading data using direct CCXT data
-                asset_data = {
+                symbol_data = {
                     "symbol": symbol,
                     "timestamp": utc_now().isoformat(),
                     "current_price": current_price,
@@ -1344,7 +1375,7 @@ async def get_trading_live_data(
                     "data_source": "direct_ccxt"
                 }
                 
-                trading_data.append(asset_data)
+                trading_data.append(symbol_data)
                 
             except Exception as e:
                 # Enhanced error logging with exception type and context
@@ -1369,8 +1400,8 @@ async def get_trading_live_data(
                 "endpoint_version": "2.0_direct_ccxt",
                 "data_source": "direct_bingx_api",
                 "data_type": "real_time_trading",
-                "update_interval": "15_seconds",
-                "trading_enabled": bot_status.get("trading_enabled", False)
+                "update_interval": "real_time",
+                "symbols_requested": symbol_list
             }
         }
         
