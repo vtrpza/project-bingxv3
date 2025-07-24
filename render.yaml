@@ -6,7 +6,7 @@ services:
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: python main.py
+    startCommand: python -m api.web_api
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
