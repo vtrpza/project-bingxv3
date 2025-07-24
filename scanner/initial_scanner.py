@@ -154,13 +154,26 @@ class InitialScanner:
             raise
     
     def _extract_usdt_symbols(self, markets: List[Dict[str, Any]]) -> List[str]:
-        """Extract USDT trading pair symbols from market data."""
+        """Extract USDT trading pair symbols from market data with validation."""
         symbols = []
+        
+        # Get valid symbols from the API first to filter out non-existent ones
+        try:
+            valid_symbols_set = set()
+            if hasattr(self.market_api, 'get_valid_symbols'):
+                valid_symbols_list = asyncio.run(self.market_api.get_valid_symbols())
+                valid_symbols_set = set(valid_symbols_list)
+        except Exception as e:
+            logger.warning(f"Could not fetch valid symbols list: {e}")
+            valid_symbols_set = set()
         
         for market in markets:
             try:
                 symbol = market.get('symbol')
-                if symbol and symbol.endswith('/USDT') and market.get('active', False):
+                if (symbol and 
+                    symbol.endswith('/USDT') and 
+                    market.get('active', False) and
+                    (not valid_symbols_set or symbol in valid_symbols_set)):
                     symbols.append(symbol)
             except Exception as e:
                 logger.warning(f"Error processing market data: {e}")
