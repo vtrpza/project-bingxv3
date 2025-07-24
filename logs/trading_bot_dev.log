@@ -9783,3 +9783,6 @@ AttributeError: 'AssetRepository' object has no attribute 'get_count'
 2025-07-24 06:28:34,978 - api.client - ERROR - Exchange error: bingx does not have market symbol VTHO/USDT
 2025-07-24 06:28:34,978 - api.client - ERROR - Error fetching ticker for VTHO/USDT: Exchange error: bingx does not have market symbol VTHO/USDT
 2025-07-24 06:28:34,978 - api.market_data - ERROR - Error fetching market summary for VTHO/USDT: Failed to fetch ticker for VTHO/USDT: Exchange error: bingx does not have market symbol VTHO/USDT
+2025-07-24 06:28:45,943 - api.client - ERROR - Exchange error: bingx does not have market symbol WAL/USDT
+2025-07-24 06:28:45,943 - api.client - ERROR - Error fetching ticker for WAL/USDT: Exchange error: bingx does not have market symbol WAL/USDT
+2025-07-24 06:28:45,943 - api.market_data - ERROR - Error fetching market summary for WAL/USDT: Failed to fetch ticker for WAL/USDT: Exchange error: bingx does not have market symbol WAL/USDT
