@@ -101,6 +101,10 @@ class APIClient:
             params.append(f"search={search.strip()}")
         params.append(f"sort_by={sort_by}")
         params.append(f"sort_direction={sort_direction}")
+        if risk_level_filter and risk_level_filter.upper() != "ALL":
+            params.append(f"risk_level_filter={risk_level_filter}")
+        params.append(f"priority_only={str(priority_only).lower()}")
+        params.append(f"trading_enabled_only={str(trading_enabled_only).lower()}")
         query_string = "?" + "&".join(params) if params else ""
         return await self.get(f"/assets/validation-table{query_string}")
     
