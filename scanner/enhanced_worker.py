@@ -172,7 +172,7 @@ class EnhancedScannerWorker:
                 for asset in batch
             ]
             
-            batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+            batch_results = await asyncio.gather(*[self._process_single_asset_optimized(asset, session) for asset in batch], return_exceptions=True)
             
             # Process results
             for j, result in enumerate(batch_results):
