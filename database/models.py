@@ -301,7 +301,7 @@ class Signal(Base):
     signal_type = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
     strength = Column(Numeric(5, 2))  # Signal strength 0-100
     rules_triggered = Column(ARRAY(Text))  # Which rules triggered the signal
-    indicators_snapshot = Column(JSONB)  # Snapshot of indicators at signal time
+    indicators_snapshot = Column(JSONType)  # Snapshot of indicators at signal time
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
@@ -335,7 +335,7 @@ class SystemConfig(Base):
     key = Column(String(100), primary_key=True)
     
     # Config data
-    value = Column(JSONB, nullable=False)
+    value = Column(JSONType, nullable=False)
     description = Column(Text)
     
     # Timestamp
