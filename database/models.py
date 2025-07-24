@@ -132,7 +132,7 @@ class Indicator(Base):
     center = Column(Numeric(20, 8))  # Slow EMA (21 periods)
     rsi = Column(Numeric(5, 2))  # RSI (14 periods)
     volume_sma = Column(Numeric(20, 8))  # Volume SMA
-    additional_data = Column(JSONB)  # For extra indicators
+    additional_data = Column(JSONType)  # For extra indicators
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
