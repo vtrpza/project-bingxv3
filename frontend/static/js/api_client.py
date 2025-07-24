@@ -431,6 +431,43 @@ class APIClient:
         """Stop polling fallback"""
         self.polling_active = False
         console.log("Polling fallback stopped")
+    
+    # Trading API Methods
+    async def get_trading_live_data(self, limit=50):
+        """Get real-time trading data with indicators and signals"""
+        return await self.get(f"/trading/live-data?limit={limit}")
+    
+    async def execute_signal_trade(self, symbol, signal_type, signal_data):
+        """Execute a trade based on signal detection"""
+        return await self.post("/trading/execute-signal", {
+            "symbol": symbol,
+            "signal_type": signal_type,
+            "signal_data": signal_data
+        })
+    
+    async def start_auto_trading(self):
+        """Start auto trading mode"""
+        return await self.post("/trading/auto-trading/start")
+    
+    async def stop_auto_trading(self):
+        """Stop auto trading mode"""
+        return await self.post("/trading/auto-trading/stop")
+    
+    async def get_positions(self):
+        """Get current open positions"""
+        return await self.get("/trading/positions")
+    
+    async def get_trades_history(self, limit=20):
+        """Get recent trades history"""
+        return await self.get(f"/trading/trades?limit={limit}")
+    
+    async def close_position(self, position_id):
+        """Close a specific position"""
+        return await self.post(f"/trading/positions/{position_id}/close")
+    
+    async def get_trading_summary(self):
+        """Get trading summary statistics"""
+        return await self.get("/trading/summary")
 
 
 # Global API client instance

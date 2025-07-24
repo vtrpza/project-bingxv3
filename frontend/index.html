@@ -205,7 +205,97 @@
             <!-- Trading Tab -->
             <div id="trading-tab" class="tab-content">
                 <div class="dashboard-section">
-                    <h2>💼 Posições Ativas</h2>
+                    <h2>🤖 Trading em Tempo Real - VST Mode</h2>
+                    <div class="trading-controls">
+                        <div class="control-group">
+                            <button id="auto-trade-btn" class="control-btn start-btn" onclick="toggleAutoTrading()">
+                                🚀 Iniciar Auto Trading
+                            </button>
+                            <span id="auto-trade-status" class="status-indicator">🔴 Inativo</span>
+                        </div>
+                        <div class="control-group">
+                            <label>Max Trades Simultâneos:</label>
+                            <input type="number" id="max-concurrent-trades" value="10" min="1" max="20">
+                        </div>
+                        <div class="control-group">
+                            <span id="active-trades-count">Trades Ativos: 0/10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📊 Dados de Trading em Tempo Real</h2>
+                    <div class="trading-data-controls">
+                        <div class="refresh-controls">
+                            <button onclick="refreshTradingData()" class="refresh-btn">🔄 Atualizar</button>
+                            <span id="trading-last-update">Última atualização: -</span>
+                        </div>
+                        <div class="filter-controls">
+                            <label>
+                                <input type="checkbox" id="show-signals-only" onchange="filterTradingData()"> 
+                                Apenas com Sinais
+                            </label>
+                            <label>
+                                <input type="checkbox" id="show-active-positions-only" onchange="filterTradingData()"> 
+                                Apenas com Posições
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="trading-data-table" id="trading-data-table">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2" class="asset-header">Ativo</th>
+                                    <th rowspan="2" class="datetime-header">Data/Hora</th>
+                                    <th colspan="5" class="timeframe-header spot-header">📈 SPOT</th>
+                                    <th colspan="6" class="timeframe-header tf-2h-header">📊 2H</th>
+                                    <th colspan="6" class="timeframe-header tf-4h-header">📊 4H</th>
+                                    <th rowspan="2" class="signal-header">Sinal</th>
+                                    <th rowspan="2" class="position-header">Posição</th>
+                                    <th rowspan="2" class="pnl-header">P&L</th>
+                                </tr>
+                                <tr>
+                                    <!-- Spot columns -->
+                                    <th class="price-col">Preço</th>
+                                    <th class="mm1-col">MM1</th>
+                                    <th class="center-col">Center</th>
+                                    <th class="rsi-col">RSI</th>
+                                    <th class="volume-col">Volume</th>
+                                    
+                                    <!-- 2H timeframe columns -->
+                                    <th class="candle-col">Candle</th>
+                                    <th class="price-col">Preço</th>
+                                    <th class="mm1-col">MM1</th>
+                                    <th class="center-col">Center</th>
+                                    <th class="rsi-col">RSI</th>
+                                    <th class="volume-col">Volume</th>
+                                    
+                                    <!-- 4H timeframe columns -->
+                                    <th class="candle-col">Candle</th>
+                                    <th class="price-col">Preço</th>
+                                    <th class="mm1-col">MM1</th>
+                                    <th class="center-col">Center</th>
+                                    <th class="rsi-col">RSI</th>
+                                    <th class="volume-col">Volume</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trading-data-tbody">
+                                <!-- Real-time trading data will be populated here -->
+                                <tr>
+                                    <td colspan="22" style="text-align: center; padding: 20px;">
+                                        <div class="loading-message">
+                                            🔄 Carregando dados de trading em tempo real...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>💼 Resumo de Posições</h2>
                     <div class="summary-row" id="trading-summary">
                         <div class="summary-card">
                             <h3>P&L Total</h3>
@@ -214,6 +304,10 @@
                         <div class="summary-card">
                             <h3>Posições Abertas</h3>
                             <span class="stat-value" id="open-positions">0</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Sinais Ativos</h3>
+                            <span class="stat-value" id="active-signals-count">0</span>
                         </div>
                         <div class="summary-card">
                             <h3>Trades Hoje</h3>
@@ -602,6 +696,123 @@
         
         // Make the function globally available
         window.forceRevalidation = forceRevalidation;
+        
+        // Trading Tab Functions
+        async function toggleAutoTrading() {
+            const btn = document.getElementById('auto-trade-btn');
+            const status = document.getElementById('auto-trade-status');
+            
+            if (btn.textContent.includes('Iniciar')) {
+                // Start auto trading
+                try {
+                    const response = await fetch('/api/trading/auto-trading/start', { method: 'POST' });
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        btn.innerHTML = '⏹️ Parar Auto Trading';
+                        btn.className = 'control-btn stop-btn';
+                        status.innerHTML = '🟢 Ativo';
+                        showNotificationSafe('Sucesso', 'Auto Trading iniciado (VST Mode)!', 'success');
+                    } else {
+                        showNotificationSafe('Erro', 'Erro ao iniciar auto trading: ' + result.detail, 'error');
+                    }
+                } catch (error) {
+                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                }
+            } else {
+                // Stop auto trading
+                try {
+                    const response = await fetch('/api/trading/auto-trading/stop', { method: 'POST' });
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        btn.innerHTML = '🚀 Iniciar Auto Trading';
+                        btn.className = 'control-btn start-btn';
+                        status.innerHTML = '🔴 Inativo';
+                        showNotificationSafe('Aviso', 'Auto Trading parado!', 'warning');
+                    } else {
+                        showNotificationSafe('Erro', 'Erro ao parar auto trading: ' + result.detail, 'error');
+                    }
+                } catch (error) {
+                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                }
+            }
+        }
+        
+        async function refreshTradingData() {
+            try {
+                const response = await fetch('/api/trading/live-data?limit=50');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update trading data via PyScript
+                    if (typeof document.updateTradingDataTable === 'function') {
+                        document.updateTradingDataTable(data);
+                    }
+                    
+                    // Update last update timestamp
+                    const now = new Date();
+                    document.getElementById('trading-last-update').textContent = 
+                        `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
+                        
+                    showNotificationSafe('Sucesso', 'Dados de trading atualizados!', 'success');
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao carregar dados: ' + data.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        function filterTradingData() {
+            // Filter trading data based on checkboxes
+            if (typeof document.filterTradingDataTable === 'function') {
+                const showSignalsOnly = document.getElementById('show-signals-only').checked;
+                const showPositionsOnly = document.getElementById('show-active-positions-only').checked;
+                
+                document.filterTradingDataTable({
+                    signals_only: showSignalsOnly,
+                    positions_only: showPositionsOnly
+                });
+            }
+        }
+        
+        async function executeSignalTrade(symbol, signal, signalData) {
+            try {
+                const response = await fetch('/api/trading/execute-signal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        symbol: symbol,
+                        signal_type: signal,
+                        signal_data: signalData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Trade Executado', 
+                        `${signal} executado para ${symbol} em VST mode!`, 'success');
+                    
+                    // Refresh trading data and positions
+                    refreshTradingData();
+                } else {
+                    showNotificationSafe('Erro no Trade', 
+                        `Erro ao executar ${signal} para ${symbol}: ${result.detail}`, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        // Make trading functions globally available
+        window.toggleAutoTrading = toggleAutoTrading;
+        window.refreshTradingData = refreshTradingData;
+        window.filterTradingData = filterTradingData;
+        window.executeSignalTrade = executeSignalTrade;
         
         
     </script>

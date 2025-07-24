@@ -921,6 +921,292 @@ class UIComponents:
         except Exception as e:
             console.error(f"Error clearing notifications: {e}")
 
+    @staticmethod
+    def format_trading_datetime(dt_str):
+        """Format datetime for trading data (DD HH:MM:SS format)"""
+        if not dt_str:
+            return "-"
+        try:
+            # Handle different datetime formats that might come from backend
+            if isinstance(dt_str, str):
+                # Remove timezone suffix and normalize
+                dt_str_clean = dt_str.replace('Z', '+00:00')
+                
+                # Try parsing ISO format first
+                try:
+                    dt = datetime.fromisoformat(dt_str_clean)
+                except ValueError:
+                    # Fallback: try parsing without timezone info (assume UTC)
+                    dt = datetime.fromisoformat(dt_str.replace('Z', '').replace('+00:00', ''))
+                    # Add UTC timezone info
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                # Handle datetime objects directly
+                dt = dt_str
+                if dt.tzinfo is None:
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            
+            # Convert to UTC-3 (Brazil time) and format as DD HH:MM:SS
+            dt_utc3 = dt - timedelta(hours=3)
+            return dt_utc3.strftime("%d %H:%M:%S")
+        except (ValueError, AttributeError, TypeError) as e:
+            # Log the error for debugging and return original string
+            console.error(f"Error formatting trading datetime '{dt_str}': {e}")
+            return str(dt_str) if dt_str else "-"
+    
+    @staticmethod
+    def get_candle_color_indicator(candle_data):
+        """Get candle color indicator (🟢 for green, 🔴 for red)"""
+        if not candle_data:
+            return "-"
+        
+        candle_color = candle_data.get("color", "neutral")
+        if candle_color == "green":
+            return "🟢"
+        elif candle_color == "red":
+            return "🔴"
+        else:
+            return "⚪"  # neutral/unknown
+    
+    @staticmethod
+    def get_signal_badge(signal_type, strength=None):
+        """Get formatted signal badge with strength"""
+        if not signal_type or signal_type == "NEUTRAL":
+            return '<span class="signal-badge neutral">NEUTRO</span>'
+        
+        signal_class = "buy" if signal_type in ["BUY", "COMPRA", "STRONG_BUY"] else "sell"
+        strength_text = f" ({strength:.0%})" if strength else ""
+        
+        signal_display = {
+            "BUY": "COMPRA",
+            "SELL": "VENDA", 
+            "STRONG_BUY": "COMPRA FORTE",
+            "STRONG_SELL": "VENDA FORTE",
+            "COMPRA": "COMPRA",
+            "VENDA": "VENDA"
+        }.get(signal_type, signal_type)
+        
+        return f'<span class="signal-badge {signal_class}">{signal_display}{strength_text}</span>'
+    
+    @staticmethod
+    def get_position_indicator(position_data):
+        """Get position indicator"""
+        if not position_data:
+            return "-"
+        
+        side = position_data.get("side", "")
+        amount = position_data.get("amount", 0)
+        
+        if side and amount:
+            side_class = "buy-position" if side.upper() == "BUY" else "sell-position"
+            return f'<span class="position-indicator {side_class}">{side.upper()}</span>'
+        
+        return "-"
+    
+    @staticmethod
+    def render_trading_data_row(trading_data):
+        """Render trading data table row with all timeframes"""
+        if not trading_data:
+            return ""
+        
+        symbol = trading_data.get("symbol", "")
+        timestamp = trading_data.get("timestamp", "")
+        
+        # Spot data
+        spot_data = trading_data.get("spot", {})
+        spot_price = UIComponents.format_currency(spot_data.get("price"))
+        spot_mm1 = UIComponents.format_currency(spot_data.get("mm1"))
+        spot_center = UIComponents.format_currency(spot_data.get("center"))
+        spot_rsi = f"{spot_data.get('rsi', 0):.1f}" if spot_data.get('rsi') else "-"
+        spot_volume = UIComponents.format_large_number(spot_data.get("volume", 0))
+        
+        # 2H data
+        tf_2h = trading_data.get("2h", {})
+        tf_2h_candle = UIComponents.get_candle_color_indicator(tf_2h.get("candle"))
+        tf_2h_price = UIComponents.format_currency(tf_2h.get("price"))
+        tf_2h_mm1 = UIComponents.format_currency(tf_2h.get("mm1"))
+        tf_2h_center = UIComponents.format_currency(tf_2h.get("center"))
+        tf_2h_rsi = f"{tf_2h.get('rsi', 0):.1f}" if tf_2h.get('rsi') else "-"
+        tf_2h_volume = UIComponents.format_large_number(tf_2h.get("volume", 0))
+        
+        # 4H data
+        tf_4h = trading_data.get("4h", {})
+        tf_4h_candle = UIComponents.get_candle_color_indicator(tf_4h.get("candle"))
+        tf_4h_price = UIComponents.format_currency(tf_4h.get("price"))
+        tf_4h_mm1 = UIComponents.format_currency(tf_4h.get("mm1"))
+        tf_4h_center = UIComponents.format_currency(tf_4h.get("center"))
+        tf_4h_rsi = f"{tf_4h.get('rsi', 0):.1f}" if tf_4h.get('rsi') else "-"
+        tf_4h_volume = UIComponents.format_large_number(tf_4h.get("volume", 0))
+        
+        # Signal data
+        signal_data = trading_data.get("signal", {})
+        signal_type = signal_data.get("type", "NEUTRAL")
+        signal_strength = signal_data.get("strength", 0)
+        signal_badge = UIComponents.get_signal_badge(signal_type, signal_strength)
+        
+        # Position data
+        position_data = trading_data.get("position")
+        position_indicator = UIComponents.get_position_indicator(position_data)
+        
+        # P&L data
+        pnl_data = trading_data.get("pnl", {})
+        unrealized_pnl = pnl_data.get("unrealized", 0)
+        pnl_percentage = pnl_data.get("percentage", 0)
+        pnl_class = UIComponents.get_pnl_class(unrealized_pnl)
+        pnl_display = f"{UIComponents.format_currency(unrealized_pnl)} ({UIComponents.format_percentage(pnl_percentage)})" if unrealized_pnl else "-"
+        
+        # Format timestamp 
+        formatted_time = UIComponents.format_trading_datetime(timestamp)
+        
+        # Determine row class based on signal
+        row_class = ""
+        if signal_type in ["BUY", "COMPRA", "STRONG_BUY"]:
+            row_class = "signal-buy-row"
+        elif signal_type in ["SELL", "VENDA", "STRONG_SELL"]:
+            row_class = "signal-sell-row"
+        
+        row_html = f'''
+        <tr class="trading-data-row {row_class}" data-symbol="{symbol}">
+            <td class="symbol-cell"><strong>{symbol}</strong></td>
+            <td class="datetime-cell">{formatted_time}</td>
+            
+            <!-- Spot data -->
+            <td class="price-cell">{spot_price}</td>
+            <td class="mm1-cell">{spot_mm1}</td>
+            <td class="center-cell">{spot_center}</td>
+            <td class="rsi-cell">{spot_rsi}</td>
+            <td class="volume-cell">{spot_volume}</td>
+            
+            <!-- 2H data -->
+            <td class="candle-cell">{tf_2h_candle}</td>
+            <td class="price-cell">{tf_2h_price}</td>
+            <td class="mm1-cell">{tf_2h_mm1}</td>           
+            <td class="center-cell">{tf_2h_center}</td>
+            <td class="rsi-cell">{tf_2h_rsi}</td>
+            <td class="volume-cell">{tf_2h_volume}</td>
+            
+            <!-- 4H data -->
+            <td class="candle-cell">{tf_4h_candle}</td>
+            <td class="price-cell">{tf_4h_price}</td>
+            <td class="mm1-cell">{tf_4h_mm1}</td>
+            <td class="center-cell">{tf_4h_center}</td>
+            <td class="rsi-cell">{tf_4h_rsi}</td>
+            <td class="volume-cell">{tf_4h_volume}</td>
+            
+            <!-- Signal and position -->
+            <td class="signal-cell">{signal_badge}</td>
+            <td class="position-cell">{position_indicator}</td>
+            <td class="pnl-cell {pnl_class}">{pnl_display}</td>
+        </tr>
+        '''
+        
+        return row_html
+    
+    @staticmethod
+    def update_trading_data_table(trading_live_data):
+        """Update trading data table with real-time data"""
+        try:
+            tbody = document.getElementById("trading-data-tbody")
+            if not tbody:
+                console.error("Trading data table body not found")
+                return
+            
+            if not trading_live_data:
+                tbody.innerHTML = '<tr><td colspan="22" style="text-align: center;">Nenhum dado de trading disponível</td></tr>'
+                return
+            
+            assets_data = trading_live_data.get("assets", [])
+            
+            if not assets_data:
+                tbody.innerHTML = '<tr><td colspan="22" style="text-align: center;">Nenhum ativo sendo monitorado</td></tr>'
+                return
+            
+            # Generate HTML for all trading data rows
+            rows_html = ""
+            for asset_data in assets_data:
+                rows_html += UIComponents.render_trading_data_row(asset_data)
+            
+            tbody.innerHTML = rows_html
+            
+            # Update summary statistics
+            UIComponents._update_trading_summary(trading_live_data)
+            
+            console.log(f"Trading data table updated with {len(assets_data)} assets")
+            
+        except Exception as e:
+            console.error(f"Error updating trading data table: {str(e)}")
+    
+    @staticmethod
+    def _update_trading_summary(trading_data):
+        """Update trading summary cards"""
+        try:
+            summary = trading_data.get("summary", {})
+            
+            # Update summary cards
+            total_pnl = summary.get("total_unrealized_pnl", 0)
+            open_positions = summary.get("open_positions", 0)
+            active_signals = summary.get("active_signals", 0)
+            trades_today = summary.get("trades_today", 0)
+            active_trades_max = summary.get("max_concurrent_trades", 10)
+            
+            # Update DOM elements
+            elements = {
+                "total-pnl": UIComponents.format_currency(total_pnl),
+                "open-positions": str(open_positions),
+                "active-signals-count": str(active_signals),
+                "trades-today": str(trades_today),
+                "active-trades-count": f"Trades Ativos: {open_positions}/{active_trades_max}"
+            }
+            
+            for element_id, value in elements.items():
+                element = document.getElementById(element_id)
+                if element:
+                    element.textContent = value
+            
+            # Update P&L with color
+            pnl_element = document.getElementById("total-pnl")
+            if pnl_element:
+                pnl_element.className = f"pnl-value {UIComponents.get_pnl_class(total_pnl)}"
+                
+        except Exception as e:
+            console.error(f"Error updating trading summary: {str(e)}")
+    
+    @staticmethod
+    def filter_trading_data_table(filters):
+        """Filter trading data table based on criteria"""
+        try:
+            rows = document.querySelectorAll("#trading-data-tbody .trading-data-row")
+            visible_count = 0
+            
+            for row in rows:
+                show_row = True
+                
+                # Filter by signals only
+                if filters.get("signals_only", False):
+                    signal_cell = row.querySelector(".signal-cell")
+                    if signal_cell and "NEUTRO" in signal_cell.textContent:
+                        show_row = False
+                
+                # Filter by positions only
+                if filters.get("positions_only", False):
+                    position_cell = row.querySelector(".position-cell")
+                    if position_cell and position_cell.textContent.strip() == "-":
+                        show_row = False
+                
+                # Show/hide row
+                if show_row:
+                    row.style.display = ""
+                    visible_count += 1
+                else:
+                    row.style.display = "none"
+            
+            console.log(f"Trading data filtered: {visible_count} rows visible")
+            
+        except Exception as e:
+            console.error(f"Error filtering trading data: {str(e)}")
+
 
 # Global UI components instance
 ui_components = UIComponents()

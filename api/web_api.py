@@ -1009,6 +1009,298 @@ async def get_dashboard_summary(
         logger.error(f"Error fetching dashboard summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Trading live data endpoint
+@app.get("/api/trading/live-data")
+async def get_trading_live_data(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo),
+    indicator_repo: IndicatorRepository = Depends(get_indicator_repo),
+    trade_repo: TradeRepository = Depends(get_trade_repo),
+    signal_repo: SignalRepository = Depends(get_signal_repo)
+):
+    """Get real-time trading data with multi-timeframe indicators and signals"""
+    try:
+        logger.info(f"Trading live data requested with limit: {limit}")
+        
+        # Get valid assets for trading
+        valid_assets = asset_repo.get_valid_assets(db)
+        if not valid_assets:
+            return {
+                "trading_data": [],
+                "timestamp": utc_now().isoformat()
+            }
+        
+        # Limit to requested number of assets
+        assets_to_process = valid_assets[:limit]
+        trading_data = []
+        
+        # Initialize BingX client for real-time data
+        from api.client import get_client
+        try:
+            client = get_client()
+        except Exception as e:
+            logger.error(f"Failed to initialize BingX client: {e}")
+            raise HTTPException(status_code=500, detail="Trading API unavailable")
+        
+        for asset in assets_to_process:
+            try:
+                # Get current market data from BingX
+                ticker = await client.fetch_ticker(asset.symbol)
+                current_price = float(ticker['last'])
+                volume_24h = float(ticker.get('quoteVolume', 0))
+                
+                # Get latest indicators for different timeframes
+                indicators_spot = indicator_repo.get_latest_indicators_by_timeframe(db, asset.id, 'spot')
+                indicators_2h = indicator_repo.get_latest_indicators_by_timeframe(db, asset.id, '2h')
+                indicators_4h = indicator_repo.get_latest_indicators_by_timeframe(db, asset.id, '4h')
+                
+                # Get OHLCV data for candle colors
+                candles_2h = await client.fetch_ohlcv(asset.symbol, '2h', 2)  # Last 2 candles
+                candles_4h = await client.fetch_ohlcv(asset.symbol, '4h', 2)  # Last 2 candles
+                
+                # Determine candle colors
+                candle_2h_color = "🟢" if len(candles_2h) >= 2 and candles_2h[-1][4] > candles_2h[-1][1] else "🔴"
+                candle_4h_color = "🟢" if len(candles_4h) >= 2 and candles_4h[-1][4] > candles_4h[-1][1] else "🔴"
+                
+                # Calculate signals based on current indicators
+                signal_type, signal_strength = _calculate_current_signal(
+                    indicators_spot, indicators_2h, indicators_4h, current_price
+                )
+                
+                # Get current position if exists
+                position_data = None
+                open_trades = trade_repo.get_open_trades_by_asset(db, asset.id)
+                if open_trades:
+                    trade = open_trades[0]  # Get first open trade
+                    pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+                    if trade.side == 'SELL':
+                        pnl = -pnl
+                    pnl_percentage = (pnl / (float(trade.entry_price) * float(trade.quantity))) * 100
+                    
+                    position_data = {
+                        "entry_price": float(trade.entry_price),
+                        "quantity": float(trade.quantity),
+                        "side": trade.side,
+                        "stop_loss": float(trade.stop_loss) if trade.stop_loss else None,
+                        "take_profit": float(trade.take_profit) if trade.take_profit else None,
+                        "pnl": round(pnl, 4),
+                        "pnl_percentage": round(pnl_percentage, 2),
+                        "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
+                    }
+                
+                # Build comprehensive trading data
+                asset_data = {
+                    "symbol": asset.symbol,
+                    "timestamp": utc_now().isoformat(),
+                    "spot": {
+                        "price": current_price,
+                        "mm1": float(indicators_spot.mm1) if indicators_spot and indicators_spot.mm1 else None,
+                        "center": float(indicators_spot.center) if indicators_spot and indicators_spot.center else None,
+                        "rsi": float(indicators_spot.rsi) if indicators_spot and indicators_spot.rsi else None,
+                        "volume": volume_24h
+                    },
+                    "timeframe_2h": {
+                        "price": candles_2h[-1][4] if candles_2h else current_price,
+                        "mm1": float(indicators_2h.mm1) if indicators_2h and indicators_2h.mm1 else None,
+                        "center": float(indicators_2h.center) if indicators_2h and indicators_2h.center else None,
+                        "rsi": float(indicators_2h.rsi) if indicators_2h and indicators_2h.rsi else None,
+                        "candle_color": candle_2h_color
+                    },
+                    "timeframe_4h": {
+                        "price": candles_4h[-1][4] if candles_4h else current_price,
+                        "mm1": float(indicators_4h.mm1) if indicators_4h and indicators_4h.mm1 else None,
+                        "center": float(indicators_4h.center) if indicators_4h and indicators_4h.center else None,
+                        "rsi": float(indicators_4h.rsi) if indicators_4h and indicators_4h.rsi else None,
+                        "candle_color": candle_4h_color
+                    },
+                    "signal": signal_type,
+                    "signal_strength": signal_strength,
+                    "position": position_data
+                }
+                
+                trading_data.append(asset_data)
+                
+            except Exception as e:
+                logger.error(f"Error processing asset {asset.symbol}: {e}")
+                # Continue with other assets
+                continue
+        
+        logger.info(f"Trading live data prepared for {len(trading_data)} assets")
+        
+        return {
+            "trading_data": trading_data,
+            "total_assets": len(trading_data),
+            "timestamp": utc_now().isoformat(),
+            "metadata": {
+                "endpoint_version": "1.0",
+                "data_type": "real_time_trading",
+                "update_interval": "15_seconds",
+                "trading_enabled": bot_status.get("trading_enabled", False)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching trading live data: {e}")
+        raise HTTPException(status_code=500, detail=f"Trading data error: {str(e)}")
+
+def _calculate_current_signal(indicators_spot, indicators_2h, indicators_4h, current_price):
+    """Calculate current trading signal based on indicators and rules"""
+    try:
+        signal_type = "NEUTRAL"
+        signal_strength = 0.0
+        
+        # Import trading config for thresholds
+        from config.trading_config import TradingConfig
+        
+        # Rule 1: MA Crossover with RSI (2h and 4h)
+        crossover_signals = []
+        
+        for indicators, timeframe in [(indicators_2h, "2h"), (indicators_4h, "4h")]:
+            if indicators and indicators.mm1 and indicators.center and indicators.rsi:
+                mm1 = float(indicators.mm1)
+                center = float(indicators.center)
+                rsi = float(indicators.rsi)
+                
+                # Check RSI range for Rule 1
+                if TradingConfig.RSI_MIN <= rsi <= TradingConfig.RSI_MAX:
+                    if mm1 > center:
+                        crossover_signals.append(("BUY", 0.7 if timeframe == "4h" else 0.6))
+                    elif mm1 < center:
+                        crossover_signals.append(("SELL", 0.7 if timeframe == "4h" else 0.6))
+        
+        # Rule 2: MA Distance (2h and 4h)
+        distance_signals = []
+        
+        for indicators, timeframe in [(indicators_2h, "2h"), (indicators_4h, "4h")]:
+            if indicators and indicators.mm1 and indicators.center:
+                mm1 = float(indicators.mm1)
+                center = float(indicators.center)
+                
+                distance_percent = abs(mm1 - center) / center
+                threshold = TradingConfig.MA_DISTANCE_2H_PERCENT if timeframe == "2h" else TradingConfig.MA_DISTANCE_4H_PERCENT
+                
+                if distance_percent >= threshold:
+                    signal = "BUY" if mm1 > center else "SELL"
+                    strength = min(distance_percent / 0.05, 1.0)  # Max strength at 5%
+                    distance_signals.append((signal, strength * 0.6))
+        
+        # Combine signals
+        all_signals = crossover_signals + distance_signals
+        
+        if all_signals:
+            buy_signals = [s for s in all_signals if s[0] == "BUY"]
+            sell_signals = [s for s in all_signals if s[0] == "SELL"]
+            
+            if buy_signals and not sell_signals:
+                signal_type = "BUY"
+                signal_strength = sum(s[1] for s in buy_signals) / len(buy_signals)
+            elif sell_signals and not buy_signals:
+                signal_type = "SELL"
+                signal_strength = sum(s[1] for s in sell_signals) / len(sell_signals)
+            elif buy_signals and sell_signals:
+                buy_strength = sum(s[1] for s in buy_signals)
+                sell_strength = sum(s[1] for s in sell_signals)
+                
+                if buy_strength > sell_strength * 1.2:
+                    signal_type = "BUY"
+                    signal_strength = buy_strength / len(buy_signals)
+                elif sell_strength > buy_strength * 1.2:
+                    signal_type = "SELL"
+                    signal_strength = sell_strength / len(sell_signals)
+        
+        return signal_type, round(signal_strength, 3)
+        
+    except Exception as e:
+        logger.error(f"Error calculating signal: {e}")
+        return "NEUTRAL", 0.0
+
+# Trading signal execution endpoint
+@app.post("/api/trading/execute-signal")
+async def execute_trading_signal(
+    symbol: str,
+    signal_type: str,
+    signal_strength: float,
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Execute a trading signal automatically"""
+    try:
+        logger.info(f"Signal execution requested: {symbol} {signal_type} (strength: {signal_strength})")
+        
+        # Check if trading is enabled
+        if not bot_status.get("trading_enabled", False):
+            raise HTTPException(status_code=400, detail="Trading is not enabled")
+        
+        # Validate signal
+        if signal_type not in ["BUY", "SELL"]:
+            raise HTTPException(status_code=400, detail="Invalid signal type")
+        
+        if signal_strength < 0.5:  # Minimum strength threshold
+            raise HTTPException(status_code=400, detail="Signal strength too low")
+        
+        # Get asset
+        asset = asset_repo.get_by_symbol(db, symbol)
+        if not asset or not asset.is_valid:
+            raise HTTPException(status_code=400, detail="Asset not valid for trading")
+        
+        # Check if we already have an open position for this asset
+        open_trades = trade_repo.get_open_trades_by_asset(db, asset.id)
+        if open_trades:
+            return {
+                "message": f"Position already exists for {symbol}",
+                "trade_id": str(open_trades[0].id),
+                "status": "skipped"
+            }
+        
+        # Initialize trading engine and execute trade
+        from trading.engine import TradingEngine
+        from api.client import get_client
+        
+        client = get_client()
+        trading_engine = TradingEngine(client, trade_repo, asset_repo)
+        
+        # Initialize trading engine
+        await trading_engine.start()
+        
+        # Create signal data for processing
+        signal_data = {
+            "symbol": symbol,
+            "signal_type": signal_type,
+            "strength": signal_strength,
+            "rules_triggered": ["automated_signal"],
+            "indicators_snapshot": {
+                "signal_type": signal_type,
+                "strength": signal_strength,
+                "timestamp": utc_now().isoformat()
+            },
+            "current_price": None  # Will be fetched by trading engine
+        }
+        
+        # Process the signal
+        trade_result = await trading_engine.process_signal(signal_data)
+        
+        if trade_result:
+            logger.info(f"✅ Trade executed successfully: {trade_result}")
+            return {
+                "message": f"Trade executed for {symbol}",
+                "trade_result": trade_result,
+                "status": "executed"
+            }
+        else:
+            logger.warning(f"❌ Trade execution failed for {symbol}")
+            return {
+                "message": f"Trade execution failed for {symbol}",
+                "status": "failed"
+            }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error executing trading signal: {e}")
+        raise HTTPException(status_code=500, detail=f"Signal execution error: {str(e)}")
+
 # WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

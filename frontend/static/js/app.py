@@ -75,6 +75,9 @@ class TradingBotApp:
             # Load trading data
             await self.update_trading_data()
             
+            # Load positions data
+            await self.update_positions_data()
+            
             ui_components.show_notification(
                 "Dashboard", 
                 "Dados carregados com sucesso", 
@@ -523,6 +526,140 @@ class TradingBotApp:
         except Exception as e:
             console.error(f"Error updating trading data: {str(e)}")
     
+    async def update_trading_data(self):
+        """Update trading data table with real-time information"""
+        try:
+            trading_data = await api_client.get_trading_live_data()
+            if trading_data:
+                ui_components.update_trading_data_table(trading_data)
+                console.log("Trading data table updated successfully")
+            else:
+                console.warn("No trading data received from API")
+        except Exception as e:
+            console.error(f"Error updating trading data: {str(e)}")
+            ui_components.show_notification(
+                "Erro Trading", 
+                "Falha ao carregar dados de trading", 
+                "error"
+            )
+    
+    async def update_positions_data(self):
+        """Update positions and trades tables"""
+        try:
+            # Update positions table
+            positions_data = await api_client.get_positions()
+            if positions_data:
+                ui_components.update_positions_table(positions_data)
+            
+            # Update trades history table
+            trades_data = await api_client.get_trades_history()
+            if trades_data:
+                ui_components.update_trades_table(trades_data)
+                
+        except Exception as e:
+            console.error(f"Error updating positions data: {str(e)}")
+    
+    async def refresh_trading_data(self):
+        """Manual refresh of trading data"""
+        try:
+            await self.update_trading_data()
+            await self.update_positions_data()
+            
+            # Update last refresh timestamp
+            current_time = datetime.now().strftime("%H:%M:%S")
+            last_update_element = document.getElementById("trading-last-update")
+            if last_update_element:
+                last_update_element.textContent = f"Última atualização: {current_time}"
+                
+            ui_components.show_notification(
+                "Trading", 
+                "Dados de trading atualizados com sucesso", 
+                "success"
+            )
+        except Exception as e:
+            console.error(f"Error refreshing trading data: {str(e)}")
+            ui_components.show_notification(
+                "Erro", 
+                "Falha ao atualizar dados de trading", 
+                "error"
+            )
+    
+    async def execute_auto_trade(self, symbol, signal_type, signal_data):
+        """Execute automatic trade when signal is detected"""
+        try:
+            console.log(f"Executing auto trade: {signal_type} for {symbol}")
+            
+            trade_result = await api_client.execute_signal_trade(symbol, signal_type, signal_data)
+            
+            if trade_result and trade_result.get("success"):
+                ui_components.show_notification(
+                    "Trade Executado", 
+                    f"{signal_type} executado para {symbol} em VST mode", 
+                    "success"
+                )
+                
+                # Refresh trading data to show new position
+                await self.refresh_trading_data()
+                
+                return True
+            else:
+                error_msg = trade_result.get("error", "Erro desconhecido") if trade_result else "Resposta inválida"
+                ui_components.show_notification(
+                    "Erro no Trade", 
+                    f"Falha ao executar {signal_type} para {symbol}: {error_msg}", 
+                    "error"
+                )
+                return False
+                
+        except Exception as e:
+            console.error(f"Error executing auto trade: {str(e)}")
+            ui_components.show_notification(
+                "Erro de Execução", 
+                f"Erro ao executar trade para {symbol}: {str(e)}", 
+                "error"
+            )
+            return False
+    
+    def filter_trading_data_table(self, filters):
+        """Filter trading data table"""
+        try:
+            ui_components.filter_trading_data_table(filters)
+            console.log("Trading data filtered successfully")
+        except Exception as e:
+            console.error(f"Error filtering trading data: {str(e)}")
+    
+    async def toggle_auto_trading(self, enable):
+        """Toggle auto trading mode"""
+        try:
+            if enable:
+                result = await api_client.start_auto_trading()
+                if result and result.get("success"):
+                    ui_components.show_notification(
+                        "Auto Trading", 
+                        "Auto Trading iniciado em VST mode", 
+                        "success"
+                    )
+                    return True
+            else:
+                result = await api_client.stop_auto_trading()
+                if result and result.get("success"):
+                    ui_components.show_notification(
+                        "Auto Trading", 
+                        "Auto Trading parado", 
+                        "warning"
+                    )
+                    return True
+            
+            return False
+        except Exception as e:
+            console.error(f"Error toggling auto trading: {str(e)}")
+            ui_components.show_notification(
+                "Erro", 
+                f"Erro ao {'iniciar' if enable else 'parar'} auto trading", 
+                "error"
+            )
+            return False
+    
     def handle_realtime_update(self, data):
         """
         Handle real-time WebSocket updates with debounce to prevent data flickering.
@@ -839,6 +976,47 @@ def applyValidationTableFilters(filters):
         console.error("Global app instance not available for filters")
         ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
+# Trading Tab Global Functions
+def updateTradingDataTable(trading_data):
+    """Global function to update trading data table"""
+    try:
+        ui_components.update_trading_data_table(trading_data)
+    except Exception as e:
+        console.error(f"Error updating trading data table: {e}")
+        ui_components.show_notification("Erro", "Falha ao atualizar tabela de trading", "error")
+
+def filterTradingDataTable(filters):
+    """Global function to filter trading data table"""
+    try:
+        app.filter_trading_data_table(filters)
+    except NameError:
+        console.error("Global app instance not available for trading filters")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
+
+def refreshTradingData():
+    """Global function to refresh trading data"""
+    try:
+        asyncio.create_task(app.refresh_trading_data())
+    except NameError:
+        console.error("Global app instance not available for trading refresh")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
+
+def executeSignalTrade(symbol, signal_type, signal_data):
+    """Global function to execute signal trade"""
+    try:
+        asyncio.create_task(app.execute_auto_trade(symbol, signal_type, signal_data))
+    except NameError:
+        console.error("Global app instance not available for trade execution")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
+
+def toggleAutoTrading(enable):
+    """Global function to toggle auto trading"""
+    try:
+        asyncio.create_task(app.toggle_auto_trading(enable))
+    except NameError:
+        console.error("Global app instance not available for auto trading toggle")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
+
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)
 document.refreshValidationTable = create_proxy(refreshValidationTable)
@@ -858,6 +1036,13 @@ document.sortValidationTableServer = create_proxy(sortValidationTableServer)
 document.refreshValidationTablePage = create_proxy(refreshValidationTablePage)
 document.applyValidationTableFilters = create_proxy(applyValidationTableFilters)
 
+# Trading functions
+document.updateTradingDataTable = create_proxy(updateTradingDataTable)
+document.filterTradingDataTable = create_proxy(filterTradingDataTable)
+document.refreshTradingData = create_proxy(refreshTradingData)
+document.executeSignalTrade = create_proxy(executeSignalTrade)
+document.toggleAutoTrading = create_proxy(toggleAutoTrading)
+
 # Also make all functions available on window object for JavaScript compatibility
 window.showNotification = create_proxy(ui_components.show_notification)
 window.forceRevalidation = create_proxy(forceRevalidation)
@@ -868,6 +1053,13 @@ window.previousPage = create_proxy(previousPage)
 window.nextPage = create_proxy(nextPage)
 window.clearSearch = create_proxy(clearSearch)
 window.searchAssets = create_proxy(searchAssets)
+
+# Trading functions on window
+window.updateTradingDataTable = create_proxy(updateTradingDataTable)
+window.filterTradingDataTable = create_proxy(filterTradingDataTable)
+window.refreshTradingData = create_proxy(refreshTradingData)
+window.executeSignalTrade = create_proxy(executeSignalTrade)
+window.toggleAutoTrading = create_proxy(toggleAutoTrading)
 
 # Initialize the application
 app = TradingBotApp()
