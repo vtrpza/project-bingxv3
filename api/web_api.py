@@ -343,7 +343,10 @@ async def get_asset_validation_table(
                 "sort_direction": sort_direction,
                 "search": search,
                 "filter_valid_only": filter_valid_only,
-                "include_invalid": include_invalid
+                "include_invalid": include_invalid,
+                "risk_level_filter": risk_level_filter,
+                "priority_only": priority_only,
+                "trading_enabled_only": trading_enabled_only
             }
             
             return {
