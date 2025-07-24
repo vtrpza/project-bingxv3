@@ -66,13 +66,27 @@ class APIClient:
         """Get detailed information about a specific asset"""
         return await self.get(f"/assets/{symbol}")
     
-    async def get_validation_table(self, limit=50, include_invalid=True):
-        """Get comprehensive asset validation table with all metrics"""
+    async def get_validation_table(self, limit=None, offset=0, include_invalid=True):
+        """Get comprehensive asset validation table with all metrics
+        
+        Args:
+            limit: Number of records per page (None = all records)
+            offset: Starting record index for pagination
+            include_invalid: Include invalid assets in results
+        """
         params = []
         if limit is not None:
             params.append(f"limit={limit}")
+        if offset > 0:
+            params.append(f"offset={offset}")
         params.append(f"include_invalid={str(include_invalid).lower()}")
         query_string = "?" + "&".join(params) if params else ""
+        return await self.get(f"/assets/validation-table{query_string}")
+    
+    async def get_validation_table_all(self, include_invalid=True):
+        """Get ALL assets for revalidation (no pagination limit)"""
+        params = [f"include_invalid={str(include_invalid).lower()}"]
+        query_string = "?" + "&".join(params)
         return await self.get(f"/assets/validation-table{query_string}")
 
     async def force_revalidation(self):
