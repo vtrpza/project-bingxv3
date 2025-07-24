@@ -2,7 +2,7 @@
 """Utility functions for data type conversion."""
 
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Union
 
 
