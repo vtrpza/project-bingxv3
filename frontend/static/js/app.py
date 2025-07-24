@@ -407,32 +407,43 @@ class TradingBotApp:
             console.error(f"Error refreshing page: {str(e)}")
     
     async def apply_validation_table_filters(self, filters):
-        """Apply filters to validation table"""
+        """Apply filters to validation table with adaptive client/server-side logic"""
         try:
             console.log(f"Applying filters: {filters}")
             
-            # Get current search and sort
-            search_input = document.getElementById("symbol-search")
-            search_term = search_input.value.strip() if search_input else ""
+            # Atualizar filtros atuais
+            self.current_filters = filters
             
-            current_sort = getattr(ui_components, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
-            
-            # Get filtered data from API
-            validation_data = await api_client.get_validation_table(
-                page=1,  # Reset to first page on filter
-                per_page=25,
-                sort_by=current_sort.get('column', 'symbol'),
-                sort_direction=current_sort.get('direction', 'asc'),
-                filter_valid_only=filters.get('filter_valid_only', False),
-                include_invalid=not filters.get('filter_valid_only', False),
-                search=search_term if search_term else None,
-                risk_level_filter=filters.get('risk_level_filter'),
-                priority_only=filters.get('priority_only', False),
-                trading_enabled_only=filters.get('trading_enabled_only', False)
-            )
-            
-            if validation_data:
-                ui_components.update_validation_table(validation_data)
+            # Se scanning ativo e temos cache, usar client-side
+            if self.scanning_active and self.client_side_cache:
+                console.log("Using client-side filtering (scanning active)")
+                await self.update_table_client_side()
+            else:
+                # Usar server-side normal
+                console.log("Using server-side filtering")
+                
+                # Get current search and sort
+                search_input = document.getElementById("symbol-search")
+                search_term = search_input.value.strip() if search_input else ""
+                
+                current_sort = getattr(ui_components, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
+                
+                # Get filtered data from API
+                validation_data = await api_client.get_validation_table(
+                    page=1,  # Reset to first page on filter
+                    per_page=25,
+                    sort_by=current_sort.get('column', 'symbol'),
+                    sort_direction=current_sort.get('direction', 'asc'),
+                    filter_valid_only=filters.get('filter_valid_only', False),
+                    include_invalid=not filters.get('filter_valid_only', False),
+                    search=search_term if search_term else None,
+                    risk_level_filter=filters.get('risk_level_filter'),
+                    priority_only=filters.get('priority_only', False),
+                    trading_enabled_only=filters.get('trading_enabled_only', False)
+                )
+                
+                if validation_data:
+                    ui_components.update_validation_table(validation_data)
                 
         except Exception as e:
             console.error(f"Error applying filters: {str(e)}")

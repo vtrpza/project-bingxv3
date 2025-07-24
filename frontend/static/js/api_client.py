@@ -194,6 +194,10 @@ class APIClient:
         """Get current bot status"""
         return await self.get("/bot/status")
     
+    async def get_scanner_status(self):
+        """Get scanner status to determine if scanning is active"""
+        return await self.get("/scanner/status")
+    
     async def start_trading(self):
         """Start trading (bot must be running)"""
         return await self.post("/trading/start")
