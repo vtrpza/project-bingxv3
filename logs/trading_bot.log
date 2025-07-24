@@ -1151,3 +1151,141 @@
 2025-07-24 07:10:00,511 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
 2025-07-24 07:10:02,563 - api.web_api - INFO - Latest indicators requested - returning empty structure
 2025-07-24 07:10:04,599 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:10,528 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:10,529 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:12,546 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:14,560 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:20,642 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:20,643 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:22,689 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:24,725 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:28,645 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:10:28,645 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:10:28,745 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:10:29,581 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:10:29,582 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:10:29,591 - api.web_api - INFO - Initializing database...
+2025-07-24 07:10:29,591 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:10:29,591 - database.connection - INFO - Using SQLite database
+2025-07-24 07:10:29,599 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:10:29,599 - api.web_api - INFO - Creating database tables...
+2025-07-24 07:10:29,600 - database.connection - INFO - Database tables created successfully
+2025-07-24 07:10:29,600 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 07:10:29,600 - api.web_api - INFO - Background tasks started
+2025-07-24 07:10:31,044 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:31,062 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:32,839 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:33,869 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:10:33,869 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:10:33,869 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:10:34,148 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:10:34,148 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:10:34,249 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:10:36,831 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:10:36,831 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:10:36,840 - api.web_api - INFO - Initializing database...
+2025-07-24 07:10:36,840 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:10:36,840 - database.connection - INFO - Using SQLite database
+2025-07-24 07:10:36,848 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:10:36,848 - api.web_api - INFO - Creating database tables...
+2025-07-24 07:10:36,849 - database.connection - INFO - Database tables created successfully
+2025-07-24 07:10:36,849 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 07:10:36,849 - api.web_api - INFO - Background tasks started
+2025-07-24 07:10:39,044 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:10:39,045 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:10:39,045 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:10:39,745 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:39,762 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:39,768 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:39,814 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:40,931 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:10:40,931 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:10:43,593 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:10:43,594 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:10:43,594 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:10:43,598 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:43,604 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:43,605 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:43,655 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:43,702 - api.web_api - INFO - Positions requested - returning empty structure
+2025-07-24 07:10:43,750 - api.web_api - INFO - Trades requested - returning empty structure
+2025-07-24 07:10:46,241 - api.web_api - INFO - Starting full asset revalidation...
+2025-07-24 07:10:46,242 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 07:10:46,242 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 07:10:46,242 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 07:10:47,008 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 07:10:47,010 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 07:10:47,010 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 07:10:49,124 - api.client - INFO - Fetched 1515 USDT markets
+2025-07-24 07:10:49,124 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 07:10:49,128 - api.market_data - INFO - Fetched 1515 USDT markets
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO - Available symbols (first 10):
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   1: BTC/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   2: ETH/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   3: LINK/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   4: BCH/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   5: ADA/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   6: XRP/USDT (active: True)
+2025-07-24 07:10:49,128 - scanner.initial_scanner - INFO -   7: LTC/USDT (active: True)
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO -   8: DOT/USDT (active: True)
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO -   9: AVAX/USDT (active: True)
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO -   10: THETA/USDT (active: True)
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Discovered 0 USDT pairs for validation
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Starting incremental validation of 0 assets...
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Processing 0 assets incrementally (0 priority)
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Incremental validation completed: 0 assets processed
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Results already persisted incrementally during validation process
+2025-07-24 07:10:49,129 - scanner.initial_scanner - INFO - Initial scan completed: 0/0 assets valid (0.0% success rate) in 2.9s
+2025-07-24 07:10:49,130 - scanner.initial_scanner - INFO - Initial asset scan completed - 0/0 valid
+2025-07-24 07:10:49,130 - api.web_api - INFO - Revalidation completed: {'scan_timestamp': '2025-07-24T10:10:46.242152', 'scan_duration_seconds': 2.887763, 'total_discovered': 0, 'valid_assets_count': 0, 'invalid_assets_count': 0, 'errors_count': 0, 'success_rate': 0, 'valid_assets': [], 'top_invalid_reasons': []}
+2025-07-24 07:10:51,951 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:51,952 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:54,061 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:10:55,073 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:10:55,074 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:10:57,103 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:10:59,137 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:11:04,175 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:11:04,176 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:11:04,187 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:11:04,239 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:11:15,303 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:11:15,304 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:11:17,325 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:11:19,382 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:11:24,501 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:11:24,502 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:11:26,553 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:11:30,021 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:11:30,021 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:11:30,123 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:11:30,975 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:11:30,975 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:11:30,985 - api.web_api - INFO - Initializing database...
+2025-07-24 07:11:30,985 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:11:30,985 - database.connection - INFO - Using SQLite database
+2025-07-24 07:11:30,993 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:11:30,994 - api.web_api - INFO - Creating database tables...
+2025-07-24 07:11:30,995 - database.connection - INFO - Database tables created successfully
+2025-07-24 07:11:30,995 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 07:11:30,995 - api.web_api - INFO - Background tasks started
+2025-07-24 07:11:35,963 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:11:35,982 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:11:35,984 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:11:35,984 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:11:35,984 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:11:37,891 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 07:11:39,909 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 07:11:40,154 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:11:40,154 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:11:40,255 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:11:41,099 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:11:41,100 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:11:41,109 - api.web_api - INFO - Initializing database...
+2025-07-24 07:11:41,109 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:11:41,109 - database.connection - INFO - Using SQLite database
+2025-07-24 07:11:41,116 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:11:41,116 - api.web_api - INFO - Creating database tables...
+2025-07-24 07:11:41,117 - database.connection - INFO - Database tables created successfully
+2025-07-24 07:11:41,117 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 07:11:41,117 - api.web_api - INFO - Background tasks started
