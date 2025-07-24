@@ -1549,3 +1549,299 @@ input:focus {
     color: var(--accent-sell);
     font-weight: 600;
 }
+
+ .tab-button {
+      margin: 2px;
+  }
+
+  .scanner-grid {
+      grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+      flex-direction: column;
+  }
+
+  .trades-table {
+      font-size: 12px;
+  }
+
+  .trades-table th,
+  .trades-table td {
+      padding: 6px;
+  }
+  
+  /* WebSocket Connection Status */
+  .ws-status {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 1000;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .ws-status.connected {
+      background: rgba(46, 160, 67, 0.9);
+      color: #ffffff;
+      border: 1px solid #2ea043;
+  }
+
+  .ws-status.connecting {
+      background: rgba(255, 193, 7, 0.9);
+      color: #000000;
+      border: 1px solid #ffc107;
+  }
+
+  .ws-status.disconnected {
+      background: rgba(248, 81, 73, 0.9);
+      color: #ffffff;
+      border: 1px solid #f85149;
+  }
+
+  /* Notification System */
+  #notifications {
+      position: fixed;
+      top: 50px;
+      right: 20px;
+      width: 320px;
+      z-index: 1001;
+      pointer-events: none;
+  }
+
+  .notification {
+      margin-bottom: 12px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      animation: slideIn 0.3s ease-out;
+      position: relative;
+      overflow: hidden;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+  }
+
+  .notification::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 4px;
+  }
+
+  .notification-info {
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid #17a2b8;
+      color: var(--text-primary);
+  }
+
+  .notification-info::before {
+      background: #17a2b8;
+  }
+
+  .notification-success {
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid var(--accent-buy);
+      color: var(--text-primary);
+  }
+
+  .notification-success::before {
+      background: var(--accent-buy);
+  }
+
+  .notification-warning {
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid #ffc107;
+      color: var(--text-primary);
+  }
+
+  .notification-warning::before {
+      background: #ffc107;
+  }
+
+  .notification-error {
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid var(--accent-sell);
+      color: var(--text-primary);
+  }
+
+  .notification-error::before {
+      background: var(--accent-sell);
+  }
+
+  .notification h4 {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--text-primary);
+  }
+
+  .notification p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.9;
+      line-height: 1.4;
+  }
+
+  /* Real-time Data Indicators */
+  .realtime-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+  }
+
+  .realtime-indicator.active {
+      background: var(--accent-buy);
+  }
+
+  .realtime-indicator.inactive {
+      background: var(--accent-neutral);
+      animation: none;
+  }
+
+  /* Trading Summary Enhanced */
+  .summary-card.live {
+      border: 1px solid var(--accent-buy);
+      box-shadow: 0 0 12px rgba(46, 160, 67, 0.15);
+      position: relative;
+  }
+
+  .summary-card.live::after {
+      content: '';
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-buy);
+      animation: pulse 2s infinite;
+  }
+
+  /* Live data updates */
+  .live-update {
+      transition: all 0.3s ease;
+  }
+
+  .live-update.updated {
+      background: rgba(46, 160, 67, 0.1);
+      transform: scale(1.02);
+  }
+
+  /* Animations */
+  @keyframes slideIn {
+      from {
+          transform: translateX(100%);
+          opacity: 0;
+      }
+      to {
+          transform: translateX(0);
+          opacity: 1;
+      }
+  }
+
+  @keyframes pulse {
+      0% {
+          opacity: 0.4;
+          transform: scale(1);
+      }
+      50% {
+          opacity: 1;
+          transform: scale(1.1);
+      }
+      100% {
+          opacity: 0.4;
+          transform: scale(1);
+      }
+  }
+
+  @keyframes fadeOut {
+      from {
+          transform: translateX(0);
+          opacity: 1;
+      }
+      to {
+          transform: translateX(100%);
+          opacity: 0;
+      }
+  }
+
+  .notification.fade-out {
+      animation: fadeOut 0.3s ease-in forwards;
+  }
+
+  /* WebSocket connection pulse */
+  @keyframes connectionPulse {
+      0% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+      50% { box-shadow: 0 2px 8px rgba(46, 160, 67, 0.6); }
+      100% { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+  }
+
+  .ws-status.connected {
+      animation: connectionPulse 3s infinite;
+  }
+
+  /* Responsividade */
+  @media (max-width: 768px) {
+      .tabs {
+          flex-direction: column;
+      }
+
+  .tab-button {
+      margin: 2px;
+  }
+
+  .scanner-grid {
+      grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+      flex-direction: column;
+  }
+
+  .trades-table {
+      font-size: 12px;
+  }
+
+  .trades-table th,
+  .trades-table td {
+      padding: 6px;
+  }
+
+  /* Mobile WebSocket Status */
+  .ws-status {
+      top: 5px;
+      right: 5px;
+      font-size: 10px;
+      padding: 6px 8px;
+  }
+
+  /* Mobile Notifications */
+  #notifications {
+      width: calc(100vw - 20px);
+      right: 10px;
+      top: 40px;
+      left: 10px;
+  }
+
+  .notification {
+      padding: 12px 14px;
+      margin-bottom: 8px;
+  }
+
+  .notification h4 {
+      font-size: 13px;
+  }
+
+  .notification p {
+      font-size: 12px;
+  }
+  }
