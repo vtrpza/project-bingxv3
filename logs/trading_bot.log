@@ -5902,3 +5902,526 @@ NameError: name 'offset' is not defined
 2025-07-24 14:23:29,184 - api.web_api - INFO - Database initialization completed successfully
 2025-07-24 14:23:29,184 - api.web_api - INFO - Background tasks started
 2025-07-24 14:23:30,695 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:26:24,215 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:26:24,215 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:26:24,227 - api.web_api - INFO - Starting up with 1.27s delay to prevent deadlocks...
+2025-07-24 14:26:25,499 - api.web_api - INFO - Initializing database...
+2025-07-24 14:26:25,499 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:26:25,499 - database.connection - INFO - Using SQLite database
+2025-07-24 14:26:25,507 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:26:25,507 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:26:25,508 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:26:25,508 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:26:25,508 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:26:25,722 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:26:25,723 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:26:26,133 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:26:26,133 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:26:26,133 - api.web_api - INFO - Background tasks started
+2025-07-24 14:26:35,911 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:26:35,912 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:26:35,912 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:26:35,953 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:26:36,053 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:26:42,162 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:26:42,163 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:26:46,045 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:26:46,046 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:26:50,484 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:26:50,485 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:26:51,672 - api.web_api - INFO - Starting full asset revalidation...
+2025-07-24 14:26:51,672 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 14:26:51,673 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 14:26:51,673 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 14:26:53,550 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 14:26:53,552 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 14:26:53,552 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 14:26:54,799 - api.client - INFO - Fetched 1516 USDT markets
+2025-07-24 14:26:54,800 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 14:26:54,803 - api.market_data - INFO - Fetched 1516 USDT markets
+2025-07-24 14:26:54,803 - scanner.initial_scanner - INFO - Extracting all active USDT pairs...
+2025-07-24 14:26:54,804 - scanner.initial_scanner - INFO - Found 1516 active USDT pairs.
+2025-07-24 14:26:54,804 - scanner.initial_scanner - INFO - Discovered 1516 USDT pairs for validation
+2025-07-24 14:26:54,804 - scanner.initial_scanner - INFO - Starting incremental validation of 1516 assets...
+2025-07-24 14:26:54,804 - scanner.initial_scanner - INFO - Processing 1516 assets with bulk operations (18 priority)
+2025-07-24 14:26:58,710 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:26:59,033 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:26:59,342 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:26:59,653 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:26:59,973 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:00,294 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:00,601 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:00,918 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:01,225 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:01,535 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:01,845 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:02,160 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:02,469 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:02,778 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:03,098 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:03,412 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:03,413 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 1.49s
+2025-07-24 14:27:03,413 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 1.49s
+2025-07-24 14:27:03,415 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:03,416 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:27:05,222 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:05,222 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.59s
+2025-07-24 14:27:05,523 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:05,524 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.29s
+2025-07-24 14:27:05,924 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:05,926 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:27:07,310 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:07,311 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:27:09,130 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:09,437 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:09,577 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,578 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,579 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.18s
+2025-07-24 14:27:09,755 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 14:27:09,756 - api.client - ERROR - Error fetching ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 14:27:09,756 - api.market_data - ERROR - Error fetching market summary for 1000CAT/USDT: Failed to fetch ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 14:27:09,756 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 14:27:09,756 - api.client - ERROR - Error fetching ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 14:27:09,756 - api.market_data - ERROR - Error fetching market summary for 1000BONK/USDT: Failed to fetch ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 14:27:09,756 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 14:27:09,756 - api.client - ERROR - Error fetching ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 14:27:09,757 - api.market_data - ERROR - Error fetching market summary for 1000CHEEMS/USDT: Failed to fetch ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Error fetching ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 14:27:09,757 - api.market_data - ERROR - Error fetching market summary for 10000SATS/USDT: Failed to fetch ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Error fetching ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 14:27:09,757 - api.market_data - ERROR - Error fetching market summary for 10000WHY/USDT: Failed to fetch ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Error fetching ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 14:27:09,757 - api.market_data - ERROR - Error fetching market summary for 1000PEPE/USDT: Failed to fetch ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 14:27:09,757 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 14:27:09,758 - api.client - ERROR - Error fetching ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 14:27:09,758 - api.market_data - ERROR - Error fetching market summary for 1000000MOG/USDT: Failed to fetch ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 14:27:10,074 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:10,391 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:10,391 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 14:27:10,391 - api.client - ERROR - Error fetching ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 14:27:10,392 - api.market_data - ERROR - Error fetching market summary for 1000000BOB/USDT: Failed to fetch ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,524 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,525 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,525 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,525 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,525 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:10,525 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.49s
+2025-07-24 14:27:11,337 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:11,658 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:11,969 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:12,272 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:12,589 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:12,912 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:13,213 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:13,524 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:13,841 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:14,161 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:14,470 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:14,471 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.44s
+2025-07-24 14:27:14,777 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:14,777 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.13s
+2025-07-24 14:27:15,086 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:15,087 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.83s
+2025-07-24 14:27:15,406 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:15,406 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.51s
+2025-07-24 14:27:15,718 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:15,719 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.19s
+2025-07-24 14:27:16,053 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:16,053 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.86s
+2025-07-24 14:27:16,359 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:16,360 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.55s
+2025-07-24 14:27:16,361 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:16,363 - api.web_api - INFO - Fetched 21 assets (total: 21, page: 1/1)
+2025-07-24 14:27:16,366 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:16,367 - api.web_api - INFO - Fetched 21 assets (total: 21, page: 1/1)
+2025-07-24 14:27:16,368 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:27:16,368 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:27:19,079 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:19,378 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:19,680 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:19,983 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:20,292 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:20,607 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:20,906 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:20,939 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:27:20,939 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:27:20,939 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:27:20,948 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:20,950 - api.web_api - INFO - Fetched 25 assets (total: 31, page: 1/2)
+2025-07-24 14:27:21,038 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,038 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,039 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,040 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,040 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,040 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,040 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:21,040 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.72s
+2025-07-24 14:27:22,079 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:22,080 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.61s
+2025-07-24 14:27:22,384 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:22,384 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.31s
+2025-07-24 14:27:22,683 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:22,683 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.63s
+2025-07-24 14:27:22,993 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:22,994 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.32s
+2025-07-24 14:27:23,321 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:23,321 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.62s
+2025-07-24 14:27:23,617 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:23,617 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.32s
+2025-07-24 14:27:23,929 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:24,239 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:24,535 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:24,535 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.34s
+2025-07-24 14:27:24,842 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:24,842 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.03s
+2025-07-24 14:27:25,151 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:25,151 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.72s
+2025-07-24 14:27:25,446 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:25,446 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.42s
+2025-07-24 14:27:25,749 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:25,750 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.12s
+2025-07-24 14:27:26,054 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:26,055 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.82s
+2025-07-24 14:27:26,359 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:26,359 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.51s
+2025-07-24 14:27:26,694 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:26,694 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.18s
+2025-07-24 14:27:26,992 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:27,318 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:27,680 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:28,051 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:28,374 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:28,704 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:28,743 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:28,746 - api.web_api - INFO - Fetched 25 assets (total: 31, page: 1/2)
+2025-07-24 14:27:29,224 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:29,529 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:29,848 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:30,164 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:30,465 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:30,777 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:31,084 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:31,413 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:31,547 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,547 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,547 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,548 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:31,549 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.31s
+2025-07-24 14:27:32,186 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:32,186 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.84s
+2025-07-24 14:27:32,491 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:32,491 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.54s
+2025-07-24 14:27:32,819 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:32,819 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.21s
+2025-07-24 14:27:33,123 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:33,123 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.91s
+2025-07-24 14:27:33,437 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:33,438 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.59s
+2025-07-24 14:27:33,751 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:33,752 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.28s
+2025-07-24 14:27:34,054 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:34,054 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.74s
+2025-07-24 14:27:34,359 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:34,359 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.44s
+2025-07-24 14:27:34,684 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:34,685 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.11s
+2025-07-24 14:27:35,007 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:35,007 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.79s
+2025-07-24 14:27:35,310 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:35,310 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.48s
+2025-07-24 14:27:35,611 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:35,611 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.18s
+2025-07-24 14:27:35,911 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:35,911 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.88s
+2025-07-24 14:27:36,248 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:36,249 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.55s
+2025-07-24 14:27:36,558 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:36,558 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.24s
+2025-07-24 14:27:36,874 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:37,219 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:37,552 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:37,860 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:38,187 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:38,493 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:38,828 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:39,147 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:39,478 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:39,781 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:40,104 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:40,419 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:40,751 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:41,075 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:41,391 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:41,410 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:41,412 - api.web_api - INFO - Fetched 25 assets (total: 51, page: 1/3)
+2025-07-24 14:27:41,511 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,511 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,511 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,512 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,513 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,513 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,513 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:41,513 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.45s
+2025-07-24 14:27:42,279 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:42,279 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.38s
+2025-07-24 14:27:42,581 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:42,582 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.08s
+2025-07-24 14:27:42,891 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:42,891 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.77s
+2025-07-24 14:27:43,196 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:43,196 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.46s
+2025-07-24 14:27:43,518 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:43,518 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.14s
+2025-07-24 14:27:43,830 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:43,830 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.83s
+2025-07-24 14:27:44,146 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:44,146 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.51s
+2025-07-24 14:27:44,450 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:44,450 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.21s
+2025-07-24 14:27:44,752 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:44,753 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.91s
+2025-07-24 14:27:45,063 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:45,063 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.60s
+2025-07-24 14:27:45,388 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:45,388 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.27s
+2025-07-24 14:27:45,681 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:45,681 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.98s
+2025-07-24 14:27:46,086 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:46,086 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.57s
+2025-07-24 14:27:46,400 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:46,401 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.26s
+2025-07-24 14:27:46,707 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:46,707 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.27s
+2025-07-24 14:27:46,873 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:47,178 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:47,482 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:47,788 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:48,100 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:48,395 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:48,710 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:49,011 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:49,316 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:49,627 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:49,941 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:50,239 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:50,553 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:50,858 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:51,166 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:51,185 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:51,186 - api.web_api - INFO - Fetched 25 assets (total: 62, page: 1/3)
+2025-07-24 14:27:51,285 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.78s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,286 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,287 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,287 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,287 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:51,287 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.77s
+2025-07-24 14:27:52,375 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:52,376 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.43s
+2025-07-24 14:27:52,673 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:52,673 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.14s
+2025-07-24 14:27:52,960 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:52,961 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.85s
+2025-07-24 14:27:53,264 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:53,265 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.54s
+2025-07-24 14:27:53,565 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:53,565 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.24s
+2025-07-24 14:27:53,565 - api.client - ERROR - Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:27:53,565 - api.client - ERROR - Error fetching ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:27:53,565 - api.market_data - ERROR - Error fetching market summary for ALTCOIN/USDT: Failed to fetch ticker for ALTCOIN/USDT: Exchange error: bingx does not have market symbol ALTCOIN/USDT
+2025-07-24 14:27:53,872 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:53,872 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.94s
+2025-07-24 14:27:54,176 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:54,176 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.63s
+2025-07-24 14:27:54,479 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:54,480 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.33s
+2025-07-24 14:27:54,796 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:54,796 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.01s
+2025-07-24 14:27:55,098 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:55,099 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.71s
+2025-07-24 14:27:55,402 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:55,402 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.41s
+2025-07-24 14:27:55,709 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:55,710 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.10s
+2025-07-24 14:27:56,012 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:56,012 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.80s
+2025-07-24 14:27:56,305 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:27:56,305 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.50s
+2025-07-24 14:27:56,306 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:27:56,307 - api.web_api - INFO - Fetched 25 assets (total: 62, page: 1/3)
+2025-07-24 14:27:57,130 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:57,440 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:57,753 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:58,058 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:58,363 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:58,677 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:59,004 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:59,317 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:59,620 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:27:59,927 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:00,228 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:00,588 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:00,896 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:01,206 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:01,260 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:28:01,261 - api.web_api - INFO - Fetched 25 assets (total: 73, page: 1/3)
+2025-07-24 14:28:01,360 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,360 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:01,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.80s
+2025-07-24 14:28:02,483 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:02,484 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.43s
+2025-07-24 14:28:02,786 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:02,787 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.12s
+2025-07-24 14:28:03,152 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:03,153 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.76s
+2025-07-24 14:28:03,479 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:03,479 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.43s
+2025-07-24 14:28:03,785 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:03,785 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.12s
+2025-07-24 14:28:04,103 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:04,103 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.81s
+2025-07-24 14:28:04,405 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:04,406 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.50s
+2025-07-24 14:28:04,723 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:04,723 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.19s
+2025-07-24 14:28:05,022 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:05,023 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.89s
+2025-07-24 14:28:05,336 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:05,337 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.57s
+2025-07-24 14:28:05,655 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:05,655 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.25s
+2025-07-24 14:28:05,965 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:05,966 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.94s
+2025-07-24 14:28:06,281 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:06,282 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.63s
+2025-07-24 14:28:06,583 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:28:06,583 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.33s
+2025-07-24 14:28:06,584 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:28:06,585 - api.web_api - INFO - Fetched 25 assets (total: 73, page: 1/3)
+2025-07-24 14:28:07,220 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:07,525 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:07,838 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:08,148 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:08,453 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:08,759 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:09,063 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:09,380 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:09,683 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:09,994 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:10,307 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:10,620 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:10,933 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:11,241 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:28:11,259 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:28:11,261 - api.web_api - INFO - Fetched 25 assets (total: 84, page: 1/4)
+2025-07-24 14:28:11,263 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:28:11,263 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:28:11,360 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,360 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,361 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,362 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.90s
+2025-07-24 14:28:11,363 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:28:12,450 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:28:12,450 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:28:12,463 - api.web_api - INFO - Starting up with 1.99s delay to prevent deadlocks...
+2025-07-24 14:28:14,455 - api.web_api - INFO - Initializing database...
+2025-07-24 14:28:14,455 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:28:14,455 - database.connection - INFO - Using SQLite database
+2025-07-24 14:28:14,463 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:28:14,464 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:28:14,464 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:28:14,464 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:28:14,464 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:28:14,503 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:28:14,503 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:28:14,598 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:28:14,598 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:28:14,598 - api.web_api - INFO - Background tasks started
+2025-07-24 14:28:16,355 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:28:16,355 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:28:16,356 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:28:18,912 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:28:19,006 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:28:27,631 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:28:27,631 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:28:27,731 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:28:28,731 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:28:28,731 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:28:28,744 - api.web_api - INFO - Starting up with 1.48s delay to prevent deadlocks...

@@ -203,7 +203,7 @@ class TradingBotApp:
             search_input = document.getElementById("symbol-search")
             search_term = search_input.value.strip() if search_input else ""
             
-            current_sort = getattr(ui_components.UIComponents, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
+            current_sort = getattr(ui_components, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
             
             # Get page data from API
             validation_data = await api_client.get_validation_table(
@@ -230,7 +230,7 @@ class TradingBotApp:
             search_input = document.getElementById("symbol-search")
             search_term = search_input.value.strip() if search_input else ""
             
-            current_sort = getattr(ui_components.UIComponents, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
+            current_sort = getattr(ui_components, '_current_sort', {'column': 'symbol', 'direction': 'asc'})
             
             # Get filtered data from API
             validation_data = await api_client.get_validation_table(
