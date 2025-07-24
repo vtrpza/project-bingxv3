@@ -1498,14 +1498,9 @@ async def get_active_positions(
         positions = []
         for trade in open_trades:
             try:
-                # Skip if BingX client is not available
-                if not bingx_client:
-                    logger.warning("BingX client not available - using entry price for calculations")
-                    current_price = float(trade.entry_price)
-                else:
-                    # Get current market price for P&L calculation
-                    current_ticker = await bingx_client.fetch_ticker(trade.symbol)
-                    current_price = current_ticker.get('last', 0)
+                # Get current market price for P&L calculation
+                current_ticker = await safe_fetch_ticker(trade.symbol)
+                current_price = current_ticker.get('last', 0) or float(trade.entry_price)
                 
                 # Calculate P&L
                 if trade.side.upper() == 'BUY':
