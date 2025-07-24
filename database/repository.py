@@ -389,6 +389,20 @@ class IndicatorRepository(BaseRepository):
             logger.error(f"Error getting latest indicators: {e}")
             return []
 
+    def get_latest_indicators_by_timeframe(self, session: Session, asset_id: str, timeframe: str) -> Optional[Indicator]:
+        """Get latest indicator for specific asset and timeframe."""
+        try:
+            return (session.query(Indicator)
+                   .filter(and_(
+                       Indicator.asset_id == asset_id,
+                       Indicator.timeframe == timeframe
+                   ))
+                   .order_by(desc(Indicator.timestamp))
+                   .first())
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting latest indicators by timeframe: {e}")
+            return None
+
     def get_latest_indicators_for_all_assets(self, session: Session, limit: int = 100) -> List[Indicator]:
         """Get the very latest indicator for each asset, across all timeframes."""
         try:

@@ -12,6 +12,7 @@ import asyncio
 import json
 import os
 from datetime import datetime, timedelta
+from decimal import Decimal
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from pathlib import Path
 
@@ -26,6 +27,15 @@ from config.settings import get_settings
 
 logger = get_logger(__name__)
 settings = get_settings()
+
+# Initialize BingX client
+bingx_client = None
+try:
+    from api.client import get_client
+    bingx_client = get_client()
+    logger.info("BingX client initialized successfully")
+except Exception as e:
+    logger.warning(f"BingX client initialization failed: {e} - trading operations will be disabled")
 
 app = FastAPI(
     title="BingX Trading Bot API",
@@ -1452,9 +1462,14 @@ async def get_active_positions(
         positions = []
         for trade in open_trades:
             try:
-                # Get current market price for P&L calculation
-                current_ticker = await bingx_client.fetch_ticker(trade.symbol)
-                current_price = current_ticker.get('last', 0)
+                # Skip if BingX client is not available
+                if not bingx_client:
+                    logger.warning("BingX client not available - using entry price for calculations")
+                    current_price = float(trade.entry_price)
+                else:
+                    # Get current market price for P&L calculation
+                    current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+                    current_price = current_ticker.get('last', 0)
                 
                 # Calculate P&L
                 if trade.side.upper() == 'BUY':
@@ -1709,10 +1724,10 @@ async def get_trading_summary(
         logger.info("Fetching trading summary")
         
         # Get today's trades
-        today_trades = trade_repo.get_trades_today()
+        today_trades = trade_repo.get_trades_today(db)
         
         # Get all open positions  
-        open_positions = trade_repo.get_open_trades()
+        open_positions = trade_repo.get_open_trades(db)
         
         # Calculate total unrealized P&L
         total_unrealized_pnl = 0
@@ -1883,7 +1898,7 @@ async def update_all_risk_management(
         logger.info("Updating risk management for all open positions")
         
         # Get all open trades
-        open_trades = trade_repo.get_open_trades()
+        open_trades = trade_repo.get_open_trades(db)
         
         updates = []
         for trade in open_trades:
@@ -2045,10 +2060,10 @@ async def automated_risk_management():
             
             # Get database session
             db = next(get_db())
-            trade_repo = TradeRepository(db)
+            trade_repo = TradeRepository()
             
             # Get all open trades
-            open_trades = trade_repo.get_open_trades()
+            open_trades = trade_repo.get_open_trades(db)
             
             if not open_trades:
                 continue
@@ -2057,6 +2072,11 @@ async def automated_risk_management():
             
             for trade in open_trades:
                 try:
+                    # Skip if BingX client is not available
+                    if not bingx_client:
+                        logger.warning("BingX client not available - skipping risk management")
+                        continue
+                        
                     # Get current market price
                     current_ticker = await bingx_client.fetch_ticker(trade.symbol)
                     current_price = current_ticker.get('last', 0)
@@ -2100,8 +2120,8 @@ async def automated_risk_management():
                                     stop_price=new_stop_price
                                 )
                                 
-                                # Update database
-                                trade_repo.update_stop_loss(trade.id, new_stop_price)
+                                # Update database (method would need to be implemented with session)
+                                trade_repo.update_trade(db, str(trade.id), {'stop_loss': new_stop_price})
                                 
                                 logger.info(f"Trailing stop updated for {trade.symbol}: {new_stop_price} (profit: {profit_percentage:.2f}%)")
                                 
@@ -2139,7 +2159,10 @@ async def automated_risk_management():
                                 
                                 # Update trade in database - reduce quantity
                                 remaining_quantity = float(trade.quantity) - close_quantity
-                                trade_repo.update_trade_quantity(trade.id, remaining_quantity, realized_pnl)
+                                trade_repo.update_trade(db, str(trade.id), {
+                                    'quantity': remaining_quantity,
+                                    'fees': (trade.fees or 0) + realized_pnl
+                                })
                                 
                                 logger.info(f"Take profit executed for {trade.symbol} at {tp_percentage}%: {tp_size_percent}% closed, P&L: ${realized_pnl:.2f}")
                                 
@@ -2192,11 +2215,11 @@ async def automated_risk_management():
                                 
                                 # Close trade in database
                                 trade_repo.close_trade(
+                                    db,
                                     trade_id=str(trade.id),
                                     exit_price=current_price,
                                     exit_reason="STOP_LOSS_TRIGGERED",
-                                    pnl=pnl,
-                                    pnl_percentage=pnl_percentage
+                                    fees=Decimal('0')
                                 )
                                 
                                 logger.warning(f"Emergency stop loss triggered for {trade.symbol}: P&L ${pnl:.2f} ({pnl_percentage:.2f}%)")
