@@ -2619,3 +2619,112 @@ WHERE signals.is_processed = 0) AS anon_1]
 2025-07-24 07:30:04,368 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
 2025-07-24 07:30:04,369 - api.web_api - INFO - WebSocket connected. Total connections: 1
 2025-07-24 07:30:04,369 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:30:09,261 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:30:09,264 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:30:09,333 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:30:20,929 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:30:20,931 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:30:25,033 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:30:31,147 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:30:31,150 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:30:35,060 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:30:36,585 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:30:36,586 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:30:36,685 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:30:38,419 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:30:38,419 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:30:38,430 - api.web_api - INFO - Initializing database...
+2025-07-24 07:30:38,430 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:30:38,431 - database.connection - INFO - Using SQLite database
+2025-07-24 07:30:38,439 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:30:38,439 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 07:30:38,439 - api.web_api - WARNING - Database initialization failed: cannot import name 'drop_tables' from 'database.connection' (/home/vhnpo/project-bingxv3/database/connection.py) - running without database
+2025-07-24 07:30:41,646 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:30:41,672 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:30:41,680 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:30:41,680 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:30:41,680 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:30:45,759 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:30:51,911 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:30:51,913 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:30:55,989 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:31:02,098 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:02,102 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:31:04,955 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:31:04,955 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:31:05,056 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:31:06,565 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:31:06,566 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:31:06,575 - api.web_api - INFO - Initializing database...
+2025-07-24 07:31:06,575 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:31:06,575 - database.connection - INFO - Using SQLite database
+2025-07-24 07:31:06,583 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:31:06,583 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 07:31:06,583 - api.web_api - WARNING - Database initialization failed: cannot import name 'drop_tables' from 'database.connection' (/home/vhnpo/project-bingxv3/database/connection.py) - running without database
+2025-07-24 07:31:07,786 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:31:09,998 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:31:09,998 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:31:09,998 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:31:12,001 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:12,005 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:31:16,057 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:31:22,162 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:22,164 - api.web_api - INFO - Fetching ALL assets for revalidation: 77 total
+2025-07-24 07:31:26,250 - database.repository - ERROR - Error getting active signals count: (sqlite3.OperationalError) no such column: signals.is_processed
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT signals.id AS signals_id, signals.asset_id AS signals_asset_id, signals.trade_id AS signals_trade_id, signals.timestamp AS signals_timestamp, signals.signal_type AS signals_signal_type, signals.strength AS signals_strength, signals.rules_triggered AS signals_rules_triggered, signals.indicators_snapshot AS signals_indicators_snapshot, signals.is_processed AS signals_is_processed, signals.created_at AS signals_created_at 
+FROM signals 
+WHERE signals.is_processed = 0) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 07:31:31,999 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:31:32,000 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:31:32,100 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 07:31:32,836 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 07:31:32,836 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 07:31:32,846 - api.web_api - INFO - Initializing database...
+2025-07-24 07:31:32,846 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 07:31:32,847 - database.connection - INFO - Using SQLite database
+2025-07-24 07:31:32,854 - database.connection - INFO - Database connection established successfully
+2025-07-24 07:31:32,854 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 07:31:32,890 - database.connection - WARNING - All database tables dropped
+2025-07-24 07:31:32,890 - api.web_api - INFO - Creating database tables...
+2025-07-24 07:31:32,976 - database.connection - INFO - Database tables created successfully
+2025-07-24 07:31:32,976 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 07:31:32,977 - api.web_api - INFO - Background tasks started
+2025-07-24 07:31:32,978 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:32,995 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
