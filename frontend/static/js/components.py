@@ -667,6 +667,41 @@ class UIComponents:
                     
         except Exception as e:
             console.error(f"Error sorting table: {str(e)}")
+            # Fallback to server-side if client-side fails
+            UIComponents._sort_server_side(column)
+    
+    @staticmethod
+    def _sort_server_side(column):
+        """Fallback to server-side sorting"""
+        try:
+            console.log(f"Falling back to server-side sorting for: {column}")
+            
+            # Toggle sort direction if same column
+            current_sort_column = getattr(UIComponents, '_sort_column', None)
+            current_sort_direction = getattr(UIComponents, '_sort_direction', 'asc')
+            
+            if current_sort_column == column:
+                new_direction = 'desc' if current_sort_direction == 'asc' else 'asc'
+            else:
+                new_direction = 'asc'
+            
+            # Store sort state
+            UIComponents._sort_column = column
+            UIComponents._sort_direction = new_direction
+            
+            # Use server-side sorting via document
+            from js import document
+            if hasattr(document, 'sortValidationTableServer'):
+                document.sortValidationTableServer(column, new_direction)
+            else:
+                console.warn("sortValidationTableServer function not available")
+                UIComponents.show_notification(
+                    "Ordenação", 
+                    "Função de ordenação não disponível", 
+                    "warning"
+                )
+        except Exception as e:
+            console.error(f"Error in server-side sort fallback: {e}")
     
     @staticmethod
     def _get_column_index(column):
