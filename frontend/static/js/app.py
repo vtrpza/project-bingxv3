@@ -110,7 +110,12 @@ class TradingBotApp:
                         
                 return self.scanning_active
         except Exception as e:
-            console.error(f"Error checking scanning status: {e}")
+            # Graceful fallback: assume server-side mode if endpoint not available
+            console.log(f"Scanner status endpoint not available (using server-side mode): {e}")
+            if self.scanning_active:
+                # Force switch back to server-side if we were in client-side mode
+                self.scanning_active = False
+                self.clear_client_side_cache()
             return False
 
     async def load_full_data_for_client_side(self):

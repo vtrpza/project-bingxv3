@@ -803,6 +803,15 @@ async def get_positions(
 # Bot control endpoints
 bot_status = {"running": False, "trading_enabled": False}
 
+# Scanner status tracking
+scanner_status = {
+    "scanning_active": False,
+    "assets_being_scanned": 0,
+    "last_scan_start": None,
+    "last_scan_end": None,
+    "scan_interval": 30  # seconds
+}
+
 @app.post("/api/bot/start")
 async def start_bot():
     """Start the bot system"""

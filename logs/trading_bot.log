@@ -9178,3 +9178,119 @@ NameError: name 'offset' is not defined
 2025-07-24 14:40:28,554 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
 2025-07-24 14:40:33,055 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
 2025-07-24 14:40:33,056 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:40,252 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:40,253 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:49,093 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:49,094 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:54,915 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:54,916 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:58,607 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:40:58,607 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:41:01,506 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:41:01,507 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:41:01,507 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:41:01,567 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:01,568 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:02,914 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:02,915 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:12,503 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:12,505 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:15,635 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:15,636 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:22,836 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:22,838 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:31,896 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:31,898 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:32,772 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:32,774 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:34,295 - api.web_api - INFO - Starting full asset revalidation...
+2025-07-24 14:41:34,295 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 14:41:34,296 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 14:41:34,296 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 14:41:35,126 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 14:41:35,128 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 14:41:35,128 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 14:41:36,984 - api.client - INFO - Fetched 1516 USDT markets
+2025-07-24 14:41:36,985 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 14:41:36,989 - api.market_data - INFO - Fetched 1516 USDT markets
+2025-07-24 14:41:36,990 - scanner.initial_scanner - INFO - Extracting all active USDT pairs...
+2025-07-24 14:41:36,990 - scanner.initial_scanner - INFO - Found 1516 active USDT pairs.
+2025-07-24 14:41:36,991 - scanner.initial_scanner - INFO - Discovered 1516 USDT pairs for validation
+2025-07-24 14:41:36,991 - scanner.initial_scanner - INFO - Starting incremental validation of 1516 assets...
+2025-07-24 14:41:36,992 - scanner.initial_scanner - INFO - Processing 1516 assets with bulk operations (18 priority)
+2025-07-24 14:41:41,477 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:41,808 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:42,352 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:42,678 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:43,008 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:43,237 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:43,565 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:43,887 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:44,218 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:44,555 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:44,864 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:45,188 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:45,504 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:45,819 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:46,142 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 14:41:46,479 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 14:41:46,480 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 0.61s
+2025-07-24 14:41:46,482 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:46,483 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:46,582 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:41:46,582 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:41:46,682 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:41:47,753 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:41:47,753 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:41:47,765 - api.web_api - INFO - Starting up with 1.09s delay to prevent deadlocks...
+2025-07-24 14:41:48,859 - api.web_api - INFO - Initializing database...
+2025-07-24 14:41:48,859 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:41:48,859 - database.connection - INFO - Using SQLite database
+2025-07-24 14:41:48,866 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:41:48,867 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:41:48,867 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:41:48,867 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:41:48,867 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:41:48,952 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:41:48,952 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:41:49,139 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:41:49,139 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:41:49,139 - api.web_api - INFO - Background tasks started
+2025-07-24 14:41:51,168 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:51,310 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:41:51,574 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:41:51,574 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:41:51,574 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:41:52,493 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:41:52,494 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:42:04,198 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:42:04,200 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:42:14,255 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:42:14,256 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:42:16,185 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:42:16,185 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:42:16,285 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:42:17,289 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:42:17,289 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:42:17,304 - api.web_api - INFO - Starting up with 1.47s delay to prevent deadlocks...
+2025-07-24 14:42:18,774 - api.web_api - INFO - Initializing database...
+2025-07-24 14:42:18,775 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:42:18,775 - database.connection - INFO - Using SQLite database
+2025-07-24 14:42:18,783 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:42:18,783 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:42:18,783 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:42:18,783 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:42:18,783 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:42:18,868 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:42:18,868 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:42:19,049 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:42:19,049 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:42:19,049 - api.web_api - INFO - Background tasks started
