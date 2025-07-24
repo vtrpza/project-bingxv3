@@ -300,7 +300,7 @@ class Signal(Base):
     timestamp = Column(DateTime(timezone=True), nullable=False)
     signal_type = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
     strength = Column(Numeric(5, 2))  # Signal strength 0-100
-    rules_triggered = Column(ARRAY(Text))  # Which rules triggered the signal
+    rules_triggered = Column(JSONType)  # Which rules triggered the signal (stored as JSON array)
     indicators_snapshot = Column(JSONType)  # Snapshot of indicators at signal time
     
     # Timestamp
