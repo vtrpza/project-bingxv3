@@ -68,8 +68,12 @@ class APIClient:
     
     async def get_validation_table(self, limit=50, include_invalid=True):
         """Get comprehensive asset validation table with all metrics"""
-        params = f"?limit={limit}&include_invalid={str(include_invalid).lower()}"
-        return await self.get(f"/assets/validation-table{params}")
+        params = []
+        if limit is not None:
+            params.append(f"limit={limit}")
+        params.append(f"include_invalid={str(include_invalid).lower()}")
+        query_string = "?" + "&".join(params) if params else ""
+        return await self.get(f"/assets/validation-table{query_string}")
 
     async def force_revalidation(self):
         """Force a full revalidation of all assets"""

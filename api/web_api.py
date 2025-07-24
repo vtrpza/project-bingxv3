@@ -725,65 +725,38 @@ async def websocket_endpoint(websocket: WebSocket):
 # Background task to broadcast real-time data
 async def broadcast_realtime_data():
     """Background task to send real-time updates to connected clients"""
+    last_broadcast_time = None
+    
     while True:
         try:
             if manager.active_connections:
-                # Get latest data
-                from database.connection import get_session
+                current_time = datetime.utcnow()
                 
-                indicator_repo = IndicatorRepository()
-                signal_repo = SignalRepository()
-                position_repo = TradeRepository()
-                
-                with get_session() as session:
-                    # Get latest indicators
-                    latest_indicators = indicator_repo.get_latest_indicators(session)
+                # Só faz broadcast a cada 15 segundos para evitar spam e concorrência
+                if (last_broadcast_time is None or 
+                    (current_time - last_broadcast_time).total_seconds() >= 15):
                     
-                    # Get recent signals (last 24 hours)
-                    active_signals = signal_repo.get_recent_signals(session, hours=24)
-                    
-                    # Get open positions
-                    active_positions = position_repo.get_open_trades(session)
-                
-                # Prepare broadcast data
-                broadcast_data = {
-                    "type": "realtime_update",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "data": {
-                        "indicators": [
-                            {
-                                "symbol": ind.symbol,
-                                "timeframe": ind.timeframe,
-                                "mm1": float(ind.mm1) if ind.mm1 else None,
-                                "center": float(ind.center) if ind.center else None,
-                                "rsi": float(ind.rsi) if ind.rsi else None,
-                                "price": float(ind.price) if ind.price else None,
-                                "timestamp": ind.timestamp.isoformat()
-                            }
-                            for ind in latest_indicators
-                        ],
-                        "active_signals": len(active_signals),
-                        "active_positions": [
-                            {
-                                "symbol": pos.symbol,
-                                "side": pos.side,
-                                "unrealized_pnl": float(pos.unrealized_pnl) if pos.unrealized_pnl else None,
-                                "current_price": float(pos.current_price) if pos.current_price else None
-                            }
-                            for pos in active_positions
-                        ]
+                    # Simples notificação de que há uma atualização disponível
+                    # O frontend fará a chamada API para buscar os dados atualizados
+                    broadcast_data = {
+                        "type": "realtime_update", 
+                        "timestamp": current_time.isoformat(),
+                        "data": {
+                            "update_available": True,
+                            "message": "Data refresh recommended"
+                        }
                     }
-                }
-                
-                await manager.broadcast(broadcast_data)
-                logger.debug(f"Broadcasted real-time data to {len(manager.active_connections)} clients")
+                    
+                    await manager.broadcast(broadcast_data)
+                    last_broadcast_time = current_time
+                    logger.debug(f"Sent update notification to {len(manager.active_connections)} clients")
                 
         except Exception as e:
             logger.error(f"Error in broadcast task: {e}")
             # Continue the loop even if one broadcast fails
         
-        # Wait 5 seconds before next broadcast
-        await asyncio.sleep(5)
+        # Wait 15 seconds before next check (aumentado de 5 para 15)
+        await asyncio.sleep(15)
 
 # Start background task - merge with main startup event
 async def start_background_tasks():

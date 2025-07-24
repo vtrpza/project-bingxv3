@@ -18,8 +18,13 @@ class TradingBotApp:
     def __init__(self):
         self.update_interval = None
         self.auto_refresh_enabled = True
-        self.refresh_rate = 5000  # 5 seconds
+        self.refresh_rate = 10000  # 10 seconds (reduzido para evitar concorrência)
         self.current_tab = "scanner"
+        
+        # Cache para evitar atualizações desnecessárias
+        self.last_validation_data = None
+        self.last_validation_timestamp = None
+        self.update_in_progress = False
         
         # Initialize after DOM is ready
         self.initialize()
@@ -89,17 +94,44 @@ class TradingBotApp:
             console.error(f"Error updating dashboard summary: {str(e)}")
     
     async def update_validation_table(self):
-        """Update asset validation table"""
+        """Update asset validation table with debounce and cache"""
+        # Evita atualizações simultâneas
+        if self.update_in_progress:
+            console.log("Validation table update already in progress, skipping...")
+            return
+            
         try:
-            # Get validation table data
-            validation_data = await api_client.get_validation_table()
+            self.update_in_progress = True
+            console.log("Updating validation table...")
+            
+            # Get validation table data with no limit to get all assets
+            validation_data = await api_client.get_validation_table(limit=None, include_invalid=True)
             if validation_data:
+                # Verificar se os dados realmente mudaram
+                current_timestamp = validation_data.get("summary", {}).get("last_updated")
+                
+                if (self.last_validation_data is not None and 
+                    self.last_validation_timestamp == current_timestamp):
+                    console.log("Validation data unchanged, skipping UI update")
+                    return
+                
+                # Atualizar cache
+                self.last_validation_data = validation_data
+                self.last_validation_timestamp = current_timestamp
+                
+                # Atualizar UI
                 ui_components.update_validation_table(validation_data)
+                
                 # Update summary stats
                 summary = validation_data.get("summary", {})
                 self.update_validation_stats(summary)
+                
+                console.log(f"Validation table updated - Valid: {summary.get('valid_assets', 0)}, Total: {summary.get('total_assets', 0)}")
+                
         except Exception as e:
             console.error(f"Error updating validation table: {str(e)}")
+        finally:
+            self.update_in_progress = False
     
     def update_validation_stats(self, summary):
         """Update validation statistics in the UI"""
@@ -161,16 +193,28 @@ class TradingBotApp:
     
     def handle_realtime_update(self, data):
         """
-        Handle real-time WebSocket updates by triggering a full data refresh.
-        This avoids issues with partial or incomplete data payloads from the WebSocket.
+        Handle real-time WebSocket updates with debounce to prevent data flickering.
         """
-        console.log("Real-time update received, triggering full data refresh...")
+        console.log("Real-time update received...")
         try:
-            # Trigger the same functions used for the initial load to ensure data consistency
-            asyncio.create_task(self.update_dashboard_summary())
-            asyncio.create_task(self.update_validation_table())
+            # Só atualiza se não há uma atualização em progresso
+            if not self.update_in_progress:
+                console.log("Triggering debounced data refresh...")
+                # Pequeno delay para evitar múltiplas atualizações simultâneas
+                setTimeout = document.defaultView.setTimeout
+                setTimeout(create_proxy(lambda: asyncio.create_task(self.debounced_update())), 1000)
+            else:
+                console.log("Update in progress, ignoring WebSocket update")
         except Exception as e:
             console.error(f"Error handling realtime update: {str(e)}")
+    
+    async def debounced_update(self):
+        """Atualização com debounce para evitar conflitos"""
+        try:
+            await self.update_validation_table()
+            await self.update_dashboard_summary()
+        except Exception as e:
+            console.error(f"Error in debounced update: {str(e)}")
     
     def handle_pong(self, data):
         """Handle WebSocket pong response"""
@@ -190,16 +234,24 @@ class TradingBotApp:
         )
     
     async def refresh_current_tab(self):
-        """Refresh data for current active tab"""
+        """Refresh data for current active tab with debounce"""
+        # Evita refresh se há atualização em progresso
+        if self.update_in_progress:
+            console.log("Update in progress, skipping scheduled refresh")
+            return
+            
         try:
+            console.log(f"Refreshing {self.current_tab} tab...")
+            
             if self.current_tab == "scanner":
                 await self.update_validation_table()
                 await self.update_scanner_data()
             elif self.current_tab == "trading":
                 await self.update_trading_data()
             
-            # Always update summary
-            await self.update_dashboard_summary()
+            # Always update summary (but only if validation isn't updating)
+            if not self.update_in_progress:
+                await self.update_dashboard_summary()
             
         except Exception as e:
             console.error(f"Error refreshing {self.current_tab} tab: {str(e)}")
@@ -271,6 +323,14 @@ def closePosition(position_id):
 
 def refreshValidationTable():
     """Global function to refresh validation table"""
+    if app.update_in_progress:
+        ui_components.show_notification(
+            "Tabela", 
+            "Atualização já em progresso, aguarde...", 
+            "warning"
+        )
+        return
+        
     asyncio.create_task(app.update_validation_table())
     ui_components.show_notification(
         "Tabela", 
