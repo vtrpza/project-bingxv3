@@ -67,8 +67,12 @@ class TradingConfig:
     
     # Scanner Configuration - OPTIMIZED FOR PERFORMANCE
     SCAN_INTERVAL: int = int(os.getenv("SCAN_INTERVAL", "10"))  # Ultra-fast 10s scanning
+    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL", "10"))  # Alias for consistency
     MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "1000"))  # Lower threshold for VST
     MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))  # Support up to 1500 assets
+    
+    # Worker Configuration
+    MAX_WORKERS: int = int(os.getenv("MAX_WORKERS", "4"))  # Number of parallel workers
     
     # Timeframes Configuration
     ANALYSIS_TIMEFRAMES: List[str] = os.getenv("ANALYSIS_TIMEFRAMES", "2h,4h").split(",")

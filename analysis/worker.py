@@ -474,3 +474,45 @@ async def analyze_symbol_on_demand(symbol: str) -> Dict[str, Any]:
     """Analyze a specific symbol on demand."""
     worker = get_analysis_worker()
     return await worker.analyze_specific_symbol(symbol)
+
+
+async def main():
+    """Main entry point for running the analysis worker."""
+    logger.info("Starting BingX Analysis Worker...")
+    
+    # Initialize database
+    try:
+        from database.connection import init_database
+        await asyncio.get_event_loop().run_in_executor(None, init_database)
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        return
+    
+    # Start the worker
+    worker = get_analysis_worker()
+    
+    try:
+        await worker.start()
+    except KeyboardInterrupt:
+        logger.info("Shutdown signal received")
+    except Exception as e:
+        logger.error(f"Worker error: {e}")
+    finally:
+        await worker.stop()
+        logger.info("Analysis worker shutdown complete")
+
+
+if __name__ == "__main__":
+    import signal
+    
+    def signal_handler(signum, frame):
+        logger.info(f"Received signal {signum}, initiating shutdown...")
+        # The main loop will handle the actual shutdown
+        
+    # Register signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    # Run the worker
+    asyncio.run(main())
