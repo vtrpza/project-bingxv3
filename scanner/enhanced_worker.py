@@ -278,7 +278,7 @@ class EnhancedScannerWorker:
     async def _store_indicators(self, session, asset, indicators, timeframe):
         """Store calculated indicators in database."""
         try:
-            self.indicator_repo.create_or_update(
+            self.indicator_repo.upsert_indicators(
                 session=session,
                 asset_id=asset.id,
                 timeframe=timeframe,
