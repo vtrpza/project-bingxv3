@@ -24,7 +24,7 @@ class APIClient:
         try:
             response = await fetch(f"{self.base_url}/api{endpoint}")
             if response.ok:
-                return await response.json()
+                return (await response.json()).to_py()
             else:
                 console.error(f"API Error: {response.status} - {await response.text()}")
                 return None
@@ -46,7 +46,7 @@ class APIClient:
             )
             
             if response.ok:
-                return await response.json()
+                return (await response.json()).to_py()
             else:
                 console.error(f"API Error: {response.status} - {await response.text()}")
                 return None
