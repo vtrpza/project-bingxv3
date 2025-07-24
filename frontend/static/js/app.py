@@ -6,7 +6,7 @@ Coordinates all frontend functionality and real-time updates
 import asyncio
 import json
 from datetime import datetime, timedelta
-from js import document, console, setInterval, clearInterval, setTimeout
+from js import document, console, setInterval, clearInterval, setTimeout, window
 from pyodide.ffi import create_proxy
 
 # Import our modules
