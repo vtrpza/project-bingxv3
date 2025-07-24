@@ -219,7 +219,7 @@ class AnalysisWorker:
             # Generate trading signal
             signal_result = {}
             try:
-                signal_result = self.signal_generator.generate_trading_signal(
+                signal_result = await self.signal_generator.generate_trading_signal(
                     symbol,
                     candles_data.get('spot', []),
                     candles_data.get('2h', []),
