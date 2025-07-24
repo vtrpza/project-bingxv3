@@ -37,6 +37,42 @@ try:
 except Exception as e:
     logger.warning(f"BingX client initialization failed: {e} - trading operations will be disabled")
 
+async def safe_fetch_ticker(symbol: str) -> dict:
+    """Safely fetch ticker with fallback when BingX client is unavailable."""
+    if not bingx_client:
+        logger.warning(f"BingX client not available - cannot fetch ticker for {symbol}")
+        return {'last': 0, 'bid': 0, 'ask': 0, 'quoteVolume': 0}
+    
+    try:
+        return await bingx_client.fetch_ticker(symbol)
+    except Exception as e:
+        logger.error(f"Error fetching ticker for {symbol}: {e}")
+        return {'last': 0, 'bid': 0, 'ask': 0, 'quoteVolume': 0}
+
+async def safe_create_market_order(symbol: str, side: str, amount: float) -> dict:
+    """Safely create market order with fallback when BingX client is unavailable."""
+    if not bingx_client:
+        logger.error(f"BingX client not available - cannot create {side} order for {symbol}")
+        raise HTTPException(status_code=503, detail="Trading API unavailable")
+    
+    try:
+        return await bingx_client.create_market_order(symbol, side, amount)
+    except Exception as e:
+        logger.error(f"Error creating {side} order for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=f"Order creation failed: {str(e)}")
+
+async def safe_create_stop_loss_order(symbol: str, side: str, amount: float, stop_price: float) -> dict:
+    """Safely create stop loss order with fallback when BingX client is unavailable."""
+    if not bingx_client:
+        logger.error(f"BingX client not available - cannot create stop loss order for {symbol}")
+        raise HTTPException(status_code=503, detail="Trading API unavailable")
+    
+    try:
+        return await bingx_client.create_stop_loss_order(symbol, side, amount, stop_price)
+    except Exception as e:
+        logger.error(f"Error creating stop loss order for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=f"Stop loss order creation failed: {str(e)}")
+
 app = FastAPI(
     title="BingX Trading Bot API",
     description="Real-time trading bot dashboard and control API",
