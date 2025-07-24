@@ -531,6 +531,17 @@ class TradeRepository(BaseRepository):
             logger.error(f"Error getting trades since {start_time}: {e}")
             return []
 
+    def get_trades_since(self, session: Session, start_time: datetime, asset_id: str = None) -> List[Trade]:
+        """Get trades that occurred since a specific timestamp."""
+        try:
+            query = session.query(Trade).filter(Trade.entry_time >= start_time)
+            if asset_id:
+                query = query.filter(Trade.asset_id == asset_id)
+            return query.order_by(desc(Trade.entry_time)).all()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting trades since {start_time}: {e}")
+            return []
+
 
 class SignalRepository(BaseRepository):
     """Repository for Signal operations."""

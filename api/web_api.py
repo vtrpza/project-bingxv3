@@ -41,6 +41,12 @@ async def startup_event():
             logger.warning("Database initialization failed - running without database")
             return
         
+        logger.info("Dropping existing database tables (if any)...")
+        from database.connection import drop_tables
+        if not drop_tables():
+            logger.warning("Database table dropping failed - running without database")
+            # Continue to try creating tables even if dropping fails
+        
         logger.info("Creating database tables...")
         if not create_tables():
             logger.warning("Database table creation failed - running without database")
