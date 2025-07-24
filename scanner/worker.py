@@ -18,7 +18,7 @@ from scanner.initial_scanner import InitialScanner
 from analysis.indicators import IndicatorCalculator
 from database.connection import init_database, get_session
 from database.repository import AssetRepository, IndicatorRepository, SignalRepository
-from api.client import get_client
+from api.client import get_client, initialize_client
 from config.trading_config import TradingConfig
 from utils.logger import get_logger
 
