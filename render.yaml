@@ -105,7 +105,7 @@ services:
 databases:
   # PostgreSQL Database
   - name: bingx-postgres
-    plan: basic
+    plan: starter
     databaseName: bingx_trading
     user: bingx_user
     ipAllowList: []
