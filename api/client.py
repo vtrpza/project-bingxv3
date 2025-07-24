@@ -7,7 +7,7 @@ import logging
 import time
 from collections import defaultdict, deque
 from typing import Dict, List, Optional, Any, Callable
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from datetime import datetime, timezone
 
 from config.settings import Settings
@@ -256,20 +256,30 @@ class BingXClient:
             # Use symbol as-is (BTC/USDT format)
             ticker = await self._execute_with_retry(self.exchange.fetch_ticker, symbol)
             
+            # Safe access to ticker data with proper error handling
+            def safe_decimal(value):
+                """Safely convert value to Decimal"""
+                try:
+                    return Decimal(str(value)) if value is not None else None
+                except (TypeError, ValueError, InvalidOperation):
+                    return None
+
             return {
                 'symbol': symbol,
                 'timestamp': ticker.get('timestamp'),
                 'datetime': ticker.get('datetime'),
-                'last': Decimal(str(ticker['last'])) if ticker['last'] else None,
-                'bid': Decimal(str(ticker['bid'])) if ticker['bid'] else None,
-                'ask': Decimal(str(ticker['ask'])) if ticker['ask'] else None,
-                'volume': Decimal(str(ticker['baseVolume'])) if ticker['baseVolume'] else None,
-                'quote_volume': Decimal(str(ticker['quoteVolume'])) if ticker['quoteVolume'] else None,
-                'change': Decimal(str(ticker['change'])) if ticker['change'] else None,
-                'percentage': Decimal(str(ticker['percentage'])) if ticker['percentage'] else None,
-                'high': Decimal(str(ticker['high'])) if ticker['high'] else None,
-                'low': Decimal(str(ticker['low'])) if ticker['low'] else None,
-                'open': Decimal(str(ticker['open'])) if ticker['open'] else None,
+                'last': safe_decimal(ticker.get('last')),
+                'bid': safe_decimal(ticker.get('bid')),
+                'ask': safe_decimal(ticker.get('ask')),
+                'volume': safe_decimal(ticker.get('baseVolume')),
+                'quote_volume': safe_decimal(ticker.get('quoteVolume')),
+                'quoteVolume': safe_decimal(ticker.get('quoteVolume')),  # Alternative key for compatibility
+                'change': safe_decimal(ticker.get('change')),
+                'percentage': safe_decimal(ticker.get('percentage')),
+                'high': safe_decimal(ticker.get('high')),
+                'low': safe_decimal(ticker.get('low')),
+                'open': safe_decimal(ticker.get('open')),
+                'raw_ticker': ticker  # Keep raw data for debugging
             }
             
         except Exception as e:
