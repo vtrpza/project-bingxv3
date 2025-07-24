@@ -1317,7 +1317,7 @@ async def get_trading_live_data(
                         "volume": volume_24h
                     },
                     "timeframe_2h": {
-                        "price": self._safe_get_candle_price(candles_2h, current_price),
+                        "price": _safe_get_candle_price(candles_2h, current_price),
                         "mm1": float(indicators_2h.mm1) if indicators_2h and indicators_2h.mm1 else None,
                         "center": float(indicators_2h.center) if indicators_2h and indicators_2h.center else None,
                         "rsi": float(indicators_2h.rsi) if indicators_2h and indicators_2h.rsi else None,
