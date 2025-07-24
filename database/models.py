@@ -7,12 +7,27 @@ from decimal import Decimal
 from typing import Optional, Dict, Any, List
 from sqlalchemy import (
     Column, String, Boolean, DateTime, JSON, Numeric, Integer,
-    Text, ForeignKey, ARRAY, CheckConstraint, UniqueConstraint, Index
+    Text, ForeignKey, CheckConstraint, UniqueConstraint, Index
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
+
+# Database-agnostic types
+try:
+    from sqlalchemy.dialects.postgresql import UUID, JSONB
+    # Use PostgreSQL-specific types when available
+    UUIDType = UUID(as_uuid=True)
+    JSONType = JSONB
+except ImportError:
+    # Fallback to generic types for SQLite
+    UUIDType = String(36)
+    JSONType = JSON
+
+# Check if we're using SQLite (for UUID handling)
+def get_uuid():
+    """Generate UUID compatible with both PostgreSQL and SQLite"""
+    return str(uuid.uuid4())
 
 Base = declarative_base()
 
@@ -23,7 +38,7 @@ class Asset(Base):
     __tablename__ = 'assets'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Asset information
     symbol = Column(String(20), unique=True, nullable=False, index=True)
@@ -62,10 +77,10 @@ class MarketData(Base):
     __tablename__ = 'market_data'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign key
-    asset_id = Column(UUID(as_uuid=True), ForeignKey('assets.id'), nullable=False)
+    asset_id = Column(UUIDType, ForeignKey('assets.id'), nullable=False)
     
     # Market data
     timestamp = Column(DateTime(timezone=True), nullable=False)
@@ -105,10 +120,10 @@ class Indicator(Base):
     __tablename__ = 'indicators'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign key
-    asset_id = Column(UUID(as_uuid=True), ForeignKey('assets.id'), nullable=False)
+    asset_id = Column(UUIDType, ForeignKey('assets.id'), nullable=False)
     
     # Indicator data
     timestamp = Column(DateTime(timezone=True), nullable=False)
@@ -147,10 +162,10 @@ class Trade(Base):
     __tablename__ = 'trades'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign key
-    asset_id = Column(UUID(as_uuid=True), ForeignKey('assets.id'), nullable=False)
+    asset_id = Column(UUIDType, ForeignKey('assets.id'), nullable=False)
     
     # Trade data
     side = Column(String(10), nullable=False)  # 'BUY' or 'SELL'
@@ -228,7 +243,7 @@ class Order(Base):
     __tablename__ = 'orders'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign key
     trade_id = Column(UUID(as_uuid=True), ForeignKey('trades.id'), nullable=False)
@@ -275,10 +290,10 @@ class Signal(Base):
     __tablename__ = 'signals'
     
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign keys
-    asset_id = Column(UUID(as_uuid=True), ForeignKey('assets.id'), nullable=False)
+    asset_id = Column(UUIDType, ForeignKey('assets.id'), nullable=False)
     trade_id = Column(UUID(as_uuid=True), ForeignKey('trades.id'))
     
     # Signal data
