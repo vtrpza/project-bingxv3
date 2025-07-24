@@ -1184,6 +1184,46 @@ class UIComponents:
         return row_html
     
     @staticmethod
+    def get_mm1_center_class(mm1_val, center_val, reverse=False):
+        """Get CSS class for MM1 vs Center comparison"""
+        if not mm1_val or not center_val:
+            return ""
+        
+        try:
+            mm1 = float(mm1_val)
+            center = float(center_val)
+            
+            if mm1 > center:
+                return "mm1-below-center" if reverse else "mm1-above-center"
+            elif mm1 < center:
+                return "mm1-above-center" if reverse else "mm1-below-center"
+            else:
+                return ""
+        except (ValueError, TypeError):
+            return ""
+    
+    @staticmethod
+    def get_rsi_zone_class(rsi_val):
+        """Get CSS class for RSI trading zones"""
+        if not rsi_val:
+            return ""
+        
+        try:
+            rsi = float(rsi_val)
+            
+            # Trading zone (35-73) - prime for signals
+            if 35 <= rsi <= 73:
+                return "rsi-trading-zone"
+            # Oversold zone (< 35)
+            elif rsi < 35:
+                return "rsi-buy-zone"
+            # Overbought zone (> 73)
+            else:
+                return "rsi-sell-zone"
+        except (ValueError, TypeError):
+            return ""
+    
+    @staticmethod
     def update_trading_data_table(trading_live_data):
         """Update trading data table with real-time data"""
         try:
