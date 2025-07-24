@@ -210,7 +210,9 @@ class AssetRepository(BaseRepository):
             logger.error(f"Error getting sorted assets: {e}")
             return []
     
-    def get_filtered_count(self, session: Session, filter_valid_only: bool = False, search: Optional[str] = None) -> int:
+    def get_filtered_count(self, session: Session, filter_valid_only: bool = False, search: Optional[str] = None,
+                          risk_level_filter: Optional[str] = None, priority_only: bool = False, 
+                          trading_enabled_only: bool = False) -> int:
         """Get count of assets with filters applied."""
         try:
             query = session.query(Asset)
@@ -229,6 +231,26 @@ class AssetRepository(BaseRepository):
             # Apply validity filter
             if filter_valid_only:
                 query = query.filter(Asset.is_valid == True)
+            
+            # Apply risk level filter
+            if risk_level_filter and risk_level_filter.upper() != "ALL":
+                risk_filter = f"%\"risk_level\":\"{risk_level_filter.upper()}\"%"
+                query = query.filter(Asset.validation_data.cast(String).ilike(risk_filter))
+            
+            # Apply priority filter
+            if priority_only:
+                priority_filter = "%\"priority_asset\":true%"
+                query = query.filter(Asset.validation_data.cast(String).ilike(priority_filter))
+            
+            # Apply trading enabled filter
+            if trading_enabled_only:
+                # Filter for assets with volume > 10000 and is_valid
+                query = query.filter(
+                    and_(
+                        Asset.is_valid == True,
+                        Asset.validation_data.cast(String).ilike('%"volume_24h_quote":%')
+                    )
+                )
                 
             return query.count()
         except SQLAlchemyError as e:
