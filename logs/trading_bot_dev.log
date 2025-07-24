@@ -9507,3 +9507,102 @@ RuntimeError: Database not initialized - call init_database() first
 2025-07-24 05:47:44,713 - api.market_data - ERROR - Error fetching market summary for DUSK/USDT: Failed to fetch ticker for DUSK/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753346864326}
 2025-07-24 05:47:49,517 - scanner.initial_scanner - ERROR - Failed to save validation result for BTC/USDT: Database not initialized - call init_database() first
 2025-07-24 05:47:50,156 - scanner.initial_scanner - ERROR - Failed to save validation result for ETH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:51,586 - scanner.initial_scanner - ERROR - Failed to save validation result for LINK/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:52,217 - scanner.initial_scanner - ERROR - Failed to save validation result for ADA/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:52,853 - scanner.initial_scanner - ERROR - Failed to save validation result for DOT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:54,355 - scanner.initial_scanner - ERROR - Failed to save validation result for AVAX/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:54,988 - scanner.initial_scanner - ERROR - Failed to save validation result for SOL/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:55,620 - scanner.initial_scanner - ERROR - Failed to save validation result for UNI/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:59,614 - scanner.initial_scanner - ERROR - Failed to save validation result for BNB/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:59,938 - scanner.initial_scanner - ERROR - Failed to save validation result for LINK/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:01,702 - scanner.initial_scanner - ERROR - Failed to save validation result for SOL/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:02,327 - scanner.initial_scanner - ERROR - Failed to save validation result for BNB/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:02,940 - scanner.initial_scanner - ERROR - Failed to save validation result for ADA/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:04,466 - scanner.initial_scanner - ERROR - Failed to save validation result for AVAX/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:04,583 - api.client - ERROR - Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 05:48:04,583 - api.client - ERROR - Error fetching ticker for ELX/USDT: Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 05:48:04,583 - api.market_data - ERROR - Error fetching market summary for ELX/USDT: Failed to fetch ticker for ELX/USDT: Exchange error: bingx does not have market symbol ELX/USDT
+2025-07-24 05:48:04,786 - scanner.initial_scanner - ERROR - Failed to save validation result for DOT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:06,618 - scanner.initial_scanner - ERROR - Failed to save validation result for BTC/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:07,253 - scanner.initial_scanner - ERROR - Failed to save validation result for $1/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:07,253 - scanner.initial_scanner - ERROR - Failed to save validation result for $URO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:09,726 - scanner.initial_scanner - ERROR - Failed to save validation result for ETH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:10,039 - scanner.initial_scanner - ERROR - Failed to save validation result for UNI/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:11,041 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000000BABYDOGE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:11,041 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:48:11,041 - api.client - ERROR - Error fetching ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:48:11,041 - api.market_data - ERROR - Error fetching market summary for 1000000BOB/USDT: Failed to fetch ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 05:48:11,042 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000000BOB/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:11,804 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:48:11,804 - api.client - ERROR - Error fetching ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:48:11,804 - api.market_data - ERROR - Error fetching market summary for 10000WHY/USDT: Failed to fetch ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 05:48:11,804 - scanner.initial_scanner - ERROR - Failed to save validation result for 10000WHY/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:11,804 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:48:11,804 - api.client - ERROR - Error fetching ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:48:11,804 - api.market_data - ERROR - Error fetching market summary for 10000SATS/USDT: Failed to fetch ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 05:48:11,805 - scanner.initial_scanner - ERROR - Failed to save validation result for 10000SATS/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:11,805 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:48:11,805 - api.client - ERROR - Error fetching ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:48:11,805 - api.market_data - ERROR - Error fetching market summary for 1000000MOG/USDT: Failed to fetch ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 05:48:11,805 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000000MOG/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:13,667 - scanner.initial_scanner - ERROR - Failed to save validation result for 1INCH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:13,667 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:48:13,668 - api.client - ERROR - Error fetching ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:48:13,668 - api.market_data - ERROR - Error fetching market summary for 1000PEPE/USDT: Failed to fetch ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 05:48:13,668 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000PEPE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:13,668 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:48:13,668 - api.client - ERROR - Error fetching ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:48:13,668 - api.market_data - ERROR - Error fetching market summary for 1000CHEEMS/USDT: Failed to fetch ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 05:48:13,668 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000CHEEMS/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:13,668 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:48:13,668 - api.client - ERROR - Error fetching ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:48:13,668 - api.market_data - ERROR - Error fetching market summary for 1000CAT/USDT: Failed to fetch ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 05:48:13,669 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000CAT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:13,669 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:48:13,669 - api.client - ERROR - Error fetching ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:48:13,669 - api.market_data - ERROR - Error fetching market summary for 1000BONK/USDT: Failed to fetch ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 05:48:13,669 - scanner.initial_scanner - ERROR - Failed to save validation result for 1000BONK/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:14,670 - scanner.initial_scanner - ERROR - Failed to save validation result for A/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:14,670 - scanner.initial_scanner - ERROR - Failed to save validation result for A/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:16,501 - scanner.initial_scanner - ERROR - Failed to save validation result for 5IRE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:17,135 - scanner.initial_scanner - ERROR - Failed to save validation result for 4EVER/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:17,762 - scanner.initial_scanner - ERROR - Failed to save validation result for 1INCH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:21,977 - scanner.initial_scanner - ERROR - Failed to save validation result for AAVE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:22,613 - scanner.initial_scanner - ERROR - Failed to save validation result for AAVE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:23,249 - scanner.initial_scanner - ERROR - Failed to save validation result for AAPLX/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:23,773 - scanner.initial_scanner - ERROR - Failed to save validation result for AAPLX/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:24,387 - scanner.initial_scanner - ERROR - Failed to save validation result for A8/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:26,601 - scanner.initial_scanner - ERROR - Failed to save validation result for ACE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:27,218 - scanner.initial_scanner - ERROR - Failed to save validation result for ACE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:27,842 - scanner.initial_scanner - ERROR - Failed to save validation result for ACA/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:32,069 - scanner.initial_scanner - ERROR - Failed to save validation result for ABT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:32,376 - scanner.initial_scanner - ERROR - Failed to save validation result for AB/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:34,009 - scanner.initial_scanner - ERROR - Failed to save validation result for ACH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:34,866 - scanner.initial_scanner - ERROR - Failed to save validation result for ACH/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:35,483 - scanner.initial_scanner - ERROR - Failed to save validation result for ACM/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:36,744 - scanner.initial_scanner - ERROR - Failed to save validation result for ACT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:37,344 - scanner.initial_scanner - ERROR - Failed to save validation result for ACS/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:38,972 - scanner.initial_scanner - ERROR - Failed to save validation result for ACT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:42,170 - scanner.initial_scanner - ERROR - Failed to save validation result for ACX/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:42,522 - scanner.initial_scanner - ERROR - Failed to save validation result for AERGO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:44,088 - scanner.initial_scanner - ERROR - Failed to save validation result for AERO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:44,979 - scanner.initial_scanner - ERROR - Failed to save validation result for AERGO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:46,627 - scanner.initial_scanner - ERROR - Failed to save validation result for AERO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:47,244 - scanner.initial_scanner - ERROR - Failed to save validation result for AEVO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:47,859 - scanner.initial_scanner - ERROR - Failed to save validation result for AEVO/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:49,060 - scanner.initial_scanner - ERROR - Failed to save validation result for AGI/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:52,520 - scanner.initial_scanner - ERROR - Failed to save validation result for AGENT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:54,033 - scanner.initial_scanner - ERROR - Failed to save validation result for AGIXT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:54,627 - scanner.initial_scanner - ERROR - Failed to save validation result for AGLD/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:55,251 - scanner.initial_scanner - ERROR - Failed to save validation result for AGLD/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:56,693 - scanner.initial_scanner - ERROR - Failed to save validation result for AGT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:57,321 - scanner.initial_scanner - ERROR - Failed to save validation result for AGT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:58,938 - scanner.initial_scanner - ERROR - Failed to save validation result for AI16Z/USDT: Database not initialized - call init_database() first
+2025-07-24 05:48:59,555 - scanner.initial_scanner - ERROR - Failed to save validation result for AI16Z/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:02,388 - scanner.initial_scanner - ERROR - Failed to save validation result for AIC/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:04,374 - scanner.initial_scanner - ERROR - Failed to save validation result for AIDOGE/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:04,999 - scanner.initial_scanner - ERROR - Failed to save validation result for AICELL/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:06,621 - scanner.initial_scanner - ERROR - Failed to save validation result for AIN/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:07,233 - scanner.initial_scanner - ERROR - Failed to save validation result for AIN/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:07,835 - scanner.initial_scanner - ERROR - Failed to save validation result for AIOT/USDT: Database not initialized - call init_database() first
+2025-07-24 05:49:09,050 - scanner.initial_scanner - ERROR - Failed to save validation result for AIOZ/USDT: Database not initialized - call init_database() first

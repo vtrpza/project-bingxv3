@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 from config.settings import Settings
 from config.trading_config import TradingConfig
-from database.connection import DatabaseManager, get_session
+from database.connection import DatabaseManager, get_session, init_database, create_tables
 from database.repository import AssetRepository, TradeRepository, OrderRepository
 from api.client import BingXClient
 from scanner.initial_scanner import InitialScanner
@@ -109,13 +109,18 @@ class TradingBot:
         logger.info("🗄️ Initializing database...")
         
         try:
-            self.db_manager = DatabaseManager()
-            await self.db_manager.initialize()
+            # Initialize global database manager
+            if not init_database():
+                raise RuntimeError("Failed to initialize database")
+            
+            # Create tables if they don't exist
+            if not create_tables():
+                raise RuntimeError("Failed to create database tables")
             
             # Test database connection
             with get_session() as session:
-                # Simple query to test connection
-                session.execute("SELECT 1")
+                from sqlalchemy import text
+                session.execute(text("SELECT 1"))
             
             logger.info("✅ Database initialized successfully")
             
