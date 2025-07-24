@@ -157,44 +157,20 @@ class InitialScanner:
         """Extract USDT trading pair symbols from market data with validation."""
         symbols = []
         
-        # VST-ONLY CONFIGURATION - Only trade VST/USDT
-        target_symbol = 'VST/USDT'
-        
-        # Debug: Log first 10 symbols to see what's available
-        logger.info("Available symbols (first 10):")
-        for i, market in enumerate(markets[:10]):
-            logger.info(f"  {i+1}: {market.get('symbol', 'N/A')} (active: {market.get('active', False)})")
-        
-        # Look for VST variations
-        vst_variations = ['VST/USDT', 'VST-USDT', 'VSTUSDT', 'vst/usdt', 'vst-usdt', 'vstusdt']
+        logger.info("Extracting all active USDT pairs...")
         
         for market in markets:
             try:
                 symbol = market.get('symbol', '').strip()
-                if symbol and market.get('active', False):
-                    # Check for VST variations
-                    for vst_var in vst_variations:
-                        if symbol.upper() == vst_var.upper():
-                            symbols.append(symbol)
-                            logger.info(f"VST-only mode: Found VST symbol {symbol}")
-                            return symbols  # Return immediately when found
+                # We are interested in perpetual swap contracts ending in USDT
+                if symbol.endswith('USDT') and market.get('active', False):
+                    symbols.append(symbol)
             except Exception as e:
-                logger.warning(f"Error processing market data: {e}")
+                logger.warning(f"Error processing market data for symbol '{market.get('symbol', 'N/A')}': {e}")
                 continue
         
-        # If no VST found, log this
-        logger.warning(f"VST symbol not found in {len(markets)} available markets")
-        logger.info("Searching for symbols containing 'VST'...")
-        
-        # Search for any symbol containing VST
-        for market in markets:
-            symbol = market.get('symbol', '')
-            if 'VST' in symbol.upper():
-                logger.info(f"Found symbol containing VST: {symbol} (active: {market.get('active', False)})")
-                if market.get('active', False):
-                    symbols.append(symbol)
-                    return symbols
-        
+        logger.info(f"Found {len(symbols)} active USDT pairs.")
+
         # Sort to prioritize important assets
         priority_symbols = []
         other_symbols = []
