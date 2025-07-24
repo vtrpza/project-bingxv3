@@ -557,61 +557,6 @@ class UIComponents:
         except Exception as e:
             console.error(f"Error filtering validation table: {str(e)}")
     
-    @staticmethod
-    def _render_validation_page():
-        """Render current page of validation table"""
-        try:
-            tbody = document.getElementById("validation-table-body")
-            if not tbody or not hasattr(UIComponents, '_validation_data'):
-                return
-            
-            data = UIComponents._validation_data
-            page = UIComponents._current_page
-            per_page = UIComponents._items_per_page
-            
-            # Calculate pagination
-            start_idx = (page - 1) * per_page
-            end_idx = start_idx + per_page
-            page_data = data[start_idx:end_idx]
-            
-            # Generate HTML
-            rows_html = ""
-            for asset in page_data:
-                rows_html += UIComponents.render_validation_table_row(asset)
-            
-            tbody.innerHTML = rows_html
-            
-        except Exception as e:
-            console.error(f"Error rendering validation page: {str(e)}")
-    
-    @staticmethod
-    def _update_pagination_info():
-        """Update pagination information"""
-        try:
-            if not hasattr(UIComponents, '_validation_data'):
-                return
-            
-            total_items = len(UIComponents._validation_data)
-            current_page = UIComponents._current_page
-            per_page = UIComponents._items_per_page
-            total_pages = max(1, (total_items + per_page - 1) // per_page)
-            
-            # Update page info
-            page_info = document.getElementById("page-info")
-            if page_info:
-                page_info.textContent = f"Página {current_page} de {total_pages}"
-            
-            # Update button states
-            prev_btn = document.querySelector(".pagination button:first-child")
-            next_btn = document.querySelector(".pagination button:last-child")
-            
-            if prev_btn:
-                prev_btn.disabled = current_page <= 1
-            if next_btn:
-                next_btn.disabled = current_page >= total_pages
-                
-        except Exception as e:
-            console.error(f"Error updating pagination: {str(e)}")
     
     @staticmethod
     def _update_server_pagination_info(pagination):

@@ -6447,3 +6447,9 @@ NameError: name 'offset' is not defined
 2025-07-24 14:28:33,227 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
 2025-07-24 14:28:33,228 - api.web_api - INFO - WebSocket connected. Total connections: 1
 2025-07-24 14:28:33,228 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:28:39,329 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:28:39,330 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:28:39,430 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:28:40,498 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:28:40,499 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:28:40,512 - api.web_api - INFO - Starting up with 1.10s delay to prevent deadlocks...
