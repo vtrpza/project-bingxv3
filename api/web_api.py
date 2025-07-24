@@ -180,19 +180,29 @@ async def test_database():
 # Asset validation table endpoint
 @app.get("/api/assets/validation-table")
 async def get_asset_validation_table(
-    limit: Optional[int] = 50,
+    limit: Optional[int] = None,
+    offset: Optional[int] = 0,
     include_invalid: bool = True
 ):
     """Get comprehensive asset validation table with all metrics from database"""
     try:
-        logger.info("Asset validation table requested - fetching from database")
+        logger.info(f"Asset validation table requested - offset: {offset}, limit: {limit}")
         
         from database.connection import get_session
         asset_repo = AssetRepository()
         
         with get_session() as db:
-            # Buscar todos os assets do banco de dados
-            all_assets = asset_repo.get_all(db, limit=limit or 1000)
+            # Get total count first
+            total_count = asset_repo.get_count(db)
+            
+            # If no limit specified, return all assets for full revalidation
+            # Otherwise use pagination
+            if limit is None:
+                all_assets = asset_repo.get_all(db, limit=None)
+                logger.info(f"Fetching ALL assets for revalidation: {len(all_assets)} total")
+            else:
+                all_assets = asset_repo.get_paginated(db, limit=limit, offset=offset or 0)
+                logger.info(f"Fetching paginated assets: {len(all_assets)} (offset: {offset}, limit: {limit})")
             
             table_data = []
             for asset in all_assets:
@@ -249,6 +259,16 @@ async def get_asset_validation_table(
             priority_assets = len([d for d in table_data if d['priority_asset']])
             assets_with_signals = len([d for d in table_data if d['signal_2h'] or d['signal_4h']])
             
+            # Add pagination metadata
+            pagination = {
+                "current_page": (offset // limit) + 1 if limit and limit > 0 else 1,
+                "total_pages": ((total_count - 1) // limit) + 1 if limit and limit > 0 else 1,
+                "page_size": limit or total_count,
+                "total_records": total_count,
+                "has_next": (offset + len(all_assets)) < total_count if limit else False,
+                "has_previous": offset > 0 if limit else False
+            }
+            
             return {
                 "table_data": table_data,
                 "summary": {
@@ -259,7 +279,8 @@ async def get_asset_validation_table(
                     "assets_with_signals": assets_with_signals,
                     "validation_success_rate": (valid_assets / total_assets * 100) if total_assets > 0 else 0,
                     "last_updated": datetime.utcnow().isoformat()
-                }
+                },
+                "pagination": pagination
             }
         
     except Exception as e:

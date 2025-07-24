@@ -29,12 +29,34 @@ class BaseRepository:
             logger.error(f"Error getting {self.model_class.__name__} by ID {id}: {e}")
             return None
     
-    def get_all(self, session: Session, limit: int = 1000) -> List[Any]:
+    def get_all(self, session: Session, limit: Optional[int] = 1000) -> List[Any]:
         """Get all records with optional limit."""
         try:
-            return session.query(self.model_class).limit(limit).all()
+            query = session.query(self.model_class)
+            if limit is not None:
+                query = query.limit(limit)
+            return query.all()
         except SQLAlchemyError as e:
             logger.error(f"Error getting all {self.model_class.__name__}: {e}")
+            return []
+    
+    def get_count(self, session: Session) -> int:
+        """Get total count of records."""
+        try:
+            return session.query(self.model_class).count()
+        except SQLAlchemyError as e:
+            logger.error(f"Error counting {self.model_class.__name__}: {e}")
+            return 0
+    
+    def get_paginated(self, session: Session, limit: int = 50, offset: int = 0) -> List[Any]:
+        """Get paginated records."""
+        try:
+            return (session.query(self.model_class)
+                   .offset(offset)
+                   .limit(limit)
+                   .all())
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting paginated {self.model_class.__name__}: {e}")
             return []
     
     def create(self, session: Session, **kwargs) -> Optional[Any]:
