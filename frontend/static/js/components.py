@@ -638,64 +638,13 @@ class UIComponents:
     def export_validation_table():
         """Export validation table to CSV"""
         try:
-            if not hasattr(UIComponents, '_validation_data'):
-                console.warn("No validation data to export")
-                return
-            
-            data = UIComponents._validation_data
-            
-            # CSV headers
-            headers = [
-                "Symbol", "Status", "Score", "Last_Updated_UTC-3", "Price", "Volume_24h", "Spread_%",
-                "RSI_2h", "RSI_4h", "MA_Dir_2h", "MA_Dir_4h", "Signal_2h", "Signal_4h",
-                "Risk_Level", "Volatility_24h", "Data_Quality", "Priority"
-            ]
-            
-            # Generate CSV content
-            csv_lines = [headers.join(",")]
-            
-            for asset in data:
-                row = [
-                    asset.get("symbol", ""),
-                    asset.get("validation_status", ""),
-                    str(asset.get("validation_score", 0)),
-                    UIComponents.format_datetime_full(asset.get("last_updated", "")),
-                    str(asset.get("current_price", "")),
-                    str(asset.get("volume_24h_quote", "")),
-                    str(asset.get("spread_percent", "")),
-                    str(asset.get("rsi_2h", "")),
-                    str(asset.get("rsi_4h", "")),
-                    asset.get("ma_direction_2h", ""),
-                    asset.get("ma_direction_4h", ""),
-                    asset.get("signal_2h", ""),
-                    asset.get("signal_4h", ""),
-                    asset.get("risk_level", ""),
-                    str(asset.get("volatility_24h", "")),
-                    str(asset.get("data_quality_score", "")),
-                    str(asset.get("priority_asset", False))
-                ]
-                csv_lines.append(row.join(","))
-            
-            csv_content = csv_lines.join("\n")
-            
-            # Create and download file
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"asset_validation_{timestamp}.csv"
-            
-            # Create blob and download link
-            from js import Blob, URL, document
-            blob = Blob.new([csv_content], {"type": "text/csv"})
-            url = URL.createObjectURL(blob)
-            
-            # Create temporary download link
-            link = document.createElement("a")
-            link.href = url
-            link.download = filename
-            link.style.display = "none"
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-            URL.revokeObjectURL(url)
+            # Show notification that export is not available with server-side pagination
+            UIComponents.show_notification(
+                "Export",
+                "Função de export será reimplementada em breve com paginação server-side",
+                "info"
+            )
+            return
             
         except Exception as e:
             console.error(f"Error exporting table: {str(e)}")
@@ -801,10 +750,8 @@ class UIComponents:
 # Global UI components instance
 ui_components = UIComponents()
 
-# Initialize validation table data storage
-UIComponents._validation_data = []
-UIComponents._original_data = []
+# Initialize validation table state storage
 UIComponents._current_page = 1
-UIComponents._items_per_page = 25
-UIComponents._sort_column = None
+UIComponents._total_pages = 1
+UIComponents._sort_column = None 
 UIComponents._sort_direction = 'asc'
