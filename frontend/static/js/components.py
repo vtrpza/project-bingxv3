@@ -531,44 +531,28 @@ class UIComponents:
     
     @staticmethod
     def filter_validation_table():
-        """Filter validation table based on checkbox states"""
+        """Filter validation table using server-side filtering"""
         try:
-            if not hasattr(UIComponents, '_original_data'):
-                return
-            
-            # Get filter states
+            # Get filter states from UI
             show_only_valid = document.getElementById("show-only-valid")
-            show_only_with_signals = document.getElementById("show-only-with-signals")
-            priority_only = document.getElementById("priority-only")
+            priority_only = document.getElementById("priority-only") 
+            trading_enabled_only = document.getElementById("trading-enabled-only")
+            risk_level_filter = document.getElementById("risk-level-filter")
             
-            only_valid = show_only_valid.checked if show_only_valid else True
-            only_with_signals = show_only_with_signals.checked if show_only_with_signals else False
-            priority_filter = priority_only.checked if priority_only else False
+            # Build filters object
+            filters = {
+                'filter_valid_only': show_only_valid.checked if show_only_valid else False,
+                'priority_only': priority_only.checked if priority_only else False,
+                'trading_enabled_only': trading_enabled_only.checked if trading_enabled_only else False,
+                'risk_level_filter': risk_level_filter.value if risk_level_filter else "all"
+            }
             
-            # Start with original data
-            filtered_data = UIComponents._original_data.copy()
-            
-            # Apply filters
-            if only_valid:
-                filtered_data = [item for item in filtered_data if item.get("validation_status") == "VALID"]
-            
-            if only_with_signals:
-                filtered_data = [item for item in filtered_data 
-                               if item.get("signal_2h") or item.get("signal_4h")]
-            
-            if priority_filter:
-                filtered_data = [item for item in filtered_data if item.get("priority_asset", False)]
-            
-            # Update stored data and re-render
-            UIComponents._validation_data = filtered_data
-            UIComponents._current_page = 1
-            UIComponents._render_validation_page()
-            UIComponents._update_pagination_info()
-            
-            # Update total symbols count
-            total_element = document.getElementById("total-symbols-count")
-            if total_element:
-                total_element.textContent = str(len(UIComponents._original_data))
+            # Import app dynamically to avoid circular import
+            from js import document
+            if hasattr(document, 'applyValidationTableFilters'):
+                document.applyValidationTableFilters(filters)
+            else:
+                console.warn("applyValidationTableFilters function not available")
             
         except Exception as e:
             console.error(f"Error filtering validation table: {str(e)}")
