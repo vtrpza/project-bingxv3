@@ -290,7 +290,7 @@ class AnalysisWorker:
             try:
                 # Determine limit based on indicator requirements
                 if tf_name == 'spot':
-                    limit = max(50, self.config.VOLUME_SPIKE_LOOKBACK + 10)  # For volume analysis
+                    limit = max(100, self.config.VOLUME_SPIKE_LOOKBACK + 20)  # Increased for correlation analysis
                 else:
                     limit = max(50, self.config.CENTER_PERIOD + 10)  # For MA calculations
                 

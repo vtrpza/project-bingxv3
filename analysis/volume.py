@@ -220,8 +220,8 @@ class VolumeAnalyzer:
             
             # Align data
             min_length = min(len(price_changes), len(volume_changes))
-            if min_length < 5:
-                raise VolumeAnalysisError("Insufficient data for correlation analysis")
+            if min_length < 5 or price_changes.std() == 0 or volume_changes.std() == 0:
+                raise VolumeAnalysisError("Insufficient or constant data for correlation analysis")
             
             price_changes = price_changes.tail(min_length)
             volume_changes = volume_changes.tail(min_length)
