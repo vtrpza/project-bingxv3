@@ -224,10 +224,11 @@ class UIComponents:
     
     @staticmethod
     def render_position_row(position):
-        """Render position table row"""
+        """Render position table row with enhanced risk management features"""
         if not position:
             return ""
         
+        position_id = position.get("id", "")
         symbol = position.get("symbol", "")
         side = position.get("side", "")
         amount = position.get("amount", 0)
@@ -237,6 +238,14 @@ class UIComponents:
         stop_loss_price = position.get("stop_loss_price", 0)
         take_profit_price = position.get("take_profit_price", 0)
         status = position.get("status", "")
+        created_at = position.get("created_at", "")
+        
+        # Enhanced risk management fields
+        trailing_stop_level = position.get("trailing_stop_level", 0)
+        breakeven_price = position.get("breakeven_price", 0)
+        next_take_profit_level = position.get("next_take_profit_level", 0)
+        take_profit_count = position.get("take_profit_executions", 0)
+        is_breakeven = position.get("is_breakeven", False)
         
         # Calculate PnL percentage
         pnl_percentage = 0
@@ -246,26 +255,80 @@ class UIComponents:
             else:
                 pnl_percentage = ((entry_price - current_price) / entry_price) * 100
         
+        # Calculate position duration
+        duration_display = "-"
+        if created_at:
+            try:
+                from datetime import datetime, timedelta
+                created_dt = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+                now = datetime.now(created_dt.tzinfo)
+                duration = now - created_dt
+                
+                hours = int(duration.total_seconds() // 3600)
+                minutes = int((duration.total_seconds() % 3600) // 60)
+                duration_display = f"{hours:02d}:{minutes:02d}"
+            except:
+                duration_display = "-"
+        
+        # Determine next take profit level
+        next_tp_display = "-"
+        if next_take_profit_level:
+            next_tp_display = f"{UIComponents.format_currency(next_take_profit_level)} ({((next_take_profit_level - entry_price) / entry_price * 100):+.1f}%)"
+        
+        # Trailing stop display
+        trailing_display = "-"
+        if trailing_stop_level:
+            trailing_display = f"{UIComponents.format_currency(trailing_stop_level)}"
+            if is_breakeven:
+                trailing_display += " (BE)"
+        
+        # Status indicators
         pnl_class = UIComponents.get_pnl_class(unrealized_pnl)
         side_class = "buy-side" if side.upper() == "BUY" else "sell-side"
         
+        # Enhanced status display
+        status_display = status.upper()
+        if is_breakeven:
+            status_display += " (BREAKEVEN)"
+        if take_profit_count > 0:
+            status_display += f" (TP: {take_profit_count})"
+        
         row_html = f'''
-        <tr>
-            <td>{symbol}</td>
+        <tr class="position-row" data-position-id="{position_id}">
+            <td><strong>{symbol}</strong></td>
             <td class="{side_class}">{side.upper()}</td>
             <td>{UIComponents.format_currency(entry_price)}</td>
-            <td>{UIComponents.format_currency(current_price)}</td>
+            <td class="current-price">{UIComponents.format_currency(current_price)}</td>
             <td class="{pnl_class}">
                 {UIComponents.format_currency(unrealized_pnl)} 
                 ({UIComponents.format_percentage(pnl_percentage)})
             </td>
-            <td>{UIComponents.format_currency(stop_loss_price) if stop_loss_price else "-"}</td>
-            <td>{UIComponents.format_currency(take_profit_price) if take_profit_price else "-"}</td>
-            <td>{status.upper()}</td>
-            <td>
-                <button onclick="closePosition('{position.get('id', '')}')" class="btn-small btn-danger">
-                    Fechar
-                </button>
+            <td class="stop-loss-cell">
+                {UIComponents.format_currency(stop_loss_price) if stop_loss_price else "-"}
+            </td>
+            <td class="trailing-stop-cell">
+                {trailing_display}
+            </td>
+            <td class="take-profit-cell">
+                {next_tp_display}
+            </td>
+            <td class="duration-cell">{duration_display}</td>
+            <td class="status-cell">{status_display}</td>
+            <td class="actions-cell">
+                <div class="action-buttons">
+                    <button onclick="adjustStopLoss('{position_id}')" class="btn-mini btn-warning" title="Ajustar Stop Loss">
+                        SL
+                    </button>
+                    <button onclick="updateTrailingStop('{position_id}')" class="btn-mini btn-info" title="Atualizar Trailing Stop">
+                        TS
+                    </button>
+                    <button onclick="executeTakeProfit('{position_id}')" class="btn-mini btn-success" title="Executar Take Profit">
+                        TP
+                    </button>
+                    <button onclick="closePosition('{position_id}')" class="btn-mini btn-danger" title="Fechar Posição">
+                        ✕
+                    </button>
+                </div>
             </td>
         </tr>
         '''

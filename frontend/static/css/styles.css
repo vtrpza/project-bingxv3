@@ -1427,3 +1427,125 @@ input:focus {
         margin-left: 2px;
     }
 }
+
+/* === RISK MANAGEMENT BUTTONS === */
+.action-buttons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-mini {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-width: 24px;
+    text-align: center;
+}
+
+.btn-mini:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.btn-mini.btn-warning {
+    background: var(--accent-warning);
+    border-color: var(--accent-warning);
+    color: white;
+}
+
+.btn-mini.btn-warning:hover {
+    background: #e07628;
+    border-color: #e07628;
+}
+
+.btn-mini.btn-info {
+    background: var(--accent-info);
+    border-color: var(--accent-info);
+    color: white;
+}
+
+.btn-mini.btn-info:hover {
+    background: #0969da;
+    border-color: #0969da;
+}
+
+.btn-mini.btn-success {
+    background: var(--accent-buy);
+    border-color: var(--accent-buy);
+    color: white;
+}
+
+.btn-mini.btn-success:hover {
+    background: #238636;
+    border-color: #238636;
+}
+
+.btn-mini.btn-danger {
+    background: var(--accent-sell);
+    border-color: var(--accent-sell);
+    color: white;
+}
+
+.btn-mini.btn-danger:hover {
+    background: #da3633;
+    border-color: #da3633;
+}
+
+/* Position table specific styles */
+.position-row {
+    transition: background-color 0.2s ease;
+}
+
+.position-row:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.actions-cell {
+    min-width: 140px;
+    text-align: center;
+}
+
+.stop-loss-cell,
+.trailing-stop-cell,
+.take-profit-cell,
+.duration-cell,
+.status-cell {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+}
+
+.current-price {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Enhanced PnL display */
+.pnl-cell.positive {
+    color: var(--accent-buy);
+    font-weight: 600;
+}
+
+.pnl-cell.negative {
+    color: var(--accent-sell);
+    font-weight: 600;
+}
+
+/* Side indicators */
+.buy-side {
+    color: var(--accent-buy);
+    font-weight: 600;
+}
+
+.sell-side {
+    color: var(--accent-sell);
+    font-weight: 600;
+}

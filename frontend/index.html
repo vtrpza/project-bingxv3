@@ -317,7 +317,14 @@
                 </div>
 
                 <div class="dashboard-section">
-                    <h2>📈 Posições</h2>
+                    <h2>📈 Posições Ativas - Gerenciamento de Risco</h2>
+                    <div class="risk-management-controls">
+                        <button onclick="updateAllRiskManagement()" class="control-btn">
+                            🔄 Atualizar Risk Management
+                        </button>
+                        <span id="last-risk-update">Última atualização: -</span>
+                    </div>
+                    
                     <div class="table-container">
                         <table class="trades-table" id="positions-table">
                             <thead>
@@ -328,7 +335,9 @@
                                     <th>Atual</th>
                                     <th>P&L</th>
                                     <th>Stop Loss</th>
-                                    <th>Take Profit</th>
+                                    <th>Trailing Level</th>
+                                    <th>Próximo TP</th>
+                                    <th>Duração</th>
                                     <th>Status</th>
                                     <th>Ações</th>
                                 </tr>
@@ -808,11 +817,171 @@
             }
         }
         
+        // Risk Management Functions
+        async function updateAllRiskManagement() {
+            try {
+                const response = await fetch('/api/trading/risk-management/update-all', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const now = new Date();
+                    document.getElementById('last-risk-update').textContent = 
+                        `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
+                    
+                    showNotificationSafe('Risk Management', result.message, 'success');
+                    
+                    // Refresh positions table
+                    refreshTradingData();
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao atualizar risk management: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        async function closePosition(positionId) {
+            if (!confirm('Tem certeza que deseja fechar esta posição?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/trading/positions/${positionId}/close`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Posição Fechada', 
+                        `Posição fechada com P&L: $${result.final_pnl.toFixed(2)} (${result.pnl_percentage.toFixed(2)}%)`, 
+                        result.final_pnl >= 0 ? 'success' : 'warning');
+                    
+                    // Refresh positions
+                    refreshTradingData();
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao fechar posição: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        async function adjustStopLoss(positionId) {
+            // Get position data from the table row
+            const row = document.querySelector(`tr[data-position-id="${positionId}"]`);
+            if (!row) {
+                showNotificationSafe('Erro', 'Posição não encontrada', 'error');
+                return;
+            }
+            
+            const symbol = row.querySelector('td:first-child strong').textContent;
+            const currentStopLoss = row.querySelector('.stop-loss-cell').textContent.replace('$', '').replace(',', '');
+            
+            const newStopPrice = prompt(`Ajustar Stop Loss para ${symbol}\\nStop Loss atual: ${currentStopLoss}\\nNovo Stop Loss:`, currentStopLoss);
+            
+            if (!newStopPrice || newStopPrice === currentStopLoss) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/trading/positions/${positionId}/adjust-stop-loss`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ new_stop_price: parseFloat(newStopPrice) })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Stop Loss Ajustado', result.message, 'success');
+                    refreshTradingData();
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao ajustar stop loss: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        async function executeTakeProfit(positionId) {
+            // Get position data from the table row
+            const row = document.querySelector(`tr[data-position-id="${positionId}"]`);
+            if (!row) {
+                showNotificationSafe('Erro', 'Posição não encontrada', 'error');
+                return;
+            }
+            
+            const symbol = row.querySelector('td:first-child strong').textContent;
+            const pnlCell = row.querySelector('.pnl-cell').textContent;
+            const currentProfitMatch = pnlCell.match(/\(([+-]?\d+\.?\d*)%\)/);
+            const currentProfit = currentProfitMatch ? parseFloat(currentProfitMatch[1]) : 0;
+            
+            const profitLevel = prompt(`Executar Take Profit para ${symbol}\\nLucro atual: ${currentProfit.toFixed(2)}%\\nNível de lucro para fechar (%):`);
+            const closePercentage = prompt(`Percentual da posição para fechar (%):`, '25');
+            
+            if (!profitLevel || !closePercentage) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/trading/positions/${positionId}/take-profit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        profit_percentage: parseFloat(profitLevel),
+                        close_percentage: parseFloat(closePercentage)
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Take Profit', result.message, 'success');
+                    refreshTradingData();
+                } else {
+                    showNotificationSafe('Erro', result.message || 'Erro ao executar take profit', 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
+        async function updateTrailingStop(positionId) {
+            // Get position data from the table row
+            const row = document.querySelector(`tr[data-position-id="${positionId}"]`);
+            const symbol = row ? row.querySelector('td:first-child strong').textContent : 'posição';
+            
+            if (!confirm(`Atualizar Trailing Stop para ${symbol}?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/trading/positions/${positionId}/update-trailing-stop`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Trailing Stop', result.message, 'success');
+                    if (result.new_stop_price) {
+                        refreshTradingData();
+                    }
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao atualizar trailing stop: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+        
         // Make trading functions globally available
         window.toggleAutoTrading = toggleAutoTrading;
         window.refreshTradingData = refreshTradingData;
         window.filterTradingData = filterTradingData;
         window.executeSignalTrade = executeSignalTrade;
+        
+        // Risk management functions
+        window.updateAllRiskManagement = updateAllRiskManagement;
+        window.closePosition = closePosition;
+        window.adjustStopLoss = adjustStopLoss;
+        window.executeTakeProfit = executeTakeProfit;
+        window.updateTrailingStop = updateTrailingStop;
         
         
     </script>

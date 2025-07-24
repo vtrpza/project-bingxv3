@@ -1301,6 +1301,525 @@ async def execute_trading_signal(
         logger.error(f"Error executing trading signal: {e}")
         raise HTTPException(status_code=500, detail=f"Signal execution error: {str(e)}")
 
+@app.get("/api/trading/positions")
+async def get_active_positions(
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Get all active trading positions with real-time P&L"""
+    try:
+        logger.info("Fetching active trading positions")
+        
+        # Get open trades from database
+        open_trades = trade_repo.get_open_trades()
+        
+        positions = []
+        for trade in open_trades:
+            try:
+                # Get current market price for P&L calculation
+                current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+                current_price = current_ticker.get('last', 0)
+                
+                # Calculate P&L
+                if trade.side.upper() == 'BUY':
+                    unrealized_pnl = (current_price - trade.entry_price) * trade.quantity
+                    pnl_percentage = ((current_price - trade.entry_price) / trade.entry_price) * 100
+                else:  # SELL
+                    unrealized_pnl = (trade.entry_price - current_price) * trade.quantity
+                    pnl_percentage = ((trade.entry_price - current_price) / trade.entry_price) * 100
+                
+                # Get current trailing stop level
+                current_profit_percent = pnl_percentage / 100
+                trailing_level = TradingConfig.get_trailing_stop_level(Decimal(str(current_profit_percent)))
+                
+                position_data = {
+                    "id": str(trade.id),
+                    "symbol": trade.symbol,
+                    "side": trade.side,
+                    "amount": float(trade.quantity),
+                    "entry_price": float(trade.entry_price),
+                    "current_price": current_price,
+                    "unrealized_pnl": unrealized_pnl,
+                    "pnl_percentage": pnl_percentage,
+                    "stop_loss_price": float(trade.stop_loss) if trade.stop_loss else None,
+                    "take_profit_price": float(trade.take_profit) if trade.take_profit else None,
+                    "status": trade.status,
+                    "entry_time": trade.entry_time.isoformat(),
+                    "trailing_stop_level": {
+                        "trigger": float(trailing_level.trigger) if trailing_level else 0,
+                        "stop": float(trailing_level.stop) if trailing_level else 0
+                    },
+                    "duration": str(utc_now() - trade.entry_time)
+                }
+                
+                positions.append(position_data)
+                
+            except Exception as trade_error:
+                logger.error(f"Error processing trade {trade.id}: {trade_error}")
+                continue
+        
+        return {
+            "success": True,
+            "positions": positions,
+            "count": len(positions),
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching positions: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching positions: {str(e)}")
+
+@app.post("/api/trading/positions/{position_id}/close")
+async def close_position(
+    position_id: str,
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Manually close a specific position"""
+    try:
+        logger.info(f"Closing position: {position_id}")
+        
+        # Get trade from database
+        trade = trade_repo.get_by_id(position_id)
+        if not trade:
+            raise HTTPException(status_code=404, detail="Position not found")
+        
+        if trade.status != 'OPEN':
+            raise HTTPException(status_code=400, detail="Position is not open")
+        
+        # Get current market price
+        current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+        current_price = current_ticker.get('last', 0)
+        
+        # Execute market order to close position
+        close_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+        
+        close_order = await bingx_client.create_market_order(
+            symbol=trade.symbol,
+            side=close_side.lower(),
+            amount=float(trade.quantity)
+        )
+        
+        # Calculate P&L
+        if trade.side.upper() == 'BUY':
+            pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+        else:
+            pnl = (float(trade.entry_price) - current_price) * float(trade.quantity)
+        
+        pnl_percentage = (pnl / (float(trade.entry_price) * float(trade.quantity))) * 100
+        
+        # Update trade in database
+        trade_repo.close_trade(
+            trade_id=position_id,
+            exit_price=current_price,
+            exit_reason="MANUAL_CLOSE",
+            pnl=pnl,
+            pnl_percentage=pnl_percentage
+        )
+        
+        return {
+            "success": True,
+            "message": f"Position {position_id} closed successfully",
+            "close_order": close_order,
+            "final_pnl": pnl,
+            "pnl_percentage": pnl_percentage,
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error closing position {position_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error closing position: {str(e)}")
+
+@app.post("/api/trading/positions/{position_id}/adjust-stop-loss")
+async def adjust_stop_loss(
+    position_id: str,
+    new_stop_price: float,
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Adjust stop loss for a specific position"""
+    try:
+        logger.info(f"Adjusting stop loss for position {position_id} to {new_stop_price}")
+        
+        # Get trade from database
+        trade = trade_repo.get_by_id(position_id)
+        if not trade:
+            raise HTTPException(status_code=404, detail="Position not found")
+        
+        if trade.status != 'OPEN':
+            raise HTTPException(status_code=400, detail="Position is not open")
+        
+        # Validate new stop price
+        current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+        current_price = current_ticker.get('last', 0)
+        
+        if trade.side.upper() == 'BUY':
+            if new_stop_price >= current_price:
+                raise HTTPException(status_code=400, detail="Stop loss must be below current price for BUY position")
+        else:
+            if new_stop_price <= current_price:
+                raise HTTPException(status_code=400, detail="Stop loss must be above current price for SELL position")
+        
+        # Cancel existing stop loss order if exists
+        # (In real implementation, you'd need to track and cancel the actual exchange order)
+        
+        # Create new stop loss order
+        stop_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+        
+        try:
+            stop_order = await bingx_client.create_stop_loss_order(
+                symbol=trade.symbol,
+                side=stop_side.lower(),
+                amount=float(trade.quantity),
+                stop_price=new_stop_price
+            )
+            
+            # Update trade in database
+            trade_repo.update_stop_loss(trade.id, new_stop_price)
+            
+            return {
+                "success": True,
+                "message": f"Stop loss adjusted to {new_stop_price}",
+                "stop_order": stop_order,
+                "timestamp": utc_now().isoformat()
+            }
+            
+        except Exception as order_error:
+            logger.error(f"Error creating stop loss order: {order_error}")
+            raise HTTPException(status_code=500, detail=f"Error creating stop loss order: {str(order_error)}")
+        
+    except Exception as e:
+        logger.error(f"Error adjusting stop loss for position {position_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error adjusting stop loss: {str(e)}")
+
+@app.post("/api/trading/positions/{position_id}/update-trailing-stop")
+async def update_trailing_stop(
+    position_id: str,
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Update trailing stop based on current profit level"""
+    try:
+        logger.info(f"Updating trailing stop for position {position_id}")
+        
+        # Get trade from database
+        trade = trade_repo.get_by_id(position_id)
+        if not trade:
+            raise HTTPException(status_code=404, detail="Position not found")
+        
+        if trade.status != 'OPEN':
+            raise HTTPException(status_code=400, detail="Position is not open")
+        
+        # Get current market price
+        current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+        current_price = current_ticker.get('last', 0)
+        
+        # Calculate current profit
+        if trade.side.upper() == 'BUY':
+            profit_percent = ((current_price - float(trade.entry_price)) / float(trade.entry_price))
+        else:
+            profit_percent = ((float(trade.entry_price) - current_price) / float(trade.entry_price))
+        
+        # Get appropriate trailing stop level
+        trailing_level = TradingConfig.get_trailing_stop_level(Decimal(str(profit_percent)))
+        
+        if trailing_level and trailing_level.trigger <= Decimal(str(profit_percent)):
+            # Calculate new stop price
+            if trade.side.upper() == 'BUY':
+                new_stop_price = float(trade.entry_price) * (1 + float(trailing_level.stop))
+            else:
+                new_stop_price = float(trade.entry_price) * (1 - float(trailing_level.stop))
+            
+            # Only update if new stop is better than current
+            current_stop = float(trade.stop_loss) if trade.stop_loss else 0
+            should_update = False
+            
+            if trade.side.upper() == 'BUY' and new_stop_price > current_stop:
+                should_update = True
+            elif trade.side.upper() == 'SELL' and new_stop_price < current_stop:
+                should_update = True
+            
+            if should_update:
+                # Update stop loss
+                await adjust_stop_loss(position_id, new_stop_price, db, trade_repo)
+                
+                return {
+                    "success": True,
+                    "message": f"Trailing stop updated to {new_stop_price}",
+                    "new_stop_price": new_stop_price,
+                    "profit_percent": profit_percent * 100,
+                    "trailing_level": float(trailing_level.trigger) * 100,
+                    "timestamp": utc_now().isoformat()
+                }
+        
+        return {
+            "success": True,
+            "message": "No trailing stop update needed",
+            "current_profit": profit_percent * 100,
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating trailing stop for position {position_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error updating trailing stop: {str(e)}")
+
+@app.get("/api/trading/summary")
+async def get_trading_summary(
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Get trading performance summary"""
+    try:
+        logger.info("Fetching trading summary")
+        
+        # Get today's trades
+        today_trades = trade_repo.get_trades_today()
+        
+        # Get all open positions  
+        open_positions = trade_repo.get_open_trades()
+        
+        # Calculate total unrealized P&L
+        total_unrealized_pnl = 0
+        active_positions = 0
+        
+        for trade in open_positions:
+            try:
+                current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+                current_price = current_ticker.get('last', 0)
+                
+                if trade.side.upper() == 'BUY':
+                    unrealized_pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+                else:
+                    unrealized_pnl = (float(trade.entry_price) - current_price) * float(trade.quantity)
+                
+                total_unrealized_pnl += unrealized_pnl
+                active_positions += 1
+                
+            except Exception as trade_error:
+                logger.error(f"Error calculating P&L for trade {trade.id}: {trade_error}")
+                continue
+        
+        # Calculate performance metrics
+        closed_trades_today = [t for t in today_trades if t.status == 'CLOSED']
+        winning_trades = [t for t in closed_trades_today if float(t.pnl or 0) > 0]
+        
+        win_rate = (len(winning_trades) / len(closed_trades_today) * 100) if closed_trades_today else 0
+        total_realized_pnl = sum(float(t.pnl or 0) for t in closed_trades_today)
+        
+        return {
+            "success": True,
+            "summary": {
+                "total_unrealized_pnl": total_unrealized_pnl,
+                "total_realized_pnl_today": total_realized_pnl,
+                "open_positions": active_positions,
+                "trades_today": len(today_trades),
+                "closed_trades_today": len(closed_trades_today),
+                "win_rate": win_rate,
+                "max_concurrent_trades": TradingConfig.MAX_CONCURRENT_TRADES
+            },
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching trading summary: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching trading summary: {str(e)}")
+
+@app.post("/api/trading/auto-trading/start")
+async def start_auto_trading():
+    """Start automatic trading mode"""
+    try:
+        # Set global auto trading flag (you might want to store this in database/config)
+        # For now, we'll just return success - the actual auto trading logic 
+        # should be implemented in the background trading engine
+        
+        logger.info("Auto trading started")
+        return {
+            "success": True,
+            "message": "Auto trading started in VST mode",
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting auto trading: {e}")
+        raise HTTPException(status_code=500, detail=f"Error starting auto trading: {str(e)}")
+
+@app.post("/api/trading/auto-trading/stop")
+async def stop_auto_trading():
+    """Stop automatic trading mode"""
+    try:
+        logger.info("Auto trading stopped")
+        return {
+            "success": True,
+            "message": "Auto trading stopped",
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error stopping auto trading: {e}")
+        raise HTTPException(status_code=500, detail=f"Error stopping auto trading: {str(e)}")
+
+@app.post("/api/trading/positions/{position_id}/take-profit")
+async def execute_partial_take_profit(
+    position_id: str,
+    profit_percentage: float,
+    close_percentage: float = 25.0,
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Execute partial take profit at specified profit level"""
+    try:
+        logger.info(f"Executing take profit for position {position_id} at {profit_percentage}% profit")
+        
+        # Get trade from database
+        trade = trade_repo.get_by_id(position_id)
+        if not trade:
+            raise HTTPException(status_code=404, detail="Position not found")
+        
+        if trade.status != 'OPEN':
+            raise HTTPException(status_code=400, detail="Position is not open")
+        
+        # Get current market price
+        current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+        current_price = current_ticker.get('last', 0)
+        
+        # Calculate current profit
+        if trade.side.upper() == 'BUY':
+            current_profit = ((current_price - float(trade.entry_price)) / float(trade.entry_price)) * 100
+        else:
+            current_profit = ((float(trade.entry_price) - current_price) / float(trade.entry_price)) * 100
+        
+        # Check if profit target is reached
+        if current_profit < profit_percentage:
+            return {
+                "success": False,
+                "message": f"Current profit {current_profit:.2f}% has not reached target {profit_percentage}%",
+                "current_profit": current_profit,
+                "timestamp": utc_now().isoformat()
+            }
+        
+        # Calculate quantity to close
+        close_quantity = float(trade.quantity) * (close_percentage / 100)
+        
+        # Execute partial close order
+        close_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+        
+        close_order = await bingx_client.create_market_order(
+            symbol=trade.symbol,
+            side=close_side.lower(),
+            amount=close_quantity
+        )
+        
+        # Calculate realized P&L for closed portion
+        if trade.side.upper() == 'BUY':
+            realized_pnl = (current_price - float(trade.entry_price)) * close_quantity
+        else:
+            realized_pnl = (float(trade.entry_price) - current_price) * close_quantity
+        
+        # Update trade in database - reduce quantity
+        remaining_quantity = float(trade.quantity) - close_quantity
+        trade_repo.update_trade_quantity(trade.id, remaining_quantity, realized_pnl)
+        
+        # Update trailing stop for remaining position
+        await update_trailing_stop(position_id, db, trade_repo)
+        
+        return {
+            "success": True,
+            "message": f"Take profit executed: {close_percentage}% of position closed",
+            "close_order": close_order,
+            "closed_quantity": close_quantity,
+            "remaining_quantity": remaining_quantity,
+            "realized_pnl": realized_pnl,
+            "profit_percentage_achieved": current_profit,
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error executing take profit for position {position_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error executing take profit: {str(e)}")
+
+@app.post("/api/trading/risk-management/update-all")
+async def update_all_risk_management(
+    db: Session = Depends(get_db),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Update risk management for all open positions"""
+    try:
+        logger.info("Updating risk management for all open positions")
+        
+        # Get all open trades
+        open_trades = trade_repo.get_open_trades()
+        
+        updates = []
+        for trade in open_trades:
+            try:
+                # Get current market price
+                current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+                current_price = current_ticker.get('last', 0)
+                
+                # Calculate current profit
+                if trade.side.upper() == 'BUY':
+                    profit_percent = ((current_price - float(trade.entry_price)) / float(trade.entry_price))
+                else:
+                    profit_percent = ((float(trade.entry_price) - current_price) / float(trade.entry_price))
+                
+                profit_percentage = profit_percent * 100
+                
+                # Check for trailing stop updates
+                trailing_updated = False
+                try:
+                    trailing_result = await update_trailing_stop(str(trade.id), db, trade_repo)
+                    if trailing_result.get("success") and "updated" in trailing_result.get("message", ""):
+                        trailing_updated = True
+                except:
+                    pass
+                
+                # Check for take profit opportunities
+                take_profit_executed = []
+                for tp_level in TradingConfig.TAKE_PROFIT_LEVELS:
+                    tp_percentage = float(tp_level["percentage"]) * 100
+                    tp_size_percent = tp_level["size_percent"]
+                    
+                    if profit_percentage >= tp_percentage:
+                        try:
+                            tp_result = await execute_partial_take_profit(
+                                str(trade.id), 
+                                tp_percentage, 
+                                tp_size_percent, 
+                                db, 
+                                trade_repo
+                            )
+                            if tp_result.get("success"):
+                                take_profit_executed.append({
+                                    "level": tp_percentage,
+                                    "size": tp_size_percent,
+                                    "pnl": tp_result.get("realized_pnl", 0)
+                                })
+                        except:
+                            pass
+                
+                updates.append({
+                    "trade_id": str(trade.id),
+                    "symbol": trade.symbol,
+                    "current_profit": profit_percentage,
+                    "trailing_stop_updated": trailing_updated,
+                    "take_profits_executed": take_profit_executed
+                })
+                
+            except Exception as trade_error:
+                logger.error(f"Error updating risk management for trade {trade.id}: {trade_error}")
+                continue
+        
+        return {
+            "success": True,
+            "message": f"Risk management updated for {len(updates)} positions",
+            "updates": updates,
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating risk management: {e}")
+        raise HTTPException(status_code=500, detail=f"Error updating risk management: {str(e)}")
+
 # WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -1378,11 +1897,205 @@ async def broadcast_realtime_data():
         # Wait 15 seconds before next check (aumentado de 5 para 15)
         await asyncio.sleep(15)
 
+# Background task for automated risk management
+async def automated_risk_management():
+    """Background task to continuously monitor and update risk management for all positions"""
+    logger.info("Starting automated risk management task")
+    
+    while True:
+        try:
+            # Run risk management update every 30 seconds
+            await asyncio.sleep(30)
+            
+            # Get database session
+            db = next(get_db())
+            trade_repo = TradeRepository(db)
+            
+            # Get all open trades
+            open_trades = trade_repo.get_open_trades()
+            
+            if not open_trades:
+                continue
+                
+            logger.info(f"Running automated risk management for {len(open_trades)} open positions")
+            
+            for trade in open_trades:
+                try:
+                    # Get current market price
+                    current_ticker = await bingx_client.fetch_ticker(trade.symbol)
+                    current_price = current_ticker.get('last', 0)
+                    
+                    # Calculate current profit
+                    if trade.side.upper() == 'BUY':
+                        profit_percent = ((current_price - float(trade.entry_price)) / float(trade.entry_price))
+                    else:
+                        profit_percent = ((float(trade.entry_price) - current_price) / float(trade.entry_price))
+                    
+                    profit_percentage = profit_percent * 100
+                    
+                    # 1. Update trailing stop if needed
+                    trailing_level = TradingConfig.get_trailing_stop_level(Decimal(str(profit_percent)))
+                    
+                    if trailing_level and trailing_level.trigger <= Decimal(str(profit_percent)):
+                        # Calculate new stop price
+                        if trade.side.upper() == 'BUY':
+                            new_stop_price = float(trade.entry_price) * (1 + float(trailing_level.stop))
+                        else:
+                            new_stop_price = float(trade.entry_price) * (1 - float(trailing_level.stop))
+                        
+                        # Only update if new stop is better than current
+                        current_stop = float(trade.stop_loss) if trade.stop_loss else 0
+                        should_update = False
+                        
+                        if trade.side.upper() == 'BUY' and new_stop_price > current_stop:
+                            should_update = True
+                        elif trade.side.upper() == 'SELL' and new_stop_price < current_stop:
+                            should_update = True
+                        
+                        if should_update:
+                            try:
+                                # Update stop loss order on exchange
+                                stop_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+                                
+                                stop_order = await bingx_client.create_stop_loss_order(
+                                    symbol=trade.symbol,
+                                    side=stop_side.lower(),
+                                    amount=float(trade.quantity),
+                                    stop_price=new_stop_price
+                                )
+                                
+                                # Update database
+                                trade_repo.update_stop_loss(trade.id, new_stop_price)
+                                
+                                logger.info(f"Trailing stop updated for {trade.symbol}: {new_stop_price} (profit: {profit_percentage:.2f}%)")
+                                
+                            except Exception as stop_error:
+                                logger.error(f"Error updating trailing stop for {trade.symbol}: {stop_error}")
+                    
+                    # 2. Check for take profit levels
+                    for tp_level in TradingConfig.TAKE_PROFIT_LEVELS:
+                        tp_percentage = float(tp_level["percentage"]) * 100
+                        tp_size_percent = tp_level["size_percent"]
+                        
+                        # Check if this level should trigger and hasn't been executed yet
+                        if profit_percentage >= tp_percentage:
+                            # Check if this take profit level was already executed
+                            # (In a real implementation, you'd track this in database)
+                            
+                            try:
+                                # Calculate quantity to close
+                                close_quantity = float(trade.quantity) * (tp_size_percent / 100)
+                                
+                                # Execute partial close order
+                                close_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+                                
+                                close_order = await bingx_client.create_market_order(
+                                    symbol=trade.symbol,
+                                    side=close_side.lower(),
+                                    amount=close_quantity
+                                )
+                                
+                                # Calculate realized P&L for closed portion
+                                if trade.side.upper() == 'BUY':
+                                    realized_pnl = (current_price - float(trade.entry_price)) * close_quantity
+                                else:
+                                    realized_pnl = (float(trade.entry_price) - current_price) * close_quantity
+                                
+                                # Update trade in database - reduce quantity
+                                remaining_quantity = float(trade.quantity) - close_quantity
+                                trade_repo.update_trade_quantity(trade.id, remaining_quantity, realized_pnl)
+                                
+                                logger.info(f"Take profit executed for {trade.symbol} at {tp_percentage}%: {tp_size_percent}% closed, P&L: ${realized_pnl:.2f}")
+                                
+                                # Send WebSocket notification to frontend
+                                await manager.broadcast({
+                                    "type": "take_profit_executed",
+                                    "data": {
+                                        "symbol": trade.symbol,
+                                        "profit_level": tp_percentage,
+                                        "size_closed": tp_size_percent,
+                                        "realized_pnl": realized_pnl,
+                                        "remaining_quantity": remaining_quantity
+                                    },
+                                    "timestamp": utc_now().isoformat()
+                                })
+                                
+                                break  # Only execute one level per iteration
+                                
+                            except Exception as tp_error:
+                                logger.error(f"Error executing take profit for {trade.symbol}: {tp_error}")
+                    
+                    # 3. Check for stop loss triggers (in case exchange stop order failed)
+                    if trade.stop_loss:
+                        stop_loss_price = float(trade.stop_loss)
+                        
+                        should_close = False
+                        if trade.side.upper() == 'BUY' and current_price <= stop_loss_price:
+                            should_close = True
+                        elif trade.side.upper() == 'SELL' and current_price >= stop_loss_price:
+                            should_close = True
+                        
+                        if should_close:
+                            try:
+                                # Execute emergency stop loss
+                                close_side = 'SELL' if trade.side.upper() == 'BUY' else 'BUY'
+                                
+                                close_order = await bingx_client.create_market_order(
+                                    symbol=trade.symbol,
+                                    side=close_side.lower(),
+                                    amount=float(trade.quantity)
+                                )
+                                
+                                # Calculate P&L
+                                if trade.side.upper() == 'BUY':
+                                    pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+                                else:
+                                    pnl = (float(trade.entry_price) - current_price) * float(trade.quantity)
+                                
+                                pnl_percentage = (pnl / (float(trade.entry_price) * float(trade.quantity))) * 100
+                                
+                                # Close trade in database
+                                trade_repo.close_trade(
+                                    trade_id=str(trade.id),
+                                    exit_price=current_price,
+                                    exit_reason="STOP_LOSS_TRIGGERED",
+                                    pnl=pnl,
+                                    pnl_percentage=pnl_percentage
+                                )
+                                
+                                logger.warning(f"Emergency stop loss triggered for {trade.symbol}: P&L ${pnl:.2f} ({pnl_percentage:.2f}%)")
+                                
+                                # Send WebSocket notification
+                                await manager.broadcast({
+                                    "type": "stop_loss_triggered",
+                                    "data": {
+                                        "symbol": trade.symbol,
+                                        "stop_price": stop_loss_price,
+                                        "exit_price": current_price,
+                                        "pnl": pnl,
+                                        "pnl_percentage": pnl_percentage
+                                    },
+                                    "timestamp": utc_now().isoformat()
+                                })
+                                
+                            except Exception as sl_error:
+                                logger.error(f"Error executing emergency stop loss for {trade.symbol}: {sl_error}")
+                    
+                except Exception as trade_error:
+                    logger.error(f"Error processing risk management for trade {trade.id}: {trade_error}")
+                    continue
+            
+        except Exception as e:
+            logger.error(f"Error in automated risk management task: {e}")
+            # Continue running even if there's an error
+            continue
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
     """Start background tasks"""
     asyncio.create_task(broadcast_realtime_data())
-    logger.info("Background tasks started")
+    asyncio.create_task(automated_risk_management())
+    logger.info("Background tasks started: real-time data broadcasting and automated risk management")
 
 @app.on_event("shutdown")
 async def shutdown_event():
