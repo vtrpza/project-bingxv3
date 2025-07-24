@@ -594,32 +594,12 @@ class UIComponents:
             console.error(f"Error updating server pagination: {str(e)}")
     
     @staticmethod
-    def sort_validation_table(column, use_server_side=False):
-        """Sort validation table using client-side sorting on currently loaded data"""
+    def sort_validation_table(column):
+        """Sort validation table - delegates to app for client/server-side logic"""
         try:
-            # Allow fallback to server-side if needed
-            if use_server_side:
-                console.log(f"Using server-side sorting for column: {column}")
-                UIComponents._sort_server_side(column)
-                return
-                
-            console.log(f"Client-side sorting by column: {column}")
+            console.log(f"Table sort requested for column: {column}")
             
-            # Get current table body
-            tbody = document.getElementById("validation-table-body")
-            if not tbody:
-                console.error("Table body not found for sorting")
-                # Fallback to server-side if client-side fails
-                UIComponents._sort_server_side(column)
-                return
-            
-            # Get all current rows
-            rows = tbody.querySelectorAll("tr")
-            if len(rows) == 0:
-                console.log("No rows to sort")
-                return
-            
-            # Toggle sort direction if same column
+            # Determinar direção da ordenação
             current_sort_column = getattr(UIComponents, '_sort_column', None)
             current_sort_direction = getattr(UIComponents, '_sort_direction', 'asc')
             
@@ -628,9 +608,39 @@ class UIComponents:
             else:
                 new_direction = 'asc'
             
-            # Store sort state
+            # Atualizar estado local
             UIComponents._sort_column = column
             UIComponents._sort_direction = new_direction
+            
+            # Chamar método do app via document
+            from js import document
+            if hasattr(document, 'sortValidationTableServer'):
+                document.sortValidationTableServer(column, new_direction)
+            else:
+                console.error("sortValidationTableServer function not available")
+                # Fallback para client-side local se disponível
+                UIComponents._sort_client_side_local(column, new_direction)
+                
+        except Exception as e:
+            console.error(f"Error in sort_validation_table: {e}")
+
+    @staticmethod
+    def _sort_client_side_local(column, direction):
+        """Fallback client-side sorting on current table data"""
+        try:
+            console.log(f"Using fallback client-side sorting: {column} {direction}")
+            
+            # Get current table body
+            tbody = document.getElementById("validation-table-body")
+            if not tbody:
+                console.error("Table body not found for local sorting")
+                return
+            
+            # Get all current rows
+            rows = tbody.querySelectorAll("tr")
+            if len(rows) == 0:
+                console.log("No rows to sort")
+                return
             
             # Convert rows to list for sorting
             rows_list = []
@@ -652,7 +662,7 @@ class UIComponents:
                 return ""
             
             # Sort the rows
-            reverse_order = (new_direction == 'desc')
+            reverse_order = (direction == 'desc')
             rows_list.sort(key=sort_key, reverse=reverse_order)
             
             # Clear tbody and re-append sorted rows
@@ -661,14 +671,12 @@ class UIComponents:
                 tbody.appendChild(row)
             
             # Update visual indicators
-            UIComponents._update_sort_indicators(column, new_direction)
+            UIComponents._update_sort_indicators(column, direction)
             
-            console.log(f"Table sorted by {column} ({new_direction})")
+            console.log(f"Local table sorted by {column} ({direction})")
                     
         except Exception as e:
-            console.error(f"Error sorting table: {str(e)}")
-            # Fallback to server-side if client-side fails
-            UIComponents._sort_server_side(column)
+            console.error(f"Error in local sorting: {str(e)}")
     
     @staticmethod
     def _sort_server_side(column):

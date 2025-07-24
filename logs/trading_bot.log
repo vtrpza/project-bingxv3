@@ -9060,3 +9060,121 @@ NameError: name 'offset' is not defined
 2025-07-24 14:39:28,591 - api.web_api - INFO - WebSocket connected from 127.0.0.1
 2025-07-24 14:39:30,658 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
 2025-07-24 14:39:30,800 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:39:41,343 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:39:41,345 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:39:51,494 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:39:51,496 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:39:52,783 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:39:52,783 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:39:52,883 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:39:53,888 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:39:53,888 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:39:53,901 - api.web_api - INFO - Starting up with 0.58s delay to prevent deadlocks...
+2025-07-24 14:39:54,487 - api.web_api - INFO - Initializing database...
+2025-07-24 14:39:54,488 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:39:54,488 - database.connection - INFO - Using SQLite database
+2025-07-24 14:39:54,496 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:39:54,496 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:39:54,496 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:39:54,496 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:39:54,497 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:39:54,530 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:39:54,531 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:39:54,619 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:39:54,619 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:39:54,619 - api.web_api - INFO - Background tasks started
+2025-07-24 14:39:57,827 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:39:57,827 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:39:57,827 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:40:01,984 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:02,081 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:05,009 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:40:05,009 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:40:05,109 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:40:06,083 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:40:06,083 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:40:06,096 - api.web_api - INFO - Starting up with 1.69s delay to prevent deadlocks...
+2025-07-24 14:40:07,792 - api.web_api - INFO - Initializing database...
+2025-07-24 14:40:07,792 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:40:07,792 - database.connection - INFO - Using SQLite database
+2025-07-24 14:40:07,801 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:40:07,801 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:40:07,801 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:07,801 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:07,801 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:40:07,837 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:40:07,837 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:40:07,926 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:40:07,926 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:40:07,926 - api.web_api - INFO - Background tasks started
+2025-07-24 14:40:10,040 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:40:11,031 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:40:11,032 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:40:11,045 - api.web_api - INFO - Starting up with 0.35s delay to prevent deadlocks...
+2025-07-24 14:40:11,393 - api.web_api - INFO - Initializing database...
+2025-07-24 14:40:11,393 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:40:11,393 - database.connection - INFO - Using SQLite database
+2025-07-24 14:40:11,402 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:40:11,402 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:40:11,402 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:11,403 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:11,403 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:40:11,440 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:40:11,440 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:40:11,530 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:40:11,530 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:40:11,530 - api.web_api - INFO - Background tasks started
+2025-07-24 14:40:11,532 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:40:11,532 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:40:11,532 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:40:12,358 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:12,466 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:14,754 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:40:14,755 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:40:14,855 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 14:40:15,834 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 14:40:15,834 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 14:40:15,849 - api.web_api - INFO - Starting up with 1.01s delay to prevent deadlocks...
+2025-07-24 14:40:16,864 - api.web_api - INFO - Initializing database...
+2025-07-24 14:40:16,865 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 14:40:16,865 - database.connection - INFO - Using SQLite database
+2025-07-24 14:40:16,874 - database.connection - INFO - Database connection established successfully
+2025-07-24 14:40:16,874 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 14:40:16,874 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:16,875 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 14:40:16,875 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 14:40:16,935 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 14:40:16,935 - api.web_api - INFO - Creating database tables...
+2025-07-24 14:40:17,029 - database.connection - INFO - Database tables created successfully
+2025-07-24 14:40:17,029 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 14:40:17,029 - api.web_api - INFO - Background tasks started
+2025-07-24 14:40:20,417 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:40:20,417 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:40:20,417 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:40:22,434 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:22,525 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:25,234 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 14:40:25,234 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 14:40:28,493 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 14:40:28,493 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 14:40:28,493 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 14:40:28,553 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:28,554 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 14:40:33,055 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 14:40:33,056 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)

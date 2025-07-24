@@ -130,6 +130,7 @@ class TradingBotApp:
                 console.log(f"Loaded {len(full_data.get('table_data', []))} records for client-side operations")
                 
                 # Atualizar UI para mostrar que está em modo client-side
+                self.show_client_side_mode_indicator(True)
                 ui_components.show_notification(
                     "Modo Scanning", 
                     "Tabela otimizada para scanning ativo - operações locais habilitadas", 
@@ -146,11 +147,21 @@ class TradingBotApp:
         self.current_filters = {}
         self.current_sort = {'column': 'symbol', 'direction': 'asc'}
         
+        self.show_client_side_mode_indicator(False)
         ui_components.show_notification(
             "Modo Server-side", 
             "Scanning parado - voltou para operações server-side", 
             "info"
         )
+
+    def show_client_side_mode_indicator(self, show):
+        """Show/hide the client-side mode indicator"""
+        try:
+            indicator = document.getElementById("table-mode-indicator")
+            if indicator:
+                indicator.style.display = "block" if show else "none"
+        except Exception as e:
+            console.error(f"Error updating mode indicator: {e}")
 
     async def update_dashboard_summary(self):
         """Update dashboard summary statistics"""
