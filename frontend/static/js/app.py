@@ -26,6 +26,13 @@ class TradingBotApp:
         self.last_validation_timestamp = None
         self.update_in_progress = False
         
+        # Client-side operation mode
+        self.scanning_active = False
+        self.client_side_cache = None  # Cache completo para operações client-side
+        self.current_search_term = ""
+        self.current_filters = {}
+        self.current_sort = {'column': 'symbol', 'direction': 'asc'}
+        
         # Initialize after DOM is ready
         self.initialize()
     
@@ -84,9 +91,73 @@ class TradingBotApp:
         finally:
             document.getElementById("loading-overlay").style.display = "none"
     
+    async def check_scanning_status(self):
+        """Check if scanning is currently active"""
+        try:
+            status_data = await api_client.get_scanner_status()
+            if status_data:
+                old_status = self.scanning_active
+                self.scanning_active = status_data.get("scanning_active", False)
+                
+                # Se mudou o status, atualizar modo de operação
+                if old_status != self.scanning_active:
+                    if self.scanning_active:
+                        console.log("🔍 Scanning detected - switching to client-side table operations")
+                        await self.load_full_data_for_client_side()
+                    else:
+                        console.log("⏹️  Scanning stopped - reverting to server-side table operations")
+                        self.clear_client_side_cache()
+                        
+                return self.scanning_active
+        except Exception as e:
+            console.error(f"Error checking scanning status: {e}")
+            return False
+
+    async def load_full_data_for_client_side(self):
+        """Load complete data set for client-side operations during scanning"""
+        try:
+            console.log("Loading complete dataset for client-side operations...")
+            
+            # Obter todos os dados sem paginação
+            full_data = await api_client.get_validation_table(
+                page=1,
+                per_page=1000,  # Valor alto para pegar todos
+                include_invalid=True
+            )
+            
+            if full_data:
+                self.client_side_cache = full_data
+                console.log(f"Loaded {len(full_data.get('table_data', []))} records for client-side operations")
+                
+                # Atualizar UI para mostrar que está em modo client-side
+                ui_components.show_notification(
+                    "Modo Scanning", 
+                    "Tabela otimizada para scanning ativo - operações locais habilitadas", 
+                    "info"
+                )
+                
+        except Exception as e:
+            console.error(f"Error loading full data: {e}")
+
+    def clear_client_side_cache(self):
+        """Clear client-side cache and revert to server-side operations"""
+        self.client_side_cache = None
+        self.current_search_term = ""
+        self.current_filters = {}
+        self.current_sort = {'column': 'symbol', 'direction': 'asc'}
+        
+        ui_components.show_notification(
+            "Modo Server-side", 
+            "Scanning parado - voltou para operações server-side", 
+            "info"
+        )
+
     async def update_dashboard_summary(self):
         """Update dashboard summary statistics"""
         try:
+            # Check scanning status first
+            await self.check_scanning_status()
+            
             summary_data = await api_client.get_dashboard_summary()
             if summary_data:
                 ui_components.update_stats_cards(summary_data)
@@ -94,7 +165,7 @@ class TradingBotApp:
             console.error(f"Error updating dashboard summary: {str(e)}")
     
     async def update_validation_table(self, page=1):
-        """Update asset validation table with server-side pagination"""
+        """Update asset validation table with adaptive client/server-side logic"""
         # Evita atualizações simultâneas
         if self.update_in_progress:
             console.log("Validation table update already in progress, skipping...")
@@ -102,7 +173,15 @@ class TradingBotApp:
             
         try:
             self.update_in_progress = True
-            console.log(f"Updating validation table page {page}...")
+            
+            # Se scanning ativo e temos cache, usar client-side
+            if self.scanning_active and self.client_side_cache:
+                console.log("Using client-side table update (scanning active)")
+                await self.update_table_client_side()
+                return
+            
+            # Senão, usar server-side normal
+            console.log(f"Using server-side table update - page {page}")
             
             # Get validation table data with pagination
             validation_data = await api_client.get_validation_table(
@@ -139,57 +218,163 @@ class TradingBotApp:
             console.error(f"Error updating validation table: {str(e)}")
         finally:
             self.update_in_progress = False
+
+    async def update_table_client_side(self):
+        """Update table using client-side cached data"""
+        try:
+            if not self.client_side_cache:
+                console.log("No client-side cache available")
+                return
+                
+            # Aplicar filtros, busca e ordenação no cache
+            filtered_data = self.apply_client_side_operations(self.client_side_cache)
+            
+            # Atualizar UI com dados filtrados
+            ui_components.update_validation_table(filtered_data)
+            
+            console.log(f"Client-side table updated - {len(filtered_data.get('table_data', []))} records displayed")
+            
+        except Exception as e:
+            console.error(f"Error in client-side table update: {e}")
+
+    def apply_client_side_operations(self, data):
+        """Apply search, filters, and sorting to cached data"""
+        try:
+            table_data = data.get("table_data", [])
+            
+            # 1. Aplicar busca
+            if self.current_search_term:
+                filtered_data = []
+                search_lower = self.current_search_term.lower()
+                for item in table_data:
+                    symbol = item.get("symbol", "").lower()
+                    if search_lower in symbol:
+                        filtered_data.append(item)
+                table_data = filtered_data
+            
+            # 2. Aplicar filtros
+            if self.current_filters:
+                if self.current_filters.get("filter_valid_only"):
+                    table_data = [item for item in table_data if item.get("validation_status") == "VALID"]
+                
+                if self.current_filters.get("priority_only"):
+                    table_data = [item for item in table_data if item.get("priority_asset")]
+                    
+                if self.current_filters.get("trading_enabled_only"):
+                    table_data = [item for item in table_data if item.get("trading_enabled")]
+                    
+                risk_filter = self.current_filters.get("risk_level_filter")
+                if risk_filter and risk_filter != "all":
+                    table_data = [item for item in table_data if item.get("risk_level") == risk_filter.upper()]
+            
+            # 3. Aplicar ordenação
+            if self.current_sort and self.current_sort.get("column"):
+                column = self.current_sort["column"]
+                reverse = self.current_sort["direction"] == "desc"
+                
+                def get_sort_key(item):
+                    value = item.get(column)
+                    if value is None:
+                        return ""
+                    # Para colunas numéricas
+                    if column in ["validation_score", "current_price", "volume_24h_quote", "spread_percent", "data_quality_score", "age_days"]:
+                        try:
+                            return float(value)
+                        except (ValueError, TypeError):
+                            return 0
+                    # Para texto
+                    return str(value).lower()
+                
+                table_data.sort(key=get_sort_key, reverse=reverse)
+            
+            # Criar estrutura de retorno simulando paginação
+            return {
+                "table_data": table_data,
+                "summary": data.get("summary", {}),
+                "pagination": {
+                    "current_page": 1,
+                    "total_pages": 1,
+                    "total_records": len(table_data),
+                    "showing_records": len(table_data)
+                }
+            }
+            
+        except Exception as e:
+            console.error(f"Error applying client-side operations: {e}")
+            return data
     
     async def search_and_update_table(self, search_term="", page=1):
-        """Search and update validation table with server-side pagination"""
+        """Search and update validation table with adaptive client/server-side logic"""
         try:
             console.log(f"Performing search for: '{search_term}' on page {page}")
             
-            # Get search results from API with pagination
-            validation_data = await api_client.get_validation_table(
-                page=page,
-                per_page=25,
-                include_invalid=True,
-                search=search_term if search_term else None
-            )
+            # Atualizar termo de busca atual
+            self.current_search_term = search_term
             
-            if validation_data:
-                ui_components.update_validation_table(validation_data)
+            # Se scanning ativo e temos cache, usar client-side
+            if self.scanning_active and self.client_side_cache:
+                console.log("Using client-side search (scanning active)")
+                await self.update_table_client_side()
+            else:
+                # Usar server-side normal
+                console.log("Using server-side search")
                 
-                # Update search indicator
-                search_input = document.getElementById("symbol-search")
-                if search_input:
-                    if search_term:
-                        search_input.style.backgroundColor = "#e8f4fd"
-                        search_input.style.borderColor = "#0969da"
-                    else:
-                        search_input.style.backgroundColor = ""
-                        search_input.style.borderColor = ""
+                # Get search results from API with pagination
+                validation_data = await api_client.get_validation_table(
+                    page=page,
+                    per_page=25,
+                    include_invalid=True,
+                    search=search_term if search_term else None
+                )
+                
+                if validation_data:
+                    ui_components.update_validation_table(validation_data)
+            
+            # Update search indicator
+            search_input = document.getElementById("symbol-search")
+            if search_input:
+                if search_term:
+                    search_input.style.backgroundColor = "#e8f4fd"
+                    search_input.style.borderColor = "#0969da"
+                else:
+                    search_input.style.backgroundColor = ""
+                    search_input.style.borderColor = ""
                         
         except Exception as e:
             console.error(f"Error during search: {str(e)}")
     
     async def sort_validation_table_server(self, column, direction):
-        """Sort validation table using server-side sorting"""
+        """Sort validation table with adaptive client/server-side logic"""
         try:
-            console.log(f"Server-side sorting: {column} {direction}")
+            console.log(f"Sorting: {column} {direction}")
             
-            # Get current search term
-            search_input = document.getElementById("symbol-search")
-            search_term = search_input.value.strip() if search_input else ""
+            # Atualizar ordenação atual
+            self.current_sort = {'column': column, 'direction': direction}
             
-            # Get sorted data from API
-            validation_data = await api_client.get_validation_table(
-                page=1,  # Reset to first page on sort
-                per_page=25,
-                sort_by=column,
-                sort_direction=direction,
-                include_invalid=True,
-                search=search_term if search_term else None
-            )
-            
-            if validation_data:
-                ui_components.update_validation_table(validation_data)
+            # Se scanning ativo e temos cache, usar client-side
+            if self.scanning_active and self.client_side_cache:
+                console.log("Using client-side sorting (scanning active)")
+                await self.update_table_client_side()
+            else:
+                # Usar server-side normal
+                console.log("Using server-side sorting")
+                
+                # Get current search term
+                search_input = document.getElementById("symbol-search")
+                search_term = search_input.value.strip() if search_input else ""
+                
+                # Get sorted data from API
+                validation_data = await api_client.get_validation_table(
+                    page=1,  # Reset to first page on sort
+                    per_page=25,
+                    sort_by=column,
+                    sort_direction=direction,
+                    include_invalid=True,
+                    search=search_term if search_term else None
+                )
+                
+                if validation_data:
+                    ui_components.update_validation_table(validation_data)
                 
         except Exception as e:
             console.error(f"Error sorting table: {str(e)}")
