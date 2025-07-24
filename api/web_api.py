@@ -358,7 +358,14 @@ async def force_revalidation():
 @app.get("/api/assets/revalidation-status")
 async def get_revalidation_status():
     """Get the current status of the revalidation process"""
-    return {"status": revalidation_status}
+    status_copy = revalidation_status.copy()
+    if not status_copy["running"] and status_copy["total"] == 0:
+        status_copy["message"] = "No revalidation in progress or no assets found."
+    elif not status_copy["running"] and status_copy["completed"]:
+        status_copy["message"] = "Revalidation completed."
+    elif status_copy["running"]:
+        status_copy["message"] = "Revalidation in progress."
+    return {"status": status_copy}
 
 # Asset endpoints
 @app.get("/api/assets")

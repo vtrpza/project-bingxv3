@@ -2728,3 +2728,133 @@ WHERE signals.is_processed = 0) AS anon_1]
 2025-07-24 07:31:32,977 - api.web_api - INFO - Background tasks started
 2025-07-24 07:31:32,978 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
 2025-07-24 07:31:32,995 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:31:37,285 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 07:31:37,285 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 07:31:37,285 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 07:31:42,328 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:42,330 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:31:50,463 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:50,464 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:31:51,894 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:51,895 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:31:53,574 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:31:53,575 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 07:31:59,695 - api.web_api - INFO - Starting full asset revalidation...
+2025-07-24 07:31:59,695 - scanner.initial_scanner - INFO - Starting initial asset scan...
+2025-07-24 07:31:59,695 - scanner.initial_scanner - INFO - Discovering available markets...
+2025-07-24 07:31:59,695 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 07:32:00,483 - api.client - INFO - BingX API connection test successful - found 2246 markets
+2025-07-24 07:32:00,485 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 07:32:00,486 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 07:32:01,235 - api.client - INFO - Fetched 1515 USDT markets
+2025-07-24 07:32:01,236 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-24 07:32:01,240 - api.market_data - INFO - Fetched 1515 USDT markets
+2025-07-24 07:32:01,240 - scanner.initial_scanner - INFO - Extracting all active USDT pairs...
+2025-07-24 07:32:01,240 - scanner.initial_scanner - INFO - Found 1515 active USDT pairs.
+2025-07-24 07:32:01,241 - scanner.initial_scanner - INFO - Discovered 1515 USDT pairs for validation
+2025-07-24 07:32:01,241 - scanner.initial_scanner - INFO - Starting incremental validation of 1515 assets...
+2025-07-24 07:32:01,241 - scanner.initial_scanner - INFO - Processing 1515 assets incrementally (18 priority)
+2025-07-24 07:32:05,495 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:05,807 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:05,822 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:05,823 - api.web_api - INFO - Fetching ALL assets for revalidation: 1 total
+2025-07-24 07:32:07,127 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:07,449 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:08,763 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:09,112 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:10,422 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:10,749 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:12,061 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:12,404 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:13,012 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:13,013 - api.web_api - INFO - Fetching ALL assets for revalidation: 5 total
+2025-07-24 07:32:13,740 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:14,063 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:15,447 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:15,766 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:17,095 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:17,412 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:18,746 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:19,062 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:20,371 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:20,689 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:22,050 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:22,370 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:22,385 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:22,386 - api.web_api - INFO - Fetching ALL assets for revalidation: 9 total
+2025-07-24 07:32:23,699 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:24,065 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:25,384 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:25,701 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:27,023 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:27,341 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:28,661 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:28,989 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:30,352 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:30,659 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:31,896 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:32,217 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:32,232 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:32,233 - api.web_api - INFO - Fetching ALL assets for revalidation: 9 total
+2025-07-24 07:32:33,542 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:33,848 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:37,912 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 07:32:37,913 - api.client - ERROR - Error fetching ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 07:32:37,913 - api.market_data - ERROR - Error fetching market summary for 1000000BOB/USDT: Failed to fetch ticker for 1000000BOB/USDT: Exchange error: bingx does not have market symbol 1000000BOB/USDT
+2025-07-24 07:32:38,940 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 07:32:38,940 - api.client - ERROR - Error fetching ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 07:32:38,940 - api.market_data - ERROR - Error fetching market summary for 1000000MOG/USDT: Failed to fetch ticker for 1000000MOG/USDT: Exchange error: bingx does not have market symbol 1000000MOG/USDT
+2025-07-24 07:32:39,958 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 07:32:39,959 - api.client - ERROR - Error fetching ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 07:32:39,959 - api.market_data - ERROR - Error fetching market summary for 10000SATS/USDT: Failed to fetch ticker for 10000SATS/USDT: Exchange error: bingx does not have market symbol 10000SATS/USDT
+2025-07-24 07:32:40,988 - api.client - ERROR - Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 07:32:40,988 - api.client - ERROR - Error fetching ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 07:32:40,988 - api.market_data - ERROR - Error fetching market summary for 10000WHY/USDT: Failed to fetch ticker for 10000WHY/USDT: Exchange error: bingx does not have market symbol 10000WHY/USDT
+2025-07-24 07:32:41,005 - scanner.initial_scanner - INFO - Progress: 25/1515 assets processed (9 valid, 16 invalid)
+2025-07-24 07:32:42,007 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 07:32:42,007 - api.client - ERROR - Error fetching ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 07:32:42,007 - api.market_data - ERROR - Error fetching market summary for 1000BONK/USDT: Failed to fetch ticker for 1000BONK/USDT: Exchange error: bingx does not have market symbol 1000BONK/USDT
+2025-07-24 07:32:43,486 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:43,488 - api.web_api - INFO - Fetching ALL assets for revalidation: 17 total
+2025-07-24 07:32:43,731 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 07:32:43,731 - api.client - ERROR - Error fetching ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 07:32:43,731 - api.market_data - ERROR - Error fetching market summary for 1000CAT/USDT: Failed to fetch ticker for 1000CAT/USDT: Exchange error: bingx does not have market symbol 1000CAT/USDT
+2025-07-24 07:32:44,749 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 07:32:44,749 - api.client - ERROR - Error fetching ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 07:32:44,750 - api.market_data - ERROR - Error fetching market summary for 1000CHEEMS/USDT: Failed to fetch ticker for 1000CHEEMS/USDT: Exchange error: bingx does not have market symbol 1000CHEEMS/USDT
+2025-07-24 07:32:45,768 - api.client - ERROR - Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 07:32:45,768 - api.client - ERROR - Error fetching ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 07:32:45,768 - api.market_data - ERROR - Error fetching market summary for 1000PEPE/USDT: Failed to fetch ticker for 1000PEPE/USDT: Exchange error: bingx does not have market symbol 1000PEPE/USDT
+2025-07-24 07:32:46,786 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 1.23s
+2025-07-24 07:32:48,556 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:48,864 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:50,188 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:50,527 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:51,860 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:52,174 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:52,193 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:52,195 - api.web_api - INFO - Fetching ALL assets for revalidation: 22 total
+2025-07-24 07:32:52,568 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:52,569 - api.web_api - INFO - Fetching ALL assets for revalidation: 22 total
+2025-07-24 07:32:53,512 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:53,862 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:54,441 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:32:54,442 - api.web_api - INFO - Fetching ALL assets for revalidation: 23 total
+2025-07-24 07:32:57,240 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:57,551 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:32:58,902 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:32:59,253 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:33:00,671 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:33:00,981 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:33:02,204 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:33:02,540 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:33:03,864 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:33:04,162 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:33:04,180 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 07:33:04,181 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 07:33:04,181 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 07:33:04,184 - api.web_api - INFO - Fetching ALL assets for revalidation: 27 total
+2025-07-24 07:33:05,476 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:33:05,798 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 07:33:07,119 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-24 07:33:07,433 - performance.performance - INFO - Operation timing: fetch_ohlcv
