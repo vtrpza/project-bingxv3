@@ -134,7 +134,7 @@ class DatabaseManager:
     def drop_tables(self) -> bool:
         """Drop all database tables (use with caution)."""
         import time
-        from sqlalchemy.exc import OperationalError
+        from sqlalchemy.exc import OperationalError, StatementError
         from sqlalchemy import text
         
         max_retries = 3
@@ -145,33 +145,120 @@ class DatabaseManager:
                 if not self._initialized:
                     raise RuntimeError("Database not initialized")
                 
-                # Use a transaction with explicit lock to prevent concurrent drops
-                with self.engine.begin() as conn:
-                    # Try to acquire an advisory lock to prevent concurrent drops
-                    # This is PostgreSQL specific
-                    try:
-                        conn.execute(text("SELECT pg_advisory_lock(12345)"))
-                        Base.metadata.drop_all(bind=conn)
-                        conn.execute(text("SELECT pg_advisory_unlock(12345)"))
-                    except Exception:
-                        # If advisory locks fail, just try to drop tables
-                        Base.metadata.drop_all(bind=conn)
+                # First, try to terminate all connections to prevent locks
+                try:
+                    with self.engine.connect() as conn:
+                        # Get database name from connection URL
+                        db_name_result = conn.execute(text("SELECT current_database()"))
+                        db_name = db_name_result.scalar()
+                        
+                        # Terminate other connections to the database (PostgreSQL specific)
+                        conn.execute(text(f"""
+                            SELECT pg_terminate_backend(pg_stat_activity.pid)
+                            FROM pg_stat_activity
+                            WHERE pg_stat_activity.datname = '{db_name}'
+                              AND pid <> pg_backend_pid()
+                        """))
+                        
+                        logger.info("Terminated existing database connections")
+                except Exception as e:
+                    logger.warning(f"Could not terminate connections: {e}")
                 
-                logger.warning("All database tables dropped successfully")
-                return True
+                # Now attempt to drop tables with transaction recovery
+                connection = self.engine.connect()
+                trans = connection.begin()
+                
+                try:
+                    # Try to acquire an advisory lock to prevent concurrent drops
+                    connection.execute(text("SELECT pg_advisory_lock(12345)"))
+                    
+                    # Drop all tables
+                    Base.metadata.drop_all(bind=connection)
+                    
+                    # Release the lock
+                    connection.execute(text("SELECT pg_advisory_unlock(12345)"))
+                    
+                    # Commit the transaction
+                    trans.commit()
+                    logger.warning("All database tables dropped successfully")
+                    return True
+                    
+                except Exception as inner_e:
+                    # Rollback the transaction on any error
+                    try:
+                        trans.rollback() 
+                        logger.warning(f"Transaction rolled back due to error: {inner_e}")
+                    except Exception as rollback_e:
+                        logger.error(f"Failed to rollback transaction: {rollback_e}")
+                    
+                    # If it's a transaction error, we need to start fresh
+                    if "current transaction is aborted" in str(inner_e).lower() or \
+                       "InFailedSqlTransaction" in str(type(inner_e)):
+                        logger.warning("Transaction is in failed state, creating new connection")
+                        try:
+                            connection.close()
+                        except:
+                            pass
+                        # Force a new connection for next retry
+                        if attempt < max_retries - 1:
+                            time.sleep(retry_delay)
+                            retry_delay *= 2
+                            continue
+                    
+                    # Try without advisory locks as fallback
+                    try:
+                        logger.info("Retrying without advisory locks...")
+                        new_conn = self.engine.connect()
+                        new_trans = new_conn.begin()
+                        Base.metadata.drop_all(bind=new_conn)
+                        new_trans.commit()
+                        new_conn.close()
+                        logger.warning("Tables dropped successfully without advisory locks")
+                        return True
+                    except Exception as fallback_e:
+                        logger.error(f"Fallback drop also failed: {fallback_e}")
+                        raise inner_e
+                        
+                finally:
+                    try:
+                        if not connection.closed:
+                            connection.close()
+                    except:
+                        pass
                 
             except OperationalError as e:
-                if "deadlock detected" in str(e).lower() and attempt < max_retries - 1:
-                    logger.warning(f"Deadlock detected on attempt {attempt + 1}, retrying in {retry_delay} seconds...")
+                error_str = str(e).lower()
+                if ("deadlock detected" in error_str or 
+                    "current transaction is aborted" in error_str) and attempt < max_retries - 1:
+                    logger.warning(f"Database error on attempt {attempt + 1}: {e}")
+                    logger.warning(f"Retrying in {retry_delay} seconds...")
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                     continue
                 else:
                     logger.error(f"Failed to drop tables after {attempt + 1} attempts: {e}")
                     return False
+                    
+            except StatementError as e:
+                # Handle SQLAlchemy statement errors (including transaction errors)
+                if "current transaction is aborted" in str(e).lower() and attempt < max_retries - 1:
+                    logger.warning(f"Transaction aborted on attempt {attempt + 1}, retrying...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    continue
+                else:
+                    logger.error(f"Statement error after {attempt + 1} attempts: {e}")
+                    return False
+                    
             except Exception as e:
-                logger.error(f"Failed to drop tables: {e}")
-                return False
+                logger.error(f"Unexpected error on attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+                    continue
+                else:
+                    logger.error(f"Failed to drop tables after {attempt + 1} attempts: {e}")
+                    return False
         
         return False
     

@@ -589,12 +589,12 @@ async def get_trades(
             "trades": [
                 {
                     "id": str(t.id),
-                    "symbol": t.symbol,
+                    "symbol": t.asset.symbol if t.asset else "UNKNOWN",
                     "side": t.side,
-                    "amount": t.amount,
-                    "price": t.entry_price, # or avg fill price
+                    "amount": float(t.quantity) if t.quantity else 0,
+                    "price": float(t.entry_price) if t.entry_price else 0,
                     "status": t.status,
-                    "created_at": t.created_at.isoformat()
+                    "created_at": t.created_at.isoformat() if t.created_at else None
                 }
                 for t in trades
             ],

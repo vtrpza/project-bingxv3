@@ -34,13 +34,34 @@ class UIComponents:
         if not dt_str:
             return "-"
         try:
-            # Parse ISO format datetime (assumes UTC)
-            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            # Handle different datetime formats that might come from backend
+            if isinstance(dt_str, str):
+                # Remove timezone suffix and normalize
+                dt_str_clean = dt_str.replace('Z', '+00:00')
+                
+                # Try parsing ISO format first
+                try:
+                    dt = datetime.fromisoformat(dt_str_clean)
+                except ValueError:
+                    # Fallback: try parsing without timezone info (assume UTC)
+                    dt = datetime.fromisoformat(dt_str.replace('Z', '').replace('+00:00', ''))
+                    # Add UTC timezone info
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                # Handle datetime objects directly
+                dt = dt_str
+                if dt.tzinfo is None:
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            
             # Convert to UTC-3 (Brazil time)
             dt_utc3 = dt - timedelta(hours=3)
             return dt_utc3.strftime("%d/%m %H:%M")
-        except (ValueError, AttributeError):
-            return dt_str
+        except (ValueError, AttributeError, TypeError) as e:
+            # Log the error for debugging and return original string
+            console.error(f"Error formatting datetime '{dt_str}': {e}")
+            return str(dt_str) if dt_str else "-"
     
     @staticmethod
     def format_datetime_full(dt_str):
@@ -48,13 +69,34 @@ class UIComponents:
         if not dt_str:
             return "-"
         try:
-            # Parse ISO format datetime (assumes UTC)
-            dt = datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
+            # Handle different datetime formats that might come from backend
+            if isinstance(dt_str, str):
+                # Remove timezone suffix and normalize
+                dt_str_clean = dt_str.replace('Z', '+00:00')
+                
+                # Try parsing ISO format first
+                try:
+                    dt = datetime.fromisoformat(dt_str_clean)
+                except ValueError:
+                    # Fallback: try parsing without timezone info (assume UTC)
+                    dt = datetime.fromisoformat(dt_str.replace('Z', '').replace('+00:00', ''))
+                    # Add UTC timezone info
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            else:
+                # Handle datetime objects directly
+                dt = dt_str
+                if dt.tzinfo is None:
+                    from datetime import timezone
+                    dt = dt.replace(tzinfo=timezone.utc)
+            
             # Convert to UTC-3 (Brazil time)
             dt_utc3 = dt - timedelta(hours=3)
             return dt_utc3.strftime("%d/%m/%Y %H:%M:%S")
-        except (ValueError, AttributeError):
-            return dt_str
+        except (ValueError, AttributeError, TypeError) as e:
+            # Log the error for debugging and return original string
+            console.error(f"Error formatting datetime_full '{dt_str}': {e}")
+            return str(dt_str) if dt_str else "-"
     
     @staticmethod
     def format_datetime_with_timezone(dt_str):

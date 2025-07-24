@@ -530,16 +530,31 @@ class TradeRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error getting trades since {start_time}: {e}")
             return []
-
-    def get_trades_since(self, session: Session, start_time: datetime, asset_id: str = None) -> List[Trade]:
-        """Get trades that occurred since a specific timestamp."""
+    
+    def get_trades(self, session: Session, symbol: str = None, status: str = None, limit: int = 50) -> List[Trade]:
+        """Get trades with optional filtering by symbol and status."""
         try:
-            query = session.query(Trade).filter(Trade.entry_time >= start_time)
-            if asset_id:
-                query = query.filter(Trade.asset_id == asset_id)
-            return query.order_by(desc(Trade.entry_time)).all()
+            from sqlalchemy.orm import joinedload
+            
+            # Always join with Asset to load the asset relationship
+            query = session.query(Trade).options(joinedload(Trade.asset))
+            
+            # Filter by symbol if provided (join with Asset table)
+            if symbol:
+                query = query.join(Asset).filter(Asset.symbol == symbol.upper())
+            
+            # Filter by status if provided
+            if status:
+                query = query.filter(Trade.status == status.upper())
+            
+            # Order by entry time (most recent first) and apply limit
+            query = query.order_by(desc(Trade.entry_time))
+            if limit:
+                query = query.limit(limit)
+                
+            return query.all()
         except SQLAlchemyError as e:
-            logger.error(f"Error getting trades since {start_time}: {e}")
+            logger.error(f"Error getting trades (symbol={symbol}, status={status}, limit={limit}): {e}")
             return []
 
 
