@@ -83,14 +83,6 @@ services:
     plan: starter
     ipAllowList: []
 
-databases:
-  # Banco de Dados PostgreSQL
-  - name: bingx-postgres
-    plan: standard
-    databaseName: bingx_trading
-    user: bingx_user
-    ipAllowList: []
-
   # Background Maintenance Worker
   - type: worker
     name: bingx-maintenance-worker
@@ -109,3 +101,11 @@ databases:
           property: connectionString
       - key: LOG_RETENTION_DAYS
         value: "30"
+
+databases:
+  # Banco de Dados PostgreSQL
+  - name: bingx-postgres
+    plan: standard
+    databaseName: bingx_trading
+    user: bingx_user
+    ipAllowList: []
