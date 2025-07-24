@@ -1221,6 +1221,11 @@ async def get_trading_live_data(
         from api.client import get_client
         try:
             client = get_client()
+            # Ensure client is initialized before use
+            if not client._initialized:
+                success = await client.initialize()
+                if not success:
+                    raise Exception("Client initialization failed")
         except Exception as e:
             logger.error(f"Failed to initialize BingX client: {e}")
             raise HTTPException(status_code=500, detail="Trading API unavailable")
