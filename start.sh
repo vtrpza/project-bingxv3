@@ -274,7 +274,7 @@ setup_environment() {
         log "INFO" "2. Create database 'bingx_trading'"
         log "INFO" "3. Create user 'trading_user' with password 'trading_password'"
         log "INFO" "4. Update DATABASE_URL in .env file"
-        log "INFO" "5. Run: python3 -m alembic upgrade head"
+        log "INFO" "5. Database tables will be created automatically by the application"
     fi
     
     log "SUCCESS" "Environment setup completed!"
