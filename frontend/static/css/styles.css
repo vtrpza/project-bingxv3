@@ -393,6 +393,21 @@ body {
     background: #1a5cc6;
 }
 
+.revalidate-btn {
+    background: var(--accent-warning);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.revalidate-btn:hover {
+    background: #d47534;
+}
+
 /* Scanner Grid */
 .scanner-grid {
     display: grid;

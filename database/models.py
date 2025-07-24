@@ -27,8 +27,8 @@ class Asset(Base):
     
     # Asset information
     symbol = Column(String(20), unique=True, nullable=False, index=True)
-    base_currency = Column(String(10), nullable=False)
-    quote_currency = Column(String(10), nullable=False)
+    base_currency = Column(String(20), nullable=False)  # Increased from 10 to 20 for symbols like 1000000BABYDOGE
+    quote_currency = Column(String(20), nullable=False)  # Increased from 10 to 20 for consistency
     
     # Validation status
     is_valid = Column(Boolean, default=True, index=True)

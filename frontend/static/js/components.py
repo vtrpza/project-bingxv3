@@ -664,7 +664,8 @@ class UIComponents:
                 if notification:
                     notification.remove()
             
-            setTimeout(remove_notification, 5000)
+            from pyodide.ffi import create_proxy
+            setTimeout(create_proxy(remove_notification), 5000)
             
         except Exception as e:
             console.error(f"Error showing notification: {str(e)}")

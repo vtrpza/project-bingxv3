@@ -208,95 +208,121 @@ class InitialScanner:
                 result.add_error(symbol, str(e))
     
     async def _persist_scan_results(self, result: InitialScanResult):
-        """Persist scan results to database."""
-        try:
-            with get_session() as session:
-                # Update valid assets
-                for asset_data in result.valid_assets:
-                    symbol = asset_data['symbol']
-                    validation_data = asset_data['validation_data']
-                    
-                    try:
-                        base_currency, quote_currency = symbol.split('/')
+        """Persist scan results to database with proper transaction handling."""
+        # Define convert_decimals function once
+        def convert_decimals(obj):
+            if isinstance(obj, dict):
+                return {k: convert_decimals(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_decimals(v) for v in obj]
+            elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
+                return float(obj)
+            else:
+                return obj
+        
+        # Process valid assets in batches
+        batch_size = 50
+        valid_processed = 0
+        
+        for i in range(0, len(result.valid_assets), batch_size):
+            batch = result.valid_assets[i:i + batch_size]
+            
+            try:
+                with get_session() as session:
+                    for asset_data in batch:
+                        symbol = asset_data['symbol']
+                        validation_data = asset_data['validation_data']
                         
-                        # Extract market data for persistence - converter Decimals para float
-                        market_summary = validation_data.get('data', {}).get('market_summary', {})
-                        
-                        # Converter todos os Decimals para float para evitar erro de serialização JSON
-                        def convert_decimals(obj):
-                            if isinstance(obj, dict):
-                                return {k: convert_decimals(v) for k, v in obj.items()}
-                            elif isinstance(obj, list):
-                                return [convert_decimals(v) for v in obj]
-                            elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
-                                return float(obj)
-                            else:
-                                return obj
-                        
-                        market_summary_clean = convert_decimals(market_summary)
-                        validation_checks_clean = convert_decimals(validation_data.get('data', {}).get('validation_checks', {}))
-                        
-                        self.asset_repo.update_validation_status(
-                            session,
-                            symbol=symbol,
-                            is_valid=True,
-                            validation_data={
-                                'validation_timestamp': validation_data['validation_timestamp'],
-                                'validation_duration': validation_data['validation_duration_seconds'],
-                                'market_summary': market_summary_clean,
-                                'validation_checks': validation_checks_clean,
-                                'priority': validation_data.get('priority', False),
-                            }
-                        )
-                        
-                        # Also create asset if it doesn't exist
-                        existing_asset = self.asset_repo.get_by_symbol(session, symbol)
-                        if not existing_asset:
-                            min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
-                            if isinstance(min_order_size, (int, float, str)):
-                                min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
+                        try:
+                            base_currency, quote_currency = symbol.split('/')
                             
-                            self.asset_repo.create(
+                            # Extract and clean market data
+                            market_summary = validation_data.get('data', {}).get('market_summary', {})
+                            market_summary_clean = convert_decimals(market_summary)
+                            validation_checks_clean = convert_decimals(validation_data.get('data', {}).get('validation_checks', {}))
+                            
+                            self.asset_repo.update_validation_status(
                                 session,
                                 symbol=symbol,
-                                base_currency=base_currency,
-                                quote_currency=quote_currency,
                                 is_valid=True,
-                                min_order_size=min_order_size,
-                                last_validation=datetime.utcnow(),
-                                validation_data=validation_data.get('data', {})
+                                validation_data={
+                                    'validation_timestamp': validation_data['validation_timestamp'],
+                                    'validation_duration': validation_data['validation_duration_seconds'],
+                                    'market_summary': market_summary_clean,
+                                    'validation_checks': validation_checks_clean,
+                                    'priority': validation_data.get('priority', False),
+                                }
                             )
+                            
+                            # Create asset if it doesn't exist
+                            existing_asset = self.asset_repo.get_by_symbol(session, symbol)
+                            if not existing_asset:
+                                min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
+                                if isinstance(min_order_size, (int, float, str)):
+                                    min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
+                                
+                                self.asset_repo.create(
+                                    session,
+                                    symbol=symbol,
+                                    base_currency=base_currency,
+                                    quote_currency=quote_currency,
+                                    is_valid=True,
+                                    min_order_size=min_order_size,
+                                    last_validation=datetime.utcnow(),
+                                    validation_data=validation_data.get('data', {})
+                                )
+                            
+                            valid_processed += 1
+                            
+                        except Exception as e:
+                            logger.error(f"Error persisting valid asset {symbol}: {e}")
+                            # Continue with next asset instead of failing the whole batch
+                            continue
+                            
+            except Exception as e:
+                logger.error(f"Error processing valid assets batch {i//batch_size + 1}: {e}")
+                # Continue with next batch
+                continue
+        
+        # Process invalid assets in batches
+        invalid_processed = 0
+        
+        for i in range(0, len(result.invalid_assets), batch_size):
+            batch = result.invalid_assets[i:i + batch_size]
+            
+            try:
+                with get_session() as session:
+                    for asset_data in batch:
+                        symbol = asset_data['symbol']
                         
-                    except Exception as e:
-                        logger.error(f"Error persisting valid asset {symbol}: {e}")
-                
-                # Update invalid assets
-                for asset_data in result.invalid_assets:
-                    symbol = asset_data['symbol']
-                    
-                    try:
-                        # Converter Decimals também para assets inválidos
-                        validation_data_clean = convert_decimals(asset_data.get('validation_data', {}))
-                        
-                        self.asset_repo.update_validation_status(
-                            session,
-                            symbol=symbol,
-                            is_valid=False,
-                            validation_data={
-                                'rejection_reason': asset_data['reason'],
-                                'rejected_timestamp': asset_data['rejected_timestamp'],
-                                'validation_data': validation_data_clean,
-                            }
-                        )
-                        
-                    except Exception as e:
-                        logger.error(f"Error persisting invalid asset {symbol}: {e}")
-                
-                logger.info(f"Persisted scan results: {len(result.valid_assets)} valid, "
-                           f"{len(result.invalid_assets)} invalid assets")
-                
-        except Exception as e:
-            logger.error(f"Error persisting scan results to database: {e}")
+                        try:
+                            validation_data_clean = convert_decimals(asset_data.get('validation_data', {}))
+                            
+                            self.asset_repo.update_validation_status(
+                                session,
+                                symbol=symbol,
+                                is_valid=False,
+                                validation_data={
+                                    'rejection_reason': asset_data['reason'],
+                                    'rejected_timestamp': asset_data['rejected_timestamp'],
+                                    'validation_data': validation_data_clean,
+                                }
+                            )
+                            
+                            invalid_processed += 1
+                            
+                        except Exception as e:
+                            logger.error(f"Error persisting invalid asset {symbol}: {e}")
+                            # Continue with next asset
+                            continue
+                            
+            except Exception as e:
+                logger.error(f"Error processing invalid assets batch {i//batch_size + 1}: {e}")
+                # Continue with next batch
+                continue
+        
+        logger.info(f"Persisted scan results: {valid_processed}/{len(result.valid_assets)} valid, "
+                   f"{invalid_processed}/{len(result.invalid_assets)} invalid assets")
     
     async def get_last_scan_summary(self) -> Optional[Dict[str, Any]]:
         """Get summary of the last scan from database."""
@@ -448,9 +474,9 @@ async def main():
         
         print("✅ Banco de dados inicializado")
         
-        # Executar scan inicial - LIMITADO para teste
-        print("🔍 Executando scan inicial de 10 ativos para teste...")
-        result = await perform_initial_scan(max_assets=10, force_refresh=True)
+        # Executar scan inicial
+        print("🔍 Executando scan inicial de todos os ativos...")
+        result = await perform_initial_scan(force_refresh=True)
         
         # Exibir resultados
         summary = result.get_summary()

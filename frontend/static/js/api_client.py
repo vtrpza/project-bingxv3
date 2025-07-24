@@ -14,10 +14,12 @@ class APIClient:
     def __init__(self, base_url=""):
         self.base_url = base_url
         self.websocket = None
-        self.ws_url = f"ws://{document.location.host}/ws"
+        self.ws_url = None
         self.is_connected = False
         self.callbacks = {}
         self.reconnect_interval = 5000
+        self.max_reconnect_attempts = 5
+        self.reconnect_attempts = 0
         
     async def get(self, endpoint):
         """Make GET request to API"""
@@ -68,6 +70,14 @@ class APIClient:
         """Get comprehensive asset validation table with all metrics"""
         params = f"?limit={limit}&include_invalid={str(include_invalid).lower()}"
         return await self.get(f"/assets/validation-table{params}")
+
+    async def force_revalidation(self):
+        """Force a full revalidation of all assets"""
+        return await self.post("/assets/force-revalidation")
+    
+    async def get_revalidation_status(self):
+        """Get the current status of the revalidation process"""
+        return await self.get("/assets/revalidation-status")
     
     # Indicator endpoints
     async def get_indicators(self, symbol=None, timeframe=None, limit=50):
@@ -131,6 +141,22 @@ class APIClient:
         return await self.get("/health")
     
     # WebSocket methods
+    def get_websocket_url(self):
+        """Get WebSocket URL with protocol detection and fallback"""
+        try:
+            # Detect protocol (ws for http, wss for https)
+            protocol = "wss" if document.location.protocol == "https:" else "ws"
+            host = document.location.host
+            url = f"{protocol}://{host}/ws"
+            console.log(f"WebSocket URL constructed: {url}")
+            return url
+        except Exception as e:
+            # Fallback for environments where document.location is not available
+            console.warn(f"Could not access document.location: {e}")
+            fallback_url = "ws://localhost:8000/ws"
+            console.log(f"Using fallback WebSocket URL: {fallback_url}")
+            return fallback_url
+    
     def on_message(self, event_type, callback):
         """Register callback for WebSocket message type"""
         self.callbacks[event_type] = callback
@@ -154,7 +180,8 @@ class APIClient:
     def on_websocket_open(self, event):
         """Handle WebSocket connection open"""
         self.is_connected = True
-        console.log("WebSocket connected")
+        self.reconnect_attempts = 0  # Reset reconnection attempts on successful connection
+        console.log("WebSocket connected successfully")
         self.update_connection_status(True)
         
         # Send ping to keep connection alive
@@ -165,12 +192,24 @@ class APIClient:
     def on_websocket_close(self, event):
         """Handle WebSocket connection close"""
         self.is_connected = False
-        console.log("WebSocket disconnected")
+        console.log(f"WebSocket disconnected. Code: {event.code}, Reason: {event.reason}")
         self.update_connection_status(False)
         
-        # Attempt to reconnect after delay
-        setTimeout = document.defaultView.setTimeout
-        setTimeout(create_proxy(self.connect_websocket), self.reconnect_interval)
+        # Attempt to reconnect with exponential backoff
+        if self.reconnect_attempts < self.max_reconnect_attempts:
+            self.reconnect_attempts += 1
+            delay = min(self.reconnect_interval * (2 ** (self.reconnect_attempts - 1)), 30000)  # Max 30s
+            console.log(f"Attempting reconnection {self.reconnect_attempts}/{self.max_reconnect_attempts} in {delay}ms")
+            
+            setTimeout = document.defaultView.setTimeout
+            
+            def reconnect():
+                self.connect_websocket()
+
+            setTimeout(create_proxy(reconnect), delay)
+        else:
+            console.error("Max reconnection attempts reached. WebSocket connection failed.")
+            self.handle_websocket_unavailable()
     
     def on_websocket_error(self, event):
         """Handle WebSocket error"""
@@ -179,8 +218,12 @@ class APIClient:
         self.update_connection_status(False)
     
     def connect_websocket(self):
-        """Connect to WebSocket server"""
+        """Connect to WebSocket server with enhanced error handling"""
         try:
+            # Get WebSocket URL using improved method
+            self.ws_url = self.get_websocket_url()
+            console.log(f"Attempting WebSocket connection to: {self.ws_url}")
+            
             self.websocket = WebSocket.new(self.ws_url)
             self.websocket.onopen = create_proxy(self.on_websocket_open)
             self.websocket.onmessage = create_proxy(self.on_websocket_message)
@@ -188,6 +231,7 @@ class APIClient:
             self.websocket.onerror = create_proxy(self.on_websocket_error)
         except Exception as e:
             console.error(f"WebSocket connection error: {str(e)}")
+            self.handle_websocket_unavailable()
     
     def disconnect_websocket(self):
         """Disconnect from WebSocket server"""
@@ -210,14 +254,45 @@ class APIClient:
                 status_text.textContent = "Desconectado"
     
     def send_websocket_message(self, message):
-        """Send message through WebSocket"""
-        if self.websocket and self.is_connected:
-            try:
-                self.websocket.send(json.dumps(message))
-            except Exception as e:
-                console.error(f"WebSocket send error: {str(e)}")
-        else:
-            console.warn("WebSocket not connected")
+        """Send message through WebSocket with validation"""
+        if not self.websocket:
+            console.warn("WebSocket not initialized")
+            return False
+            
+        if not self.is_connected:
+            console.warn("WebSocket not connected - attempting reconnection")
+            self.connect_websocket()
+            return False
+            
+        try:
+            self.websocket.send(json.dumps(message))
+            return True
+        except Exception as e:
+            console.error(f"WebSocket send error: {str(e)}")
+            self.is_connected = False
+            return False
+    
+    def handle_websocket_unavailable(self):
+        """Handle case where WebSocket is not available"""
+        console.warn("WebSocket unavailable - real-time updates disabled")
+        # TODO: Implement polling fallback for real-time updates if needed
+        # self.start_polling_fallback()
+        
+        # Update UI to show WebSocket is unavailable
+        self.update_connection_status(False)
+        
+        # Show user notification about degraded functionality
+        try:
+            # Try to show notification if UI components are available
+            from components import ui_components
+            ui_components.show_notification(
+                "Conexão", 
+                "Atualizações em tempo real indisponíveis. Usando modo manual.", 
+                "warning"
+            )
+        except:
+            # Fallback if UI components not available
+            console.warn("Real-time updates unavailable - using manual refresh mode")
 
 
 # Global API client instance

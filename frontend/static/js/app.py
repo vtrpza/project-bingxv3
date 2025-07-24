@@ -32,8 +32,8 @@ class TradingBotApp:
         api_client.connect_websocket()
         
         # Set up WebSocket event handlers
-        api_client.on_message("realtime_update", self.handle_realtime_update)
-        api_client.on_message("pong", self.handle_pong)
+        api_client.on_message("realtime_update", create_proxy(self.handle_realtime_update))
+        api_client.on_message("pong", create_proxy(self.handle_pong))
         
         # Load initial data
         asyncio.create_task(self.load_initial_data())
@@ -160,39 +160,15 @@ class TradingBotApp:
             console.error(f"Error updating trading data: {str(e)}")
     
     def handle_realtime_update(self, data):
-        """Handle real-time WebSocket updates"""
+        """
+        Handle real-time WebSocket updates by triggering a full data refresh.
+        This avoids issues with partial or incomplete data payloads from the WebSocket.
+        """
+        console.log("Real-time update received, triggering full data refresh...")
         try:
-            update_data = data.get("data", {})
-            
-            # Update indicators in scanner
-            indicators = update_data.get("indicators", [])
-            if indicators:
-                ui_components.update_scanner_grid(indicators)
-            
-            # Update active signals count
-            active_signals = update_data.get("active_signals", 0)
-            element = document.getElementById("active-signals-count")
-            if element:
-                element.textContent = str(active_signals)
-            
-            # Update positions if available
-            positions = update_data.get("active_positions", [])
-            if positions:
-                # Update P&L in real-time
-                total_pnl = sum(
-                    float(pos.get("unrealized_pnl", 0)) 
-                    for pos in positions
-                )
-                pnl_element = document.getElementById("total-pnl")
-                if pnl_element:
-                    pnl_element.textContent = ui_components.format_currency(total_pnl)
-                    pnl_element.className = f"pnl-value {ui_components.get_pnl_class(total_pnl)}"
-            
-            # Update timestamp
-            timestamp_element = document.getElementById("last-update")
-            if timestamp_element:
-                timestamp_element.textContent = datetime.now().strftime("%H:%M:%S")
-                
+            # Trigger the same functions used for the initial load to ensure data consistency
+            asyncio.create_task(self.update_dashboard_summary())
+            asyncio.create_task(self.update_validation_table())
         except Exception as e:
             console.error(f"Error handling realtime update: {str(e)}")
     
@@ -323,29 +299,78 @@ def nextPage():
     """Global function for table pagination"""
     ui_components.change_table_page(1)
 
+async def check_revalidation_status():
+    """Check the status of revalidation process"""
+    status = await api_client.get_revalidation_status()
+    if status and status.get("status"):
+        status_data = status["status"]
+        if status_data.get("running"):
+            ui_components.show_notification(
+                "Validação", 
+                f"Processando... {status_data.get('progress', 0)}/{status_data.get('total', 0)} ativos", 
+                "info"
+            )
+            # Check again in 2 seconds
+            setTimeout = document.defaultView.setTimeout
+            setTimeout(create_proxy(lambda: asyncio.create_task(check_revalidation_status())), 2000)
+        elif status_data.get("completed"):
+            ui_components.show_notification(
+                "Validação", 
+                f"Revalidação concluída! {status_data.get('total', 0)} ativos processados", 
+                "success"
+            )
+            # Refresh the validation table
+            asyncio.create_task(app.update_validation_table())
+        elif status_data.get("error"):
+            ui_components.show_notification(
+                "Erro", 
+                f"Erro na revalidação: {status_data.get('error')}", 
+                "error"
+            )
+
 def forceRevalidation():
     """Global function to force asset revalidation"""
-    ui_components.show_notification(
-        "Validação", 
-        "Revalidação de ativos solicitada", 
-        "info"
-    )
-    # TODO: Implement asset revalidation API call
+    async def do_revalidation():
+        result = await api_client.force_revalidation()
+        if result:
+            if result.get("status", {}).get("running"):
+                ui_components.show_notification(
+                    "Validação", 
+                    "Processo de revalidação já está em execução", 
+                    "warning"
+                )
+            else:
+                ui_components.show_notification(
+                    "Validação", 
+                    "Iniciando revalidação de todos os ativos...", 
+                    "info"
+                )
+                # Start checking status
+                await check_revalidation_status()
+        else:
+            ui_components.show_notification(
+                "Erro", 
+                "Falha ao iniciar revalidação", 
+                "error"
+            )
+    
+    asyncio.create_task(do_revalidation())
+
 
 def filterValidationTable():
     """Global function to filter validation table"""
     ui_components.filter_validation_table()
 
 # Make functions globally available
-document.refreshData = refreshData
-document.refreshValidationTable = refreshValidationTable
-document.exportTableData = exportTableData
-document.sortTable = sortTable
-document.previousPage = previousPage
-document.nextPage = nextPage
-document.closePosition = closePosition
-document.forceRevalidation = forceRevalidation
-document.filterValidationTable = filterValidationTable
+document.refreshData = create_proxy(refreshData)
+document.refreshValidationTable = create_proxy(refreshValidationTable)
+document.exportTableData = create_proxy(exportTableData)
+document.sortTable = create_proxy(sortTable)
+document.previousPage = create_proxy(previousPage)
+document.nextPage = create_proxy(nextPage)
+document.closePosition = create_proxy(closePosition)
+document.forceRevalidation = create_proxy(forceRevalidation)
+document.filterValidationTable = create_proxy(filterValidationTable)
 
 # Initialize the application
 app = TradingBotApp()

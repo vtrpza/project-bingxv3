@@ -269,6 +269,69 @@ async def get_asset_validation_table(
         logger.error(f"Full traceback: {error_details}")
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
+# Background task to track revalidation status
+revalidation_status = {"running": False, "progress": 0, "total": 0, "completed": False, "error": None}
+
+async def run_revalidation_task():
+    """Run the revalidation task and track its progress"""
+    global revalidation_status
+    try:
+        from scanner.initial_scanner import perform_initial_scan
+        
+        revalidation_status["running"] = True
+        revalidation_status["progress"] = 0
+        revalidation_status["total"] = 0
+        revalidation_status["completed"] = False
+        revalidation_status["error"] = None
+        
+        logger.info("Starting full asset revalidation...")
+        result = await perform_initial_scan(force_refresh=True)
+        
+        if result:
+            revalidation_status["total"] = result.total_discovered
+            revalidation_status["progress"] = result.total_discovered
+            revalidation_status["completed"] = True
+            logger.info(f"Revalidation completed: {result.get_summary()}")
+        else:
+            revalidation_status["error"] = "Revalidation failed"
+            
+    except Exception as e:
+        logger.error(f"Error during revalidation: {e}")
+        revalidation_status["error"] = str(e)
+    finally:
+        revalidation_status["running"] = False
+
+# Force revalidation endpoint
+@app.post("/api/assets/force-revalidation")
+async def force_revalidation():
+    """Force a full revalidation of all assets"""
+    global revalidation_status
+    
+    try:
+        # Check if revalidation is already running
+        if revalidation_status.get("running", False):
+            return {
+                "message": "Revalidation already in progress",
+                "status": revalidation_status
+            }
+        
+        # Start revalidation task
+        asyncio.create_task(run_revalidation_task())
+        
+        return {
+            "message": "Revalidation process started",
+            "status": revalidation_status
+        }
+    except Exception as e:
+        logger.error(f"Error forcing revalidation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Get revalidation status endpoint
+@app.get("/api/assets/revalidation-status")
+async def get_revalidation_status():
+    """Get the current status of the revalidation process"""
+    return {"status": revalidation_status}
+
 # Asset endpoints
 @app.get("/api/assets")
 async def get_assets(
@@ -621,7 +684,12 @@ async def get_dashboard_summary():
 # WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    client_host = websocket.client.host if websocket.client else "unknown"
+    logger.info(f"WebSocket connection attempt from {client_host}")
+    
     await manager.connect(websocket)
+    logger.info(f"WebSocket connected from {client_host}")
+    
     try:
         while True:
             # Keep connection alive and handle incoming messages
@@ -630,15 +698,28 @@ async def websocket_endpoint(websocket: WebSocket):
             
             # Handle different message types
             if message.get("type") == "ping":
-                await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.utcnow().isoformat()}))
+                await websocket.send_text(json.dumps({
+                    "type": "pong", 
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "server_info": "BingX Trading Bot WebSocket"
+                }))
+                logger.debug(f"Pong sent to {client_host}")
             elif message.get("type") == "subscribe":
                 # Handle subscription requests
-                await websocket.send_text(json.dumps({"type": "subscribed", "data": message.get("data")}))
+                await websocket.send_text(json.dumps({
+                    "type": "subscribed", 
+                    "data": message.get("data"),
+                    "timestamp": datetime.utcnow().isoformat()
+                }))
+                logger.info(f"Subscription confirmed for {client_host}: {message.get('data')}")
+            else:
+                logger.warning(f"Unknown message type from {client_host}: {message.get('type')}")
             
     except WebSocketDisconnect:
+        logger.info(f"WebSocket disconnected from {client_host}")
         manager.disconnect(websocket)
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
+        logger.error(f"WebSocket error from {client_host}: {e}")
         manager.disconnect(websocket)
 
 # Background task to broadcast real-time data
@@ -695,9 +776,11 @@ async def broadcast_realtime_data():
                 }
                 
                 await manager.broadcast(broadcast_data)
+                logger.debug(f"Broadcasted real-time data to {len(manager.active_connections)} clients")
                 
         except Exception as e:
             logger.error(f"Error in broadcast task: {e}")
+            # Continue the loop even if one broadcast fails
         
         # Wait 5 seconds before next broadcast
         await asyncio.sleep(5)
