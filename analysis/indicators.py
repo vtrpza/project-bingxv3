@@ -21,6 +21,36 @@ class IndicatorError(Exception):
     pass
 
 
+class IndicatorCalculator:
+    """Calculator for technical indicators used by scanner worker."""
+    
+    def __init__(self):
+        self.indicators = TechnicalIndicators()
+    
+    def calculate_all(self, candles):
+        """Calculate all indicators for given candle data."""
+        try:
+            if not candles:
+                return {}
+                
+            df = self.indicators.prepare_dataframe(candles)
+            
+            # Calculate basic indicators
+            mm1 = self.indicators.calculate_ema(df['close'], 9).iloc[-1]
+            center = self.indicators.calculate_ema(df['close'], 21).iloc[-1]
+            rsi = self.indicators.calculate_rsi(df['close'], 14).iloc[-1]
+            
+            return {
+                'mm1': float(mm1) if pd.notna(mm1) else None,
+                'center': float(center) if pd.notna(center) else None,
+                'rsi': float(rsi) if pd.notna(rsi) else None
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating indicators: {e}")
+            return {}
+
+
 class TechnicalIndicators:
     """Technical indicators calculator using pandas and numpy."""
     
