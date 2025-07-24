@@ -685,20 +685,19 @@ class UIComponents:
     
     @staticmethod
     def change_table_page(direction):
-        """Change table page"""
+        """Change table page using server-side pagination"""
         try:
-            if not hasattr(UIComponents, '_validation_data'):
-                return
+            current_page = getattr(UIComponents, '_current_page', 1)
+            total_pages = getattr(UIComponents, '_total_pages', 1)
             
-            total_items = len(UIComponents._validation_data)
-            per_page = UIComponents._items_per_page
-            total_pages = max(1, (total_items + per_page - 1) // per_page)
-            
-            new_page = UIComponents._current_page + direction
+            new_page = current_page + direction
             if 1 <= new_page <= total_pages:
-                UIComponents._current_page = new_page
-                UIComponents._render_validation_page()
-                UIComponents._update_pagination_info()
+                # Use server-side pagination
+                from js import document
+                if hasattr(document, 'refreshValidationTablePage'):
+                    document.refreshValidationTablePage(new_page)
+                else:
+                    console.warn("refreshValidationTablePage function not available")
                 
         except Exception as e:
             console.error(f"Error changing page: {str(e)}")
