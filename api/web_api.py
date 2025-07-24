@@ -1292,7 +1292,16 @@ async def get_trading_live_data(
                     pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
                     if trade.side == 'SELL':
                         pnl = -pnl
-                    pnl_percentage = (pnl / (float(trade.entry_price) * float(trade.quantity))) * 100
+                    
+                    # Safe PnL percentage calculation
+                    entry_price = float(trade.entry_price)
+                    quantity = float(trade.quantity)
+                    denominator = entry_price * quantity
+                    
+                    if denominator == 0:
+                        pnl_percentage = 0.0  # Avoid division by zero
+                    else:
+                        pnl_percentage = (pnl / denominator) * 100
                     
                     position_data = {
                         "entry_price": float(trade.entry_price),
@@ -1393,6 +1402,9 @@ def _calculate_current_signal(indicators_spot, indicators_2h, indicators_4h, cur
                 mm1 = float(indicators.mm1)
                 center = float(indicators.center)
                 
+                # Safe division - avoid division by zero
+                if center == 0:
+                    continue  # Skip this calculation if center is zero
                 distance_percent = abs(mm1 - center) / center
                 threshold = TradingConfig.MA_DISTANCE_2H_PERCENT if timeframe == "2h" else TradingConfig.MA_DISTANCE_4H_PERCENT
                 
