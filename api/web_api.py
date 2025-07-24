@@ -33,41 +33,82 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Global startup state
+startup_complete = False
+database_ready = False
+
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup."""
+    """Initialize database on startup with optimized performance."""
+    global startup_complete, database_ready
     import asyncio
     import random
     
     try:
-        # Add random delay to prevent multiple instances from starting at exact same time
-        startup_delay = random.uniform(0.1, 2.0)
-        logger.info(f"Starting up with {startup_delay:.2f}s delay to prevent deadlocks...")
-        await asyncio.sleep(startup_delay)
+        logger.info("FastAPI server starting - health check will be available immediately")
         
-        logger.info("Initializing database...")
-        if not init_database():
-            logger.warning("Database initialization failed - running without database")
-            return
+        # Start database initialization in background (non-blocking)
+        asyncio.create_task(initialize_database_background())
         
-        logger.info("Dropping existing database tables (if any)...")
-        from database.connection import db_manager
-        if not db_manager.drop_tables():
-            logger.warning("Database table dropping failed - continuing anyway")
-            # Continue to try creating tables even if dropping fails
+        # Start background tasks immediately (they handle their own initialization)
+        asyncio.create_task(start_background_tasks_delayed())
         
-        logger.info("Creating database tables...")
-        if not create_tables():
-            logger.warning("Database table creation failed - running without database")
-            return
-        
-        logger.info("Database initialization completed successfully")
-        
-        # Start background tasks
-        await start_background_tasks()
+        startup_complete = True
+        logger.info("FastAPI startup completed - health check ready")
     
     except Exception as e:
-        logger.warning(f"Database initialization failed: {e} - running without database")
+        logger.warning(f"Startup event error: {e} - server will continue without some features")
+        startup_complete = True
+
+async def initialize_database_background():
+    """Initialize database in background to avoid blocking startup."""
+    global database_ready
+    import random
+    
+    try:
+        # Add small delay to prevent multiple instances from starting at exact same time
+        startup_delay = random.uniform(0.1, 0.5)  # Reduced from 2.0s to 0.5s
+        logger.info(f"Database initialization starting with {startup_delay:.2f}s delay...")
+        await asyncio.sleep(startup_delay)
+        
+        # Set timeout for database operations
+        timeout_seconds = 30
+        logger.info(f"Initializing database with {timeout_seconds}s timeout...")
+        
+        async def init_with_timeout():
+            if not init_database():
+                logger.warning("Database initialization failed - running without database")
+                return False
+            
+            logger.info("Creating database tables (skipping drop for faster startup)...")
+            if not create_tables():
+                logger.warning("Database table creation failed - running without database")
+                return False
+            
+            return True
+        
+        # Run database initialization with timeout
+        try:
+            success = await asyncio.wait_for(init_with_timeout(), timeout=timeout_seconds)
+            if success:
+                database_ready = True
+                logger.info("Database initialization completed successfully")
+            else:
+                logger.warning("Database initialization completed with errors")
+        except asyncio.TimeoutError:
+            logger.warning(f"Database initialization timed out after {timeout_seconds}s - running without database")
+    
+    except Exception as e:
+        logger.warning(f"Background database initialization failed: {e} - running without database")
+
+async def start_background_tasks_delayed():
+    """Start background tasks with delay to allow database initialization."""
+    try:
+        # Wait a bit for database to be ready, but don't block startup
+        await asyncio.sleep(1.0)
+        await start_background_tasks()
+    except Exception as e:
+        logger.warning(f"Background tasks startup failed: {e}")
 
 # CORS middleware
 app.add_middleware(
@@ -158,10 +199,34 @@ def get_position_repo():
 # Health check
 @app.get("/health")
 async def health_check():
+    """Fast health check that responds immediately during startup."""
+    global startup_complete, database_ready
+    
     return {
         "status": "healthy",
         "timestamp": utc_now(),
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "startup_complete": startup_complete,
+        "database_ready": database_ready,
+        "message": "Server is running"
+    }
+
+# Readiness check (for internal use)
+@app.get("/ready")
+async def readiness_check():
+    """Detailed readiness check including database connectivity."""
+    global startup_complete, database_ready
+    
+    status = "ready" if (startup_complete and database_ready) else "initializing"
+    
+    return {
+        "status": status,
+        "timestamp": utc_now(),
+        "checks": {
+            "startup_complete": startup_complete,
+            "database_ready": database_ready,
+            "api_responsive": True
+        }
     }
 
 @app.get("/api/test-db")
