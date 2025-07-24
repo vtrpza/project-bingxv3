@@ -916,3 +916,6 @@
 2025-07-24 06:58:17,883 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
 2025-07-24 06:58:19,176 - api.web_api - INFO - Latest indicators requested - returning empty structure
 2025-07-24 06:58:21,199 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:22,212 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:58:22,212 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:58:22,212 - api.web_api - INFO - WebSocket connected from 127.0.0.1
