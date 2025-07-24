@@ -428,6 +428,15 @@
         window.searchAssets = searchAssets;
         window.clearSearch = clearSearch;
         
+        // Make filter function available on window for event listeners
+        window.filterValidationTable = function() {
+            if (typeof document.filterValidationTable === 'function') {
+                document.filterValidationTable();
+            } else {
+                console.warn('PyScript filterValidationTable not available yet');
+            }
+        };
+        
         // Safe notification wrapper that checks if PyScript is loaded
         function showNotificationSafe(title, message, type) {
             if (typeof window.showNotification === 'function') {

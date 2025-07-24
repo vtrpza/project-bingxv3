@@ -580,12 +580,14 @@ def searchAssets(event):
     def perform_search():
         console.log(f"Searching for: '{search_term}'")
         try:
+            # Call the method on the global app instance
             asyncio.create_task(app.search_and_update_table(search_term))
+        except NameError:
+            console.error("Global app instance not available")
+            ui_components.show_notification("Erro", "Sistema não inicializado", "error")
         except Exception as e:
             console.error(f"Search error: {e}")
-            # Fallback: show error notification
-            if hasattr(window, 'showNotification'):
-                window.showNotification("Erro de Pesquisa", f"Erro ao buscar: {e}", "error")
+            ui_components.show_notification("Erro de Pesquisa", f"Erro ao buscar: {e}", "error")
     
     searchAssets.timeout = setTimeout(create_proxy(perform_search), 500)
 
@@ -594,19 +596,35 @@ def clearSearch():
     search_input = document.getElementById("symbol-search")
     if search_input:
         search_input.value = ""
-        asyncio.create_task(app.search_and_update_table("", 1))
+        try:
+            asyncio.create_task(app.search_and_update_table("", 1))
+        except NameError:
+            console.error("Global app instance not available for clearSearch")
+            ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
 def sortValidationTableServer(column, direction):
     """Global function for server-side sorting"""
-    asyncio.create_task(app.sort_validation_table_server(column, direction))
+    try:
+        asyncio.create_task(app.sort_validation_table_server(column, direction))
+    except NameError:
+        console.error("Global app instance not available for sorting")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
 def refreshValidationTablePage(page):
     """Global function to refresh specific page"""
-    asyncio.create_task(app.refresh_validation_table_page(page))
+    try:
+        asyncio.create_task(app.refresh_validation_table_page(page))
+    except NameError:
+        console.error("Global app instance not available for pagination")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
 def applyValidationTableFilters(filters):
     """Global function to apply filters"""
-    asyncio.create_task(app.apply_validation_table_filters(filters))
+    try:
+        asyncio.create_task(app.apply_validation_table_filters(filters))
+    except NameError:
+        console.error("Global app instance not available for filters")
+        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)

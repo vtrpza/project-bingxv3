@@ -547,12 +547,17 @@ class UIComponents:
                 'risk_level_filter': risk_level_filter.value if risk_level_filter else "all"
             }
             
-            # Import app dynamically to avoid circular import
-            from js import document
-            if hasattr(document, 'applyValidationTableFilters'):
-                document.applyValidationTableFilters(filters)
-            else:
-                console.warn("applyValidationTableFilters function not available")
+            console.log(f"Filter states: {filters}")
+            
+            # Call app method via global document
+            try:
+                from js import document
+                if hasattr(document, 'applyValidationTableFilters'):
+                    document.applyValidationTableFilters(filters)
+                else:
+                    console.error("applyValidationTableFilters not available on document")
+            except Exception as e:
+                console.error(f"Error calling applyValidationTableFilters: {e}")
             
         except Exception as e:
             console.error(f"Error filtering validation table: {str(e)}")
