@@ -494,7 +494,7 @@ class UIComponents:
     
     @staticmethod
     def update_validation_table(validation_data):
-        """Update asset validation table"""
+        """Update asset validation table with server-side data"""
         try:
             console.log("DEBUG: validation_data received:", validation_data)
             
@@ -509,22 +509,22 @@ class UIComponents:
                 return
             
             table_data = validation_data.get("table_data", [])
+            pagination = validation_data.get("pagination", {})
             console.log(f"DEBUG: table_data length: {len(table_data)}")
             
             if not table_data:
                 tbody.innerHTML = '<tr><td colspan="15" style="text-align: center;">Nenhum ativo encontrado</td></tr>'
                 return
             
-            # Store data for sorting and pagination
-            UIComponents._validation_data = table_data
-            UIComponents._original_data = table_data.copy()  # Keep original data
-            UIComponents._current_page = 1
-            UIComponents._items_per_page = 25
-            UIComponents._sort_column = None
-            UIComponents._sort_direction = 'asc'
+            # Generate HTML for table rows
+            rows_html = ""
+            for asset in table_data:
+                rows_html += UIComponents.render_validation_table_row(asset)
             
-            # Apply current filters
-            UIComponents.filter_validation_table()
+            tbody.innerHTML = rows_html
+            
+            # Update pagination info using server data
+            UIComponents._update_server_pagination_info(pagination)
             
         except Exception as e:
             console.error(f"Error updating validation table: {str(e)}")
