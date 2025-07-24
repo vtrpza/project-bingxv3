@@ -161,7 +161,10 @@ class AssetRepository(BaseRepository):
                                filter_valid_only: bool = False,
                                search: Optional[str] = None,
                                limit: Optional[int] = None,
-                               offset: int = 0) -> List[Asset]:
+                               offset: int = 0,
+                               risk_level_filter: Optional[str] = None,
+                               priority_only: bool = False,
+                               trading_enabled_only: bool = False) -> List[Asset]:
         """Get assets with sorting, filtering and search options."""
         try:
             query = session.query(Asset)
