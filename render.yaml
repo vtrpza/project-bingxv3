@@ -11,7 +11,7 @@ services:
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.10
       - key: DATABASE_URL
         fromDatabase:
           name: bingx-postgres
@@ -38,7 +38,7 @@ services:
     startCommand: python -m scanner.worker
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.10
       - key: DATABASE_URL
         fromDatabase:
           name: bingx-postgres
@@ -63,7 +63,7 @@ services:
     startCommand: python -m analysis.worker
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.10
       - key: DATABASE_URL
         fromDatabase:
           name: bingx-postgres
@@ -84,7 +84,7 @@ services:
     startCommand: python -m utils.maintenance_worker
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11
+        value: 3.11.10
       - key: DATABASE_URL
         fromDatabase:
           name: bingx-postgres
