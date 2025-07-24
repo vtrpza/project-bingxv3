@@ -32,7 +32,20 @@ class IndicatorCalculator:
         try:
             if not candles:
                 return {}
-                
+            
+            # Ensure candles is a list of dictionaries
+            if not isinstance(candles, list) or not all(isinstance(c, dict) for c in candles):
+                candles = [
+                    {
+                        'timestamp': c[0],
+                        'open': c[1],
+                        'high': c[2],
+                        'low': c[3],
+                        'close': c[4],
+                        'volume': c[5]
+                    } for c in candles
+                ]
+
             df = self.indicators.prepare_dataframe(candles)
             
             # Calculate basic indicators
