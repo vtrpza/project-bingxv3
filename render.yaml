@@ -28,14 +28,14 @@ services:
       - key: SECRET_KEY
         generateValue: true
 
-  # Scanner Worker
+  # Scanner Worker - Enhanced Performance Version
   - type: worker
     name: bingx-scanner-worker
     runtime: python
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: python -m scanner.worker
+    startCommand: python -m scanner.enhanced_worker
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.10
@@ -52,6 +52,12 @@ services:
         sync: false
       - key: BINGX_SECRET_KEY
         sync: false
+      - key: USE_PARALLEL_SCANNER
+        value: "true"
+      - key: SCAN_INTERVAL
+        value: "10"
+      - key: MAX_ASSETS_TO_SCAN
+        value: "1500"
 
   # Analysis Worker
   - type: worker
