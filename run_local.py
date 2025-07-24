@@ -159,14 +159,13 @@ class LocalRunner:
             self.log("4. Update DATABASE_URL in .env file", "INFO")
     
     def run_migrations(self):
-        """Run database migrations"""
-        self.log("Running database migrations...", "INFO")
+        """Database initialization (handled by application)"""
+        self.log("Database initialization will be handled by the application...", "INFO")
+        self.log("Skipping Alembic migrations (using SQLAlchemy create_tables)", "SUCCESS")
         try:
-            subprocess.run([
-                sys.executable, "-m", "alembic", "upgrade", "head"
-            ], check=True, cwd=self.project_root)
-            self.log("Migrations completed successfully", "SUCCESS")
-        except subprocess.CalledProcessError as e:
+            # No migration needed - application handles table creation
+            pass
+        except Exception as e:
             self.log(f"Migration failed: {e}", "ERROR")
             self.log("You may need to setup the database first", "WARNING")
     
