@@ -532,6 +532,77 @@
             }
         }
         
+        // Force Revalidation Function - Using Optimized Scanner
+        async function forceRevalidation() {
+            try {
+                // Disable button and show loading state
+                const btn = document.querySelector('[onclick="forceRevalidation()"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '🔄 Revalidando...';
+                }
+                
+                showNotificationSafe('Iniciado', 'Iniciando revalidação com scanner otimizado...', 'info');
+                
+                // Call the optimized revalidation endpoint
+                const response = await fetch('/api/assets/force-revalidation', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotificationSafe('Sucesso', 'Revalidação iniciada! Scanner otimizado em execução.', 'success');
+                    
+                    // Check status periodically
+                    await checkRevalidationStatus();
+                } else {
+                    showNotificationSafe('Erro', 'Erro ao iniciar revalidação: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotificationSafe('Erro de Conexão', 'Erro ao conectar com o servidor: ' + error.message, 'error');
+            } finally {
+                // Re-enable button
+                const btn = document.querySelector('[onclick="forceRevalidation()"]');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔄 Revalidar Ativos';
+                }
+            }
+        }
+        
+        // Check revalidation status
+        async function checkRevalidationStatus() {
+            try {
+                const response = await fetch('/api/assets/revalidation-status');
+                const result = await response.json();
+                
+                if (result.status && result.status.running) {
+                    // Still running, check again in 2 seconds
+                    setTimeout(checkRevalidationStatus, 2000);
+                } else if (result.status && result.status.completed) {
+                    showNotificationSafe('Concluído', 
+                        `Revalidação concluída! ${result.status.progress}/${result.status.total} ativos processados.`, 
+                        'success');
+                    
+                    // Refresh the validation table if available
+                    if (typeof window.refreshValidationTable === 'function') {
+                        window.refreshValidationTable();
+                    }
+                } else if (result.status && result.status.error) {
+                    showNotificationSafe('Erro', 'Erro na revalidação: ' + result.status.error, 'error');
+                }
+            } catch (error) {
+                console.error('Error checking revalidation status:', error);
+            }
+        }
+        
+        // Make the function globally available
+        window.forceRevalidation = forceRevalidation;
+        
         
     </script>
 
