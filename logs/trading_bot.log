@@ -922,3 +922,18 @@
 2025-07-24 06:58:27,291 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
 2025-07-24 06:58:27,293 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
 2025-07-24 06:58:29,330 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:58:31,366 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:35,429 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:35,430 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:37,478 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:37,482 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:37,483 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:39,402 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:58:41,418 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:46,344 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:46,345 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:46,352 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:58:46,401 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:50,315 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:58:50,315 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:58:50,416 - api.web_api - INFO - FastAPI server shutting down

@@ -401,7 +401,15 @@ def forceRevalidation():
             result = await api_client.force_revalidation()
             console.log(f"Revalidation result: {result}")
             
-            if result and not result.get("error"):
+            if result is None:
+                ui_components.show_notification(
+                    "Erro de Validação",
+                    "Falha ao iniciar revalidação: resposta da API nula.",
+                    "error"
+                )
+                return
+
+            if not result.get("error"):
                 if result.get("status") == "already_running":
                     ui_components.show_notification(
                         "Validação", 
