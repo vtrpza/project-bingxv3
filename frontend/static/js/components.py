@@ -639,34 +639,73 @@ class UIComponents:
             console.error(f"Error exporting table: {str(e)}")
     
     @staticmethod
-    def show_notification(title, message, notification_type="info"):
-        """Show notification"""
+    def show_notification(title, message, notification_type="info", duration=5000):
+        """Show a dismissable notification with a title, message, and type."""
         try:
             notifications_container = document.getElementById("notifications")
             if not notifications_container:
+                console.error("Notification container not found.")
                 return
+
+            # Prevent duplicate notifications
+            existing_notifications = document.querySelectorAll(".notification-content p")
+            for el in existing_notifications:
+                if el.textContent == message:
+                    console.log("Duplicate notification prevented.")
+                    return
+
+            # Create notification element
+            notification = document.createElement("div")
+            notification.className = f"notification notification-{notification_type} fade-in"
             
-            notification_id = f"notification-{datetime.now().timestamp()}"
+            # Create content container
+            content = document.createElement("div")
+            content.className = "notification-content"
             
-            notification_html = f'''
-            <div id="{notification_id}" class="notification notification-{notification_type}">
-                <h4>{title}</h4>
-                <p>{message}</p>
-            </div>
-            '''
+            title_element = document.createElement("h4")
+            title_element.textContent = title
             
-            notifications_container.innerHTML += notification_html
+            message_element = document.createElement("p")
+            message_element.textContent = message
             
-            # Auto-remove after 5 seconds
-            setTimeout = document.defaultView.setTimeout
-            def remove_notification():
-                notification = document.getElementById(notification_id)
-                if notification:
-                    notification.remove()
+            content.appendChild(title_element)
+            content.appendChild(message_element)
             
+            # Create close button
+            close_button = document.createElement("button")
+            close_button.className = "notification-close"
+            close_button.innerHTML = "&times;"
+            
+            notification.appendChild(content)
+            notification.appendChild(close_button)
+            
+            # Add to container
+            notifications_container.appendChild(notification)
+            
+            # --- Removal logic ---
+            timeout_id = None
+
+            def remove_notification(event=None):
+                notification.classList.remove("fade-in")
+                notification.classList.add("fade-out")
+                
+                def on_animation_end():
+                    if notification.parentNode:
+                        notification.remove()
+                    if timeout_id:
+                        document.defaultView.clearTimeout(timeout_id)
+
+                from pyodide.ffi import create_proxy
+                notification.addEventListener("animationend", create_proxy(on_animation_end))
+
+            # Add event listener to close button
             from pyodide.ffi import create_proxy
-            setTimeout(create_proxy(remove_notification), 5000)
+            close_button.addEventListener("click", create_proxy(remove_notification))
             
+            # Auto-remove after duration
+            if duration > 0:
+                timeout_id = document.defaultView.setTimeout(create_proxy(remove_notification), duration)
+
         except Exception as e:
             console.error(f"Error showing notification: {str(e)}")
 

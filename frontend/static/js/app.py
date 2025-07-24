@@ -457,6 +457,7 @@ document.nextPage = create_proxy(nextPage)
 document.closePosition = create_proxy(closePosition)
 document.forceRevalidation = create_proxy(forceRevalidation)
 document.filterValidationTable = create_proxy(filterValidationTable)
+document.showNotification = create_proxy(ui_components.show_notification)
 
 # Initialize the application
 app = TradingBotApp()

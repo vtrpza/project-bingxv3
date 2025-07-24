@@ -355,12 +355,12 @@
                     document.getElementById('stop-bot-btn').disabled = false;
                     document.getElementById('start-trading-btn').disabled = false;
                     document.getElementById('bot-status').innerHTML = '🟢 Ativo';
-                    showNotification('Bot iniciado com sucesso!', 'success');
+                    window.showNotification('Sucesso', 'Bot iniciado com sucesso!', 'success');
                 } else {
-                    showNotification('Erro ao iniciar bot: ' + result.detail, 'error');
+                    window.showNotification('Erro', 'Erro ao iniciar bot: ' + result.detail, 'error');
                 }
             } catch (error) {
-                showNotification('Erro de conexão: ' + error.message, 'error');
+                window.showNotification('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -376,12 +376,12 @@
                     document.getElementById('stop-trading-btn').disabled = true;
                     document.getElementById('bot-status').innerHTML = '🔴 Parado';
                     document.getElementById('trading-status').innerHTML = '🔴 Inativo';
-                    showNotification('Bot parado com sucesso!', 'warning');
+                    window.showNotification('Aviso', 'Bot parado com sucesso!', 'warning');
                 } else {
-                    showNotification('Erro ao parar bot: ' + result.detail, 'error');
+                    window.showNotification('Erro', 'Erro ao parar bot: ' + result.detail, 'error');
                 }
             } catch (error) {
-                showNotification('Erro de conexão: ' + error.message, 'error');
+                window.showNotification('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -394,12 +394,12 @@
                     document.getElementById('start-trading-btn').disabled = true;
                     document.getElementById('stop-trading-btn').disabled = false;
                     document.getElementById('trading-status').innerHTML = '🟢 Trading Ativo';
-                    showNotification('Trading iniciado com sucesso!', 'success');
+                    window.showNotification('Sucesso', 'Trading iniciado com sucesso!', 'success');
                 } else {
-                    showNotification('Erro ao iniciar trading: ' + result.detail, 'error');
+                    window.showNotification('Erro', 'Erro ao iniciar trading: ' + result.detail, 'error');
                 }
             } catch (error) {
-                showNotification('Erro de conexão: ' + error.message, 'error');
+                window.showNotification('Erro de Conexão', error.message, 'error');
             }
         }
         
@@ -412,27 +412,16 @@
                     document.getElementById('start-trading-btn').disabled = false;
                     document.getElementById('stop-trading-btn').disabled = true;
                     document.getElementById('trading-status').innerHTML = '🔴 Inativo';
-                    showNotification('Trading parado com sucesso!', 'warning');
+                    window.showNotification('Aviso', 'Trading parado com sucesso!', 'warning');
                 } else {
-                    showNotification('Erro ao parar trading: ' + result.detail, 'error');
+                    window.showNotification('Erro', 'Erro ao parar trading: ' + result.detail, 'error');
                 }
             } catch (error) {
-                showNotification('Erro de conexão: ' + error.message, 'error');
+                window.showNotification('Erro de Conexão', error.message, 'error');
             }
         }
         
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            
-            const container = document.getElementById('notifications');
-            container.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.remove();
-            }, 5000);
-        }
+        
     </script>
 
     <!-- PyScript application -->

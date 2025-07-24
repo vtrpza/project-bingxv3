@@ -178,15 +178,10 @@ def create_tables() -> bool:
     return db_manager.create_tables()
 
 
-def get_db_session():
+def get_db():
     """Dependency function to get database session (for FastAPI)."""
     with db_manager.get_session() as session:
         yield session
-
-
-def get_db():
-    """Alias for get_db_session for compatibility."""
-    return get_db_session()
 
 
 @contextmanager

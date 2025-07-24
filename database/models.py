@@ -309,6 +309,7 @@ class Signal(Base):
     strength = Column(Numeric(5, 2))  # Signal strength 0-100
     rules_triggered = Column(JSONType)  # Which rules triggered the signal (stored as JSON array)
     indicators_snapshot = Column(JSONType)  # Snapshot of indicators at signal time
+    is_processed = Column(Boolean, default=False, index=True) # New field to track if signal has been processed
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())

@@ -118,6 +118,14 @@ class AssetRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error getting valid assets: {e}")
             return []
+
+    def get_valid_assets_count(self, session: Session) -> int:
+        """Get count of all valid assets."""
+        try:
+            return session.query(Asset).filter(Asset.is_valid == True).count()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting valid assets count: {e}")
+            return 0
     
     def update_validation_status(self, session: Session, symbol: str, is_valid: bool, validation_data: Dict = None) -> Optional[Asset]:
         """Update asset validation status."""
@@ -255,6 +263,41 @@ class IndicatorRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error getting latest indicators: {e}")
             return []
+
+    def get_latest_indicators_for_all_assets(self, session: Session, limit: int = 100) -> List[Indicator]:
+        """Get the very latest indicator for each asset, across all timeframes."""
+        try:
+            # Subquery to find the maximum timestamp for each asset_id
+            subquery = (
+                session.query(
+                    Indicator.asset_id,
+                    func.max(Indicator.timestamp).label('max_timestamp')
+                )
+                .group_by(Indicator.asset_id)
+                .subquery()
+            )
+
+            # Join with the main Indicator table to get the full indicator records
+            # for the latest timestamp of each asset
+            query = (
+                session.query(Indicator)
+                .join(
+                    subquery,
+                    and_(
+                        Indicator.asset_id == subquery.c.asset_id,
+                        Indicator.timestamp == subquery.c.max_timestamp
+                    )
+                )
+                .order_by(desc(Indicator.timestamp))
+            )
+            
+            if limit:
+                query = query.limit(limit)
+                
+            return query.all()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting latest indicators for all assets: {e}")
+            return []
     
     def upsert_indicators(self, session: Session, asset_id: str, timeframe: str, timestamp: datetime,
                          mm1: Decimal = None, center: Decimal = None, rsi: Decimal = None,
@@ -308,15 +351,15 @@ class TradeRepository(BaseRepository):
     def __init__(self):
         super().__init__(Trade)
     
-    def get_open_trades(self, session: Session, asset_id: str = None) -> List[Trade]:
-        """Get all open trades."""
+    def get_open_positions(self, session: Session, asset_id: str = None) -> List[Trade]:
+        """Get all open positions (trades)."""
         try:
             query = session.query(Trade).filter(Trade.status == 'OPEN')
             if asset_id:
                 query = query.filter(Trade.asset_id == asset_id)
             return query.order_by(desc(Trade.entry_time)).all()
         except SQLAlchemyError as e:
-            logger.error(f"Error getting open trades: {e}")
+            logger.error(f"Error getting open positions: {e}")
             return []
     
     def get_recent_trades(self, session: Session, days: int = 30, asset_id: str = None) -> List[Trade]:
@@ -477,6 +520,17 @@ class TradeRepository(BaseRepository):
             logger.error(f"Error getting trades by date {target_date}: {e}")
             return []
 
+    def get_trades_since(self, session: Session, start_time: datetime, asset_id: str = None) -> List[Trade]:
+        """Get trades that occurred since a specific timestamp."""
+        try:
+            query = session.query(Trade).filter(Trade.entry_time >= start_time)
+            if asset_id:
+                query = query.filter(Trade.asset_id == asset_id)
+            return query.order_by(desc(Trade.entry_time)).all()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting trades since {start_time}: {e}")
+            return []
+
 
 class SignalRepository(BaseRepository):
     """Repository for Signal operations."""
@@ -526,6 +580,16 @@ class SignalRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error getting pending signals: {e}")
             return []
+
+    def get_active_signals_count(self, session: Session) -> int:
+        """Get count of unprocessed signals."""
+        try:
+            # Assuming 'is_processed' is a boolean field in the Signal model
+            # If not, adjust the filter condition based on how unprocessed signals are identified
+            return session.query(Signal).filter(Signal.is_processed == False).count()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting active signals count: {e}")
+            return 0
 
 
 class OrderRepository(BaseRepository):
