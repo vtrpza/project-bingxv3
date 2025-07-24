@@ -89,31 +89,91 @@ class DatabaseManager:
     
     def create_tables(self) -> bool:
         """Create all database tables."""
-        try:
-            if not self._initialized:
-                raise RuntimeError("Database not initialized")
+        import time
+        from sqlalchemy.exc import OperationalError
+        from sqlalchemy import text
+        
+        max_retries = 3
+        retry_delay = 1  # Start with 1 second
+        
+        for attempt in range(max_retries):
+            try:
+                if not self._initialized:
+                    raise RuntimeError("Database not initialized")
                 
-            Base.metadata.create_all(bind=self.engine)
-            logger.info("Database tables created successfully")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to create tables: {e}")
-            return False
+                # Use a transaction with explicit lock to prevent concurrent creates
+                with self.engine.begin() as conn:
+                    # Try to acquire an advisory lock to prevent concurrent creates
+                    # This is PostgreSQL specific
+                    try:
+                        conn.execute(text("SELECT pg_advisory_lock(12346)"))
+                        Base.metadata.create_all(bind=conn)
+                        conn.execute(text("SELECT pg_advisory_unlock(12346)"))
+                    except Exception:
+                        # If advisory locks fail, just try to create tables
+                        Base.metadata.create_all(bind=conn)
+                
+                logger.info("Database tables created successfully")
+                return True
+                
+            except OperationalError as e:
+                if "deadlock detected" in str(e).lower() and attempt < max_retries - 1:
+                    logger.warning(f"Deadlock detected on attempt {attempt + 1}, retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    logger.error(f"Failed to create tables after {attempt + 1} attempts: {e}")
+                    return False
+            except Exception as e:
+                logger.error(f"Failed to create tables: {e}")
+                return False
+        
+        return False
     
     def drop_tables(self) -> bool:
         """Drop all database tables (use with caution)."""
-        try:
-            if not self._initialized:
-                raise RuntimeError("Database not initialized")
+        import time
+        from sqlalchemy.exc import OperationalError
+        from sqlalchemy import text
+        
+        max_retries = 3
+        retry_delay = 1  # Start with 1 second
+        
+        for attempt in range(max_retries):
+            try:
+                if not self._initialized:
+                    raise RuntimeError("Database not initialized")
                 
-            Base.metadata.drop_all(bind=self.engine)
-            logger.warning("All database tables dropped")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to drop tables: {e}")
-            return False
+                # Use a transaction with explicit lock to prevent concurrent drops
+                with self.engine.begin() as conn:
+                    # Try to acquire an advisory lock to prevent concurrent drops
+                    # This is PostgreSQL specific
+                    try:
+                        conn.execute(text("SELECT pg_advisory_lock(12345)"))
+                        Base.metadata.drop_all(bind=conn)
+                        conn.execute(text("SELECT pg_advisory_unlock(12345)"))
+                    except Exception:
+                        # If advisory locks fail, just try to drop tables
+                        Base.metadata.drop_all(bind=conn)
+                
+                logger.warning("All database tables dropped successfully")
+                return True
+                
+            except OperationalError as e:
+                if "deadlock detected" in str(e).lower() and attempt < max_retries - 1:
+                    logger.warning(f"Deadlock detected on attempt {attempt + 1}, retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                    continue
+                else:
+                    logger.error(f"Failed to drop tables after {attempt + 1} attempts: {e}")
+                    return False
+            except Exception as e:
+                logger.error(f"Failed to drop tables: {e}")
+                return False
+        
+        return False
     
     @contextmanager
     def get_session(self):
