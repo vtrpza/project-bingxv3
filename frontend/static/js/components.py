@@ -594,15 +594,23 @@ class UIComponents:
             console.error(f"Error updating server pagination: {str(e)}")
     
     @staticmethod
-    def sort_validation_table(column):
+    def sort_validation_table(column, use_server_side=False):
         """Sort validation table using client-side sorting on currently loaded data"""
         try:
+            # Allow fallback to server-side if needed
+            if use_server_side:
+                console.log(f"Using server-side sorting for column: {column}")
+                UIComponents._sort_server_side(column)
+                return
+                
             console.log(f"Client-side sorting by column: {column}")
             
             # Get current table body
             tbody = document.getElementById("validation-table-body")
             if not tbody:
                 console.error("Table body not found for sorting")
+                # Fallback to server-side if client-side fails
+                UIComponents._sort_server_side(column)
                 return
             
             # Get all current rows
