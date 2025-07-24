@@ -1,5 +1,5 @@
 services:
-  # Serviço Web Principal
+  # Main Web Service
   - type: web
     name: bingx-trading-bot
     runtime: python
@@ -29,7 +29,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
 
-  # Worker de Escaneamento
+  # Scanner Worker
   - type: worker
     name: bingx-scanner-worker
     runtime: python
@@ -55,7 +55,7 @@ services:
       - key: BINGX_SECRET_KEY
         sync: false
 
-  # Worker de Análise
+  # Analysis Worker
   - type: worker
     name: bingx-analysis-worker
     runtime: python
@@ -77,13 +77,7 @@ services:
           name: bingx-redis
           property: connectionString
 
-  # Cache Redis
-  - type: redis
-    name: bingx-redis
-    plan: starter
-    ipAllowList: []
-
-  # Background Maintenance Worker
+  # Maintenance Worker
   - type: worker
     name: bingx-maintenance-worker
     runtime: python
@@ -102,8 +96,14 @@ services:
       - key: LOG_RETENTION_DAYS
         value: "30"
 
+  # Redis Cache
+  - type: redis
+    name: bingx-redis
+    plan: starter
+    ipAllowList: []
+
 databases:
-  # Banco de Dados PostgreSQL
+  # PostgreSQL Database
   - name: bingx-postgres
     plan: standard
     databaseName: bingx_trading
