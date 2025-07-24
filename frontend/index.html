@@ -15,6 +15,290 @@
     <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- WebSocket Connection Script -->
+    <script>
+        class TradingWebSocket {
+            constructor() {
+                this.ws = null;
+                this.reconnectInterval = 5000;
+                this.reconnectTimer = null;
+                this.isConnecting = false;
+                this.isConnected = false;
+                
+                this.connect();
+            }
+            
+            connect() {
+                if (this.isConnecting || this.isConnected) return;
+                
+                this.isConnecting = true;
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws`;
+                
+                console.log('Connecting to WebSocket:', wsUrl);
+                this.updateConnectionStatus('Conectando...', 'connecting');
+                
+                try {
+                    this.ws = new WebSocket(wsUrl);
+                    
+                    this.ws.onopen = (event) => {
+                        console.log('WebSocket connected');
+                        this.isConnected = true;
+                        this.isConnecting = false;
+                        this.updateConnectionStatus('Conectado', 'online');
+                        
+                        // Subscribe to trading data
+                        this.subscribe('trading_data');
+                        
+                        // Clear reconnect timer
+                        if (this.reconnectTimer) {
+                            clearTimeout(this.reconnectTimer);
+                            this.reconnectTimer = null;
+                        }
+                    };
+                    
+                    this.ws.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            this.handleMessage(data);
+                        } catch (error) {
+                            console.error('Error parsing WebSocket message:', error);
+                        }
+                    };
+                    
+                    this.ws.onclose = (event) => {
+                        console.log('WebSocket disconnected:', event.code, event.reason);
+                        this.isConnected = false;
+                        this.isConnecting = false;
+                        this.updateConnectionStatus('Desconectado', 'offline');
+                        
+                        // Attempt to reconnect
+                        this.scheduleReconnect();
+                    };
+                    
+                    this.ws.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        this.isConnecting = false;
+                        this.updateConnectionStatus('Erro de Conexão', 'error');
+                    };
+                    
+                } catch (error) {
+                    console.error('Error creating WebSocket:', error);
+                    this.isConnecting = false;
+                    this.updateConnectionStatus('Erro de Conexão', 'error');
+                    this.scheduleReconnect();
+                }
+            }
+            
+            scheduleReconnect() {
+                if (this.reconnectTimer) return;
+                
+                this.reconnectTimer = setTimeout(() => {
+                    this.reconnectTimer = null;
+                    if (!this.isConnected && !this.isConnecting) {
+                        this.connect();
+                    }
+                }, this.reconnectInterval);
+            }
+            
+            subscribe(channel) {
+                if (this.isConnected && this.ws) {
+                    const message = {
+                        type: 'subscribe',
+                        data: { channel: channel }
+                    };
+                    this.ws.send(JSON.stringify(message));
+                    console.log('Subscribed to channel:', channel);
+                }
+            }
+            
+            requestUpdate(updateType) {
+                if (this.isConnected && this.ws) {
+                    const message = {
+                        type: 'request_update',
+                        data: { type: updateType }
+                    };
+                    this.ws.send(JSON.stringify(message));
+                }
+            }
+            
+            handleMessage(data) {
+                switch (data.type) {
+                    case 'trading_update':
+                        this.handleTradingUpdate(data.data);
+                        break;
+                    case 'trading_data_snapshot':
+                        this.handleTradingSnapshot(data.data);
+                        break;
+                    case 'positions_update':
+                        this.handlePositionsUpdate(data.data);
+                        break;
+                    case 'take_profit_executed':
+                        this.handleTakeProfitExecuted(data.data);
+                        break;
+                    case 'stop_loss_triggered':
+                        this.handleStopLossTriggered(data.data);
+                        break;
+                    case 'pong':
+                        console.log('Pong received');
+                        break;
+                    default:
+                        console.log('Unknown message type:', data.type);
+                }
+            }
+            
+            handleTradingUpdate(data) {
+                console.log('Trading update received:', data);
+                
+                // Update summary indicators
+                if (data.summary) {
+                    this.updateSummaryIndicators(data.summary);
+                }
+                
+                // Trigger data refresh for current tab
+                const currentTab = document.querySelector('.tab-button.active')?.textContent?.trim();
+                if (currentTab === '💰 Trading') {
+                    this.refreshTradingData();
+                }
+            }
+            
+            handleTradingSnapshot(data) {
+                console.log('Trading snapshot received:', data);
+                this.updatePositionsTable(data.positions);
+            }
+            
+            handlePositionsUpdate(data) {
+                console.log('Positions update received:', data);
+                this.updatePositionsTable(data.positions);
+            }
+            
+            handleTakeProfitExecuted(data) {
+                console.log('Take profit executed:', data);
+                this.showNotification(
+                    'Take Profit Executado',
+                    `${data.symbol}: ${data.size_closed}% da posição fechada com ${data.profit_level}% de lucro`,
+                    'success'
+                );
+                this.refreshTradingData();
+            }
+            
+            handleStopLossTriggered(data) {
+                console.log('Stop loss triggered:', data);
+                this.showNotification(
+                    'Stop Loss Ativado',
+                    `${data.symbol}: Posição fechada por stop loss. P&L: $${data.pnl.toFixed(2)} (${data.pnl_percentage.toFixed(2)}%)`,
+                    'warning'
+                );
+                this.refreshTradingData();
+            }
+            
+            updateConnectionStatus(text, status) {
+                const statusElement = document.getElementById('connection-status');
+                if (statusElement) {
+                    const indicator = statusElement.querySelector('.status-indicator');
+                    const textElement = statusElement.querySelector('span:last-child');
+                    
+                    if (indicator) {
+                        indicator.className = `status-indicator ${status}`;
+                    }
+                    if (textElement) {
+                        textElement.textContent = text;
+                    }
+                }
+            }
+            
+            updateSummaryIndicators(summary) {
+                // Update P&L indicator
+                const pnlElement = document.querySelector('.total-pnl');
+                if (pnlElement && summary.total_unrealized_pnl !== undefined) {
+                    pnlElement.textContent = `$${summary.total_unrealized_pnl.toFixed(2)}`;
+                    pnlElement.className = `total-pnl ${summary.total_unrealized_pnl >= 0 ? 'profit' : 'loss'}`;
+                }
+                
+                // Update positions count
+                const positionsElement = document.querySelector('.positions-count');
+                if (positionsElement && summary.open_positions !== undefined) {
+                    positionsElement.textContent = summary.open_positions;
+                }
+                
+                // Update trading status
+                const tradingStatusElement = document.querySelector('.trading-status');
+                if (tradingStatusElement && summary.trading_enabled !== undefined) {
+                    tradingStatusElement.textContent = summary.trading_enabled ? 'Ativo' : 'Inativo';
+                    tradingStatusElement.className = `trading-status ${summary.trading_enabled ? 'active' : 'inactive'}`;
+                }
+            }
+            
+            updatePositionsTable(positions) {
+                // This will be called by PyScript to update the positions table
+                if (window.updatePositionsFromWebSocket) {
+                    window.updatePositionsFromWebSocket(positions);
+                }
+            }
+            
+            refreshTradingData() {
+                // Trigger PyScript to refresh trading data
+                if (window.refreshTradingDataFromWebSocket) {
+                    window.refreshTradingDataFromWebSocket();
+                }
+            }
+            
+            showNotification(title, message, type = 'info') {
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        <h4>${title}</h4>
+                        <p>${message}</p>
+                        <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                    </div>
+                `;
+                
+                // Add to notifications container
+                let container = document.getElementById('notifications');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'notifications';
+                    container.className = 'notifications-container';
+                    document.body.appendChild(container);
+                }
+                
+                container.appendChild(notification);
+                
+                // Auto-remove after 5 seconds
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 5000);
+            }
+            
+            ping() {
+                if (this.isConnected && this.ws) {
+                    this.ws.send(JSON.stringify({ type: 'ping' }));
+                }
+            }
+        }
+        
+        // Initialize WebSocket connection when page loads
+        let tradingWS = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            tradingWS = new TradingWebSocket();
+            
+            // Send ping every 30 seconds to keep connection alive
+            setInterval(() => {
+                if (tradingWS) {
+                    tradingWS.ping();
+                }
+            }, 30000);
+        });
+        
+        // Make WebSocket available globally
+        window.tradingWS = tradingWS;
+    </script>
+    
     <py-config>
         {
             "packages": ["pandas"],

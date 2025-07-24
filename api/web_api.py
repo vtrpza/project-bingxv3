@@ -2025,14 +2025,98 @@ async def websocket_endpoint(websocket: WebSocket):
                     "server_info": "BingX Trading Bot WebSocket"
                 }))
                 logger.debug(f"Pong sent to {client_host}")
+                
             elif message.get("type") == "subscribe":
                 # Handle subscription requests
+                subscription_type = message.get("data", {}).get("channel", "general")
+                
+                # Send immediate data based on subscription type
+                if subscription_type == "trading_data":
+                    # Send current trading summary
+                    try:
+                        from database.connection import get_session
+                        with get_session() as db:
+                            trade_repo = TradeRepository()
+                            open_trades = trade_repo.get_open_trades(db)
+                            
+                            trading_summary = {
+                                "type": "trading_data_snapshot",
+                                "timestamp": utc_now().isoformat(),
+                                "data": {
+                                    "open_positions": len(open_trades),
+                                    "trading_enabled": bot_status.get("trading_enabled", False),
+                                    "positions": [
+                                        {
+                                            "id": str(trade.id),
+                                            "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
+                                            "side": trade.side,
+                                            "entry_price": float(trade.entry_price),
+                                            "quantity": float(trade.quantity),
+                                            "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
+                                        }
+                                        for trade in open_trades[:5]  # Limit to 5 positions
+                                    ]
+                                }
+                            }
+                            
+                            await websocket.send_text(json.dumps(trading_summary))
+                    except Exception as snapshot_error:
+                        logger.error(f"Error sending trading snapshot: {snapshot_error}")
+                
+                # Confirm subscription
                 await websocket.send_text(json.dumps({
                     "type": "subscribed", 
+                    "data": {
+                        "channel": subscription_type,
+                        "status": "active"
+                    },
+                    "timestamp": utc_now().isoformat()
+                }))
+                logger.info(f"Subscription confirmed for {client_host}: {subscription_type}")
+                
+            elif message.get("type") == "unsubscribe":
+                # Handle unsubscription requests
+                await websocket.send_text(json.dumps({
+                    "type": "unsubscribed", 
                     "data": message.get("data"),
                     "timestamp": utc_now().isoformat()
                 }))
-                logger.info(f"Subscription confirmed for {client_host}: {message.get('data')}")
+                logger.info(f"Unsubscription confirmed for {client_host}: {message.get('data')}")
+                
+            elif message.get("type") == "request_update":
+                # Handle manual update requests
+                update_type = message.get("data", {}).get("type", "general")
+                
+                if update_type == "positions":
+                    try:
+                        from database.connection import get_session
+                        with get_session() as db:
+                            trade_repo = TradeRepository()
+                            open_trades = trade_repo.get_open_trades(db)
+                            
+                            positions_update = {
+                                "type": "positions_update",
+                                "timestamp": utc_now().isoformat(),
+                                "data": {
+                                    "positions": [
+                                        {
+                                            "id": str(trade.id),
+                                            "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
+                                            "side": trade.side,
+                                            "entry_price": float(trade.entry_price),
+                                            "current_price": await _get_current_price(trade.asset.symbol if trade.asset else "UNKNOWN"),
+                                            "quantity": float(trade.quantity),
+                                            "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
+                                        }
+                                        for trade in open_trades
+                                    ]
+                                }
+                            }
+                            
+                            await websocket.send_text(json.dumps(positions_update))
+                    except Exception as update_error:
+                        logger.error(f"Error sending positions update: {update_error}")
+                
             else:
                 logger.warning(f"Unknown message type from {client_host}: {message.get('type')}")
             
@@ -2042,6 +2126,15 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         logger.error(f"WebSocket error from {client_host}: {e}")
         manager.disconnect(websocket)
+
+async def _get_current_price(symbol: str) -> float:
+    """Helper function to get current price for WebSocket updates."""
+    try:
+        ticker = await safe_fetch_ticker(symbol)
+        return ticker.get('last', 0)
+    except Exception as e:
+        logger.debug(f"Error getting current price for {symbol}: {e}")
+        return 0
 
 # Background task to broadcast real-time data
 async def broadcast_realtime_data():
@@ -2053,30 +2146,88 @@ async def broadcast_realtime_data():
             if manager.active_connections:
                 current_time = utc_now()
                 
-                # Só faz broadcast a cada 15 segundos para evitar spam e concorrência
+                # Broadcast trading data every 15 seconds
                 if (last_broadcast_time is None or 
                     (current_time - last_broadcast_time).total_seconds() >= 15):
                     
-                    # Simples notificação de que há uma atualização disponível
-                    # O frontend fará a chamada API para buscar os dados atualizados
-                    broadcast_data = {
-                        "type": "realtime_update", 
-                        "timestamp": current_time.isoformat(),
-                        "data": {
-                            "update_available": True,
-                            "message": "Data refresh recommended"
-                        }
-                    }
+                    # Get real-time trading data for broadcast
+                    try:
+                        # Get database session
+                        from database.connection import get_session
+                        with get_session() as db:
+                            asset_repo = AssetRepository()
+                            trade_repo = TradeRepository()
+                            
+                            # Get summary data for broadcast
+                            valid_assets = asset_repo.get_valid_assets(db)[:10]  # Top 10 assets
+                            open_trades = trade_repo.get_open_trades(db)
+                            
+                            # Calculate total P&L
+                            total_unrealized_pnl = 0
+                            position_count = len(open_trades)
+                            
+                            for trade in open_trades[:5]:  # Sample first 5 trades
+                                try:
+                                    current_ticker = await safe_fetch_ticker(trade.asset.symbol if trade.asset else "UNKNOWN")
+                                    current_price = current_ticker.get('last', 0) or float(trade.entry_price)
+                                    
+                                    if trade.side.upper() == 'BUY':
+                                        pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+                                    else:
+                                        pnl = (float(trade.entry_price) - current_price) * float(trade.quantity)
+                                    
+                                    total_unrealized_pnl += pnl
+                                except Exception as trade_error:
+                                    logger.debug(f"Error calculating P&L for trade {trade.id}: {trade_error}")
+                                    continue
+                            
+                            # Prepare broadcast data
+                            broadcast_data = {
+                                "type": "trading_update",
+                                "timestamp": current_time.isoformat(),
+                                "data": {
+                                    "summary": {
+                                        "total_assets": len(valid_assets),
+                                        "open_positions": position_count,
+                                        "total_unrealized_pnl": round(total_unrealized_pnl, 2),
+                                        "trading_enabled": bot_status.get("trading_enabled", False)
+                                    },
+                                    "positions_sample": [
+                                        {
+                                            "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
+                                            "side": trade.side,
+                                            "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
+                                        }
+                                        for trade in open_trades[:3]  # Sample first 3
+                                    ],
+                                    "update_available": True,
+                                    "refresh_recommended": True
+                                }
+                            }
+                            
+                            await manager.broadcast(broadcast_data)
+                            last_broadcast_time = current_time
+                            logger.debug(f"Sent trading update to {len(manager.active_connections)} clients")
                     
-                    await manager.broadcast(broadcast_data)
-                    last_broadcast_time = current_time
-                    logger.debug(f"Sent update notification to {len(manager.active_connections)} clients")
+                    except Exception as data_error:
+                        logger.warning(f"Error getting trading data for broadcast: {data_error}")
+                        # Send simple update notification as fallback
+                        broadcast_data = {
+                            "type": "realtime_update", 
+                            "timestamp": current_time.isoformat(),
+                            "data": {
+                                "update_available": True,
+                                "message": "Data refresh recommended"
+                            }
+                        }
+                        await manager.broadcast(broadcast_data)
+                        last_broadcast_time = current_time
                 
         except Exception as e:
             logger.error(f"Error in broadcast task: {e}")
             # Continue the loop even if one broadcast fails
         
-        # Wait 15 seconds before next check (aumentado de 5 para 15)
+        # Wait 15 seconds before next check
         await asyncio.sleep(15)
 
 # Background task for automated risk management
