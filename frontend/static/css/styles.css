@@ -1179,6 +1179,20 @@ input:focus {
     transform: translateY(-50%) scale(1.2);
 }
 
+/* Sort arrow indicator */
+.sort-arrow {
+    color: var(--accent-info);
+    font-weight: bold;
+    margin-left: 4px;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+/* Override default pseudo-element when sort-arrow is present */
+.sortable:has(.sort-arrow)::after {
+    display: none;
+}
+
 /* === SEARCH IMPROVEMENTS === */
 .search-container input[type="text"] {
     flex: 1;
