@@ -717,8 +717,8 @@ class UIComponents:
             console.error(f"Error exporting table: {str(e)}")
     
     @staticmethod
-    def show_notification(title, message, notification_type="info", duration=1000):
-        """Show a dismissable notification with a title, message, and type."""
+    def show_notification(title, message, notification_type="info", duration=3000):
+        """Show a dismissable notification with fast auto-hide."""
         try:
             notifications_container = document.getElementById("notifications")
             if not notifications_container:
@@ -734,9 +734,9 @@ class UIComponents:
 
             # Create notification element
             notification = document.createElement("div")
-            notification.className = f"notification notification-{notification_type} fade-in"
+            notification.className = f"notification notification-{notification_type}"
             
-            # Create content container
+            # Create content container  
             content = document.createElement("div")
             content.className = "notification-content"
             
@@ -753,6 +753,7 @@ class UIComponents:
             close_button = document.createElement("button")
             close_button.className = "notification-close"
             close_button.innerHTML = "&times;"
+            close_button.setAttribute("aria-label", "Fechar notificação")
             
             notification.appendChild(content)
             notification.appendChild(close_button)
@@ -760,32 +761,57 @@ class UIComponents:
             # Add to container
             notifications_container.appendChild(notification)
             
-            # --- Removal logic ---
-            timeout_id = None
+            # Enhanced removal function with animation
+            def remove_notification():
+                try:
+                    if notification and notification.parentNode:
+                        # Add fade-out class for smooth transition
+                        notification.classList.add("fade-out")
+                        
+                        # Remove element after animation completes
+                        def final_remove():
+                            if notification and notification.parentNode:
+                                notification.remove()
+                        
+                        # Wait for CSS transition to complete (300ms)
+                        document.defaultView.setTimeout(create_proxy(final_remove), 300)
+                        
+                except Exception as e:
+                    console.error(f"Error removing notification: {e}")
 
-            def remove_notification(event=None):
-                notification.classList.remove("fade-in")
-                notification.classList.add("fade-out")
-                
-                def on_animation_end():
-                    if notification.parentNode:
-                        notification.remove()
-                    if timeout_id:
-                        document.defaultView.clearTimeout(timeout_id)
-
-                from pyodide.ffi import create_proxy
-                notification.addEventListener("animationend", create_proxy(on_animation_end))
-
-            # Add event listener to close button
-            from pyodide.ffi import create_proxy
+            # Manual close button
+            from pyodide.ffi import create_proxy  
             close_button.addEventListener("click", create_proxy(remove_notification))
             
-            # Auto-remove after duration
-            if duration > 0:
-                timeout_id = document.defaultView.setTimeout(create_proxy(remove_notification), duration)
+            # Auto-remove with type-specific durations for quick dismissal
+            auto_hide_duration = duration
+            if notification_type == "success":
+                auto_hide_duration = 2000  # 2 seconds for success messages
+            elif notification_type == "info":
+                auto_hide_duration = 2500  # 2.5 seconds for info  
+            elif notification_type == "warning":
+                auto_hide_duration = 3500  # 3.5 seconds for warnings
+            elif notification_type == "error":
+                auto_hide_duration = 4000  # 4 seconds for errors (longer to read)
+            
+            # Set timeout for auto-removal
+            document.defaultView.setTimeout(create_proxy(remove_notification), auto_hide_duration)
+            
+            console.log(f"Notification: '{title}' - auto-hide in {auto_hide_duration}ms")
 
         except Exception as e:
             console.error(f"Error showing notification: {str(e)}")
+
+    @staticmethod
+    def clear_all_notifications():
+        """Clear all notifications immediately."""
+        try:
+            notifications_container = document.getElementById("notifications")
+            if notifications_container:
+                notifications_container.innerHTML = ""
+                console.log("All notifications cleared")
+        except Exception as e:
+            console.error(f"Error clearing notifications: {e}")
 
 
 # Global UI components instance
