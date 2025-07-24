@@ -164,10 +164,41 @@ class APIClient:
         """Get dashboard summary data"""
         return await self.get("/dashboard/summary")
     
+    # Bot control endpoints
+    async def start_bot(self):
+        """Start the trading bot"""
+        return await self.post("/bot/start")
+    
+    async def stop_bot(self):
+        """Stop the trading bot"""
+        return await self.post("/bot/stop")
+    
+    async def get_bot_status(self):
+        """Get current bot status"""
+        return await self.get("/bot/status")
+    
+    async def start_trading(self):
+        """Start trading (bot must be running)"""
+        return await self.post("/trading/start")
+    
+    async def stop_trading(self):
+        """Stop trading"""
+        return await self.post("/trading/stop")
+    
     # Health check
     async def health_check(self):
         """Check API health status"""
-        return await self.get("/health")
+        # Backend exposes /health without /api prefix
+        try:
+            response = await fetch(f"{self.base_url}/health")
+            if response.ok:
+                return (await response.json()).to_py()
+            else:
+                console.error(f"Health check error: {response.status}")
+                return None
+        except Exception as e:
+            console.error(f"Health check failed: {str(e)}")
+            return None
     
     # WebSocket methods
     def get_websocket_url(self):
@@ -212,6 +243,11 @@ class APIClient:
         self.reconnect_attempts = 0  # Reset reconnection attempts on successful connection
         console.log("WebSocket connected successfully")
         self.update_connection_status(True)
+        
+        # Stop polling if it was active
+        if hasattr(self, 'polling_active') and self.polling_active:
+            self.stop_polling_fallback()
+            console.log("Stopped polling fallback - WebSocket connected")
         
         # Send ping to keep connection alive
         if self.websocket:
@@ -303,9 +339,7 @@ class APIClient:
     
     def handle_websocket_unavailable(self):
         """Handle case where WebSocket is not available"""
-        console.warn("WebSocket unavailable - real-time updates disabled")
-        # TODO: Implement polling fallback for real-time updates if needed
-        # self.start_polling_fallback()
+        console.warn("WebSocket unavailable - starting polling fallback")
         
         # Update UI to show WebSocket is unavailable
         self.update_connection_status(False)
@@ -316,12 +350,66 @@ class APIClient:
             from components import ui_components
             ui_components.show_notification(
                 "Conexão", 
-                "Atualizações em tempo real indisponíveis. Usando modo manual.", 
+                "Atualizações em tempo real indisponíveis. Usando modo de atualização automática.", 
                 "warning"
             )
         except:
             # Fallback if UI components not available
-            console.warn("Real-time updates unavailable - using manual refresh mode")
+            console.warn("Real-time updates unavailable - using polling mode")
+        
+        # Start polling fallback
+        self.start_polling_fallback()
+    
+    def start_polling_fallback(self):
+        """Start polling for updates when WebSocket is unavailable"""
+        console.log("Starting polling fallback for real-time updates")
+        
+        # Set polling interval (10 seconds)
+        self.polling_interval = 10000  # milliseconds
+        self.polling_active = True
+        
+        # Use JavaScript setTimeout for polling
+        setTimeout = document.defaultView.setTimeout
+        
+        async def poll_updates():
+            """Poll for updates from the server"""
+            if not self.polling_active:
+                return
+            
+            try:
+                # Get latest data
+                dashboard_data = await self.get_dashboard_summary()
+                positions = await self.get_positions()
+                signals = await self.get_active_signals()
+                
+                # Simulate WebSocket message for consistency
+                if dashboard_data:
+                    self.on_websocket_message(type("Event", (), {
+                        "data": json.dumps({
+                            "type": "realtime_update",
+                            "data": {
+                                "dashboard": dashboard_data,
+                                "positions": positions,
+                                "signals": signals,
+                                "timestamp": datetime.utcnow().isoformat()
+                            }
+                        })
+                    })())
+                
+            except Exception as e:
+                console.error(f"Polling error: {str(e)}")
+            
+            # Schedule next poll
+            if self.polling_active:
+                setTimeout(create_proxy(poll_updates), self.polling_interval)
+        
+        # Start initial poll
+        setTimeout(create_proxy(poll_updates), 1000)  # Start after 1 second
+    
+    def stop_polling_fallback(self):
+        """Stop polling fallback"""
+        self.polling_active = False
+        console.log("Polling fallback stopped")
 
 
 # Global API client instance
