@@ -1446,6 +1446,12 @@ async def execute_trading_signal(
         from api.client import get_client
         
         client = get_client()
+        # Ensure client is initialized before use
+        if not client._initialized:
+            success = await client.initialize()
+            if not success:
+                raise HTTPException(status_code=500, detail="BingX client initialization failed")
+        
         trading_engine = TradingEngine(client, trade_repo, asset_repo)
         
         # Initialize trading engine
