@@ -66,19 +66,20 @@ def create_database_backup():
             
             # Clean up old backups (keep last 7 days)
             cleanup_old_backups(backups_dir, days_to_keep=7)
+            return True
             
         else:
             logger.error(f"❌ Database backup failed")
             logger.error(f"   - Return code: {result.returncode}")
             logger.error(f"   - Error: {result.stderr}")
-            sys.exit(1)
+            return False
     
     except subprocess.TimeoutExpired:
         logger.error("❌ Database backup timed out")
-        sys.exit(1)
+        return False
     except Exception as e:
         logger.error(f"❌ Database backup error: {e}")
-        sys.exit(1)
+        return False
 
 
 def cleanup_old_backups(backups_dir: Path, days_to_keep: int = 7):
