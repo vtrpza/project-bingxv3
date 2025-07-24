@@ -1,6 +1,6 @@
 # 🤖 BingX Trading Bot - Quick Deploy
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/vtrpza/project-bingxv3)
 
 ## ⚡ One-Click Deployment
 
