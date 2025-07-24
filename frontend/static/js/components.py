@@ -551,7 +551,6 @@ class UIComponents:
             
             # Call app method via global document
             try:
-                from js import document
                 if hasattr(document, 'applyValidationTableFilters'):
                     document.applyValidationTableFilters(filters)
                 else:
@@ -613,7 +612,6 @@ class UIComponents:
             UIComponents._sort_direction = new_direction
             
             # Chamar método do app via document
-            from js import document
             if hasattr(document, 'sortValidationTableServer'):
                 document.sortValidationTableServer(column, new_direction)
             else:
@@ -698,7 +696,6 @@ class UIComponents:
             UIComponents._sort_direction = new_direction
             
             # Use server-side sorting via document
-            from js import document
             if hasattr(document, 'sortValidationTableServer'):
                 document.sortValidationTableServer(column, new_direction)
             else:
@@ -804,7 +801,6 @@ class UIComponents:
             new_page = current_page + direction
             if 1 <= new_page <= total_pages:
                 # Use server-side pagination
-                from js import document
                 if hasattr(document, 'refreshValidationTablePage'):
                     document.refreshValidationTablePage(new_page)
                 else:

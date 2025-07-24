@@ -630,6 +630,7 @@ class TradingBotApp:
                 asyncio.create_task(self.refresh_current_tab())
             
             button.addEventListener("click", create_proxy(on_tab_click))
+        
     
     def cleanup(self):
         """Cleanup resources"""
@@ -857,8 +858,16 @@ document.sortValidationTableServer = create_proxy(sortValidationTableServer)
 document.refreshValidationTablePage = create_proxy(refreshValidationTablePage)
 document.applyValidationTableFilters = create_proxy(applyValidationTableFilters)
 
-# Also make showNotification available on window object for JavaScript compatibility
+# Also make all functions available on window object for JavaScript compatibility
 window.showNotification = create_proxy(ui_components.show_notification)
+window.forceRevalidation = create_proxy(forceRevalidation)
+window.refreshValidationTable = create_proxy(refreshValidationTable)
+window.exportTableData = create_proxy(exportTableData)
+window.sortTable = create_proxy(sortTable)
+window.previousPage = create_proxy(previousPage)
+window.nextPage = create_proxy(nextPage)
+window.clearSearch = create_proxy(clearSearch)
+window.searchAssets = create_proxy(searchAssets)
 
 # Initialize the application
 app = TradingBotApp()
