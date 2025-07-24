@@ -35,7 +35,15 @@ app = FastAPI(
 @app.on_event("startup")
 async def startup_event():
     """Initialize database on startup."""
+    import asyncio
+    import random
+    
     try:
+        # Add random delay to prevent multiple instances from starting at exact same time
+        startup_delay = random.uniform(0.1, 2.0)
+        logger.info(f"Starting up with {startup_delay:.2f}s delay to prevent deadlocks...")
+        await asyncio.sleep(startup_delay)
+        
         logger.info("Initializing database...")
         if not init_database():
             logger.warning("Database initialization failed - running without database")
@@ -44,7 +52,7 @@ async def startup_event():
         logger.info("Dropping existing database tables (if any)...")
         from database.connection import db_manager
         if not db_manager.drop_tables():
-            logger.warning("Database table dropping failed - running without database")
+            logger.warning("Database table dropping failed - continuing anyway")
             # Continue to try creating tables even if dropping fails
         
         logger.info("Creating database tables...")
