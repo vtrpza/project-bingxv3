@@ -91,27 +91,21 @@ databases:
     user: bingx_user
     ipAllowList: []
 
-  # Background Jobs (using cron service type for Render)
-  # Backup diário do banco
-  - type: cron
-    name: daily-backup
-    schedule: "0 2 * * *"  # 2AM UTC
+  # Background Maintenance Worker
+  - type: worker
+    name: bingx-maintenance-worker
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m utils.backup
+    plan: starter
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python -m utils.maintenance_worker
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
       - key: DATABASE_URL
         fromDatabase:
           name: bingx-postgres
           property: connectionString
-
-  # Limpeza de logs antigos
-  - type: cron
-    name: log-cleanup
-    schedule: "0 3 * * 0"  # Domingos 3AM UTC
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m utils.cleanup_logs
-    envVars:
       - key: LOG_RETENTION_DAYS
         value: "30"
