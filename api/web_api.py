@@ -12,6 +12,7 @@ import asyncio
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from datetime import timedelta
 
 from database.connection import get_db, init_database, create_tables
 from database.repository import (
@@ -458,14 +459,29 @@ async def get_indicators(
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/indicators")
-async def get_latest_indicators(limit: int = 100):
+async def get_latest_indicators(
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    repo: IndicatorRepository = Depends(get_indicator_repo)
+):
     """Get latest indicators for all symbols"""
     try:
-        logger.info("Latest indicators requested - returning empty structure")
-        
+        latest_indicators = repo.get_latest_indicators_for_all_assets(db, limit=limit)
         return {
-            "indicators": [],
-            "total": 0
+            "indicators": [
+                {
+                    "symbol": ind.asset.symbol,
+                    "timeframe": ind.timeframe,
+                    "price": ind.center,  # Use center as reference price
+                    "mm1": ind.mm1,
+                    "center": ind.center,
+                    "rsi": ind.rsi,
+                    "volume_ratio": ind.volume_sma, # Placeholder
+                    "timestamp": ind.timestamp.isoformat()
+                }
+                for ind in latest_indicators
+            ],
+            "total": len(latest_indicators)
         }
     except Exception as e:
         logger.error(f"Error fetching latest indicators: {e}")
@@ -536,15 +552,32 @@ async def get_active_signals(
 async def get_trades(
     symbol: Optional[str] = None,
     status: Optional[str] = None,
-    limit: int = 50
+    limit: int = 50,
+    db: Session = Depends(get_db),
+    repo: TradeRepository = Depends(get_trade_repo)
 ):
     """Get trade history"""
     try:
-        logger.info("Trades requested - returning empty structure")
-        
+        trades = repo.get_trades(
+            db,
+            symbol=symbol,
+            status=status,
+            limit=limit
+        )
         return {
-            "trades": [],
-            "total": 0
+            "trades": [
+                {
+                    "id": str(t.id),
+                    "symbol": t.symbol,
+                    "side": t.side,
+                    "amount": t.amount,
+                    "price": t.entry_price, # or avg fill price
+                    "status": t.status,
+                    "created_at": t.created_at.isoformat()
+                }
+                for t in trades
+            ],
+            "total": len(trades)
         }
     except Exception as e:
         logger.error(f"Error fetching trades: {e}")
@@ -552,14 +585,35 @@ async def get_trades(
 
 # Position endpoints
 @app.get("/api/positions")
-async def get_positions(active_only: bool = True):
+async def get_positions(
+    active_only: bool = True,
+    db: Session = Depends(get_db),
+    repo: TradeRepository = Depends(get_position_repo)
+):
     """Get current positions"""
     try:
-        logger.info("Positions requested - returning empty structure")
-        
+        if active_only:
+            positions = repo.get_open_positions(db)
+        else:
+            positions = repo.get_all(db, limit=100)  # Get all trades as positions
+            
         return {
-            "positions": [],
-            "total": 0
+            "positions": [
+                {
+                    "id": str(p.id),
+                    "symbol": p.symbol,
+                    "side": p.side,
+                    "amount": p.amount,
+                    "entry_price": p.entry_price,
+                    "current_price": p.current_price,  # Assuming this is updated
+                    "unrealized_pnl": p.unrealized_pnl,
+                    "stop_loss_price": p.stop_loss_price,
+                    "take_profit_price": p.take_profit_price,
+                    "status": p.status
+                }
+                for p in positions
+            ],
+            "total": len(positions)
         }
     except Exception as e:
         logger.error(f"Error fetching positions: {e}")
@@ -682,19 +736,31 @@ async def stop_trading():
 
 # Dashboard summary endpoint
 @app.get("/api/dashboard/summary")
-async def get_dashboard_summary():
+async def get_dashboard_summary(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo),
+    signal_repo: SignalRepository = Depends(get_signal_repo),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
     """Get dashboard summary data"""
     try:
-        logger.info("Dashboard summary requested - returning basic structure")
+        valid_assets = asset_repo.get_valid_assets_count(db)
+        active_signals = signal_repo.get_active_signals_count(db)
         
-        # Return basic summary until database is properly configured
+        # Get positions and P&L
+        positions = trade_repo.get_open_positions(db)
+        total_pnl = sum(p.unrealized_pnl for p in positions if p.unrealized_pnl)
+        
+        # Get recent trades
+        recent_trades = trade_repo.get_trades_since(db, datetime.utcnow() - timedelta(days=1))
+        
         return {
             "summary": {
-                "valid_assets": 0,
-                "active_signals": 0,
-                "active_positions": 0,
-                "total_unrealized_pnl": 0.0,
-                "recent_trades_count": 0
+                "valid_assets": valid_assets,
+                "active_signals": active_signals,
+                "active_positions": len(positions),
+                "total_unrealized_pnl": total_pnl,
+                "recent_trades_count": len(recent_trades)
             },
             "timestamp": datetime.utcnow().isoformat()
         }
