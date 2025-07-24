@@ -283,16 +283,8 @@ class InitialScanner:
     async def _save_validation_result_to_db(self, symbol: str, validation_result: Dict[str, Any]):
         """Save a single validation result to database immediately."""
         try:
-            # Convert any Decimal objects to float for JSON storage
-            def convert_decimals(obj):
-                if isinstance(obj, dict):
-                    return {k: convert_decimals(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [convert_decimals(v) for v in obj]
-                elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
-                    return float(obj)
-                else:
-                    return obj
+            # Import convert_decimals utility function
+            from utils.converters import convert_decimals
             
             # Prepare validation data for database
             is_valid = validation_result.get('is_valid', False)
@@ -373,16 +365,8 @@ class InitialScanner:
     
     async def _persist_scan_results(self, result: InitialScanResult):
         """Persist scan results to database with proper transaction handling."""
-        # Define convert_decimals function once
-        def convert_decimals(obj):
-            if isinstance(obj, dict):
-                return {k: convert_decimals(v) for k, v in obj.items()}
-            elif isinstance(obj, list):
-                return [convert_decimals(v) for v in obj]
-            elif hasattr(obj, '__class__') and obj.__class__.__name__ == 'Decimal':
-                return float(obj)
-            else:
-                return obj
+        # Import convert_decimals utility function
+        from utils.converters import convert_decimals
         
         # Process valid assets in batches
         batch_size = 50
