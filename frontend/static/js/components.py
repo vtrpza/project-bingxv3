@@ -717,7 +717,7 @@ class UIComponents:
             console.error(f"Error exporting table: {str(e)}")
     
     @staticmethod
-    def show_notification(title, message, notification_type="info", duration=5000):
+    def show_notification(title, message, notification_type="info", duration=1000):
         """Show a dismissable notification with a title, message, and type."""
         try:
             notifications_container = document.getElementById("notifications")

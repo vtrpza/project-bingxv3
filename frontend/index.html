@@ -102,11 +102,17 @@
                             <input type="checkbox" id="show-only-valid" checked> Apenas válidos
                         </label>
                         <label>
-                            <input type="checkbox" id="show-only-with-signals"> Apenas com sinais
-                        </label>
-                        <label>
                             <input type="checkbox" id="priority-only"> Apenas prioritários
                         </label>
+                        <label>
+                            <input type="checkbox" id="trading-enabled-only"> Trading habilitado
+                        </label>
+                        <select id="risk-level-filter">
+                            <option value="all">Todos os riscos</option>
+                            <option value="LOW">Risco baixo</option>
+                            <option value="MEDIUM">Risco médio</option>
+                            <option value="HIGH">Risco alto</option>
+                        </select>
                         <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar Tabela</button>
                         <button onclick="forceRevalidation()" class="revalidate-btn">🔄 Forçar Revalidação</button>
                         <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
@@ -119,19 +125,15 @@
                                     <th class="sortable" data-sort="symbol">Símbolo</th>
                                     <th class="sortable" data-sort="validation_status">Status</th>
                                     <th class="sortable" data-sort="validation_score">Score</th>
-                                    <th class="sortable" data-sort="last_updated">Atualizado (UTC-3)</th>
                                     <th class="sortable" data-sort="current_price">Preço</th>
                                     <th class="sortable" data-sort="volume_24h_quote">Volume 24h</th>
+                                    <th class="sortable" data-sort="price_change_percent_24h">Variação %</th>
                                     <th class="sortable" data-sort="spread_percent">Spread %</th>
-                                    <th class="sortable" data-sort="rsi_2h">RSI 2h</th>
-                                    <th class="sortable" data-sort="rsi_4h">RSI 4h</th>
-                                    <th class="sortable" data-sort="ma_direction_2h">Dir 2h</th>
-                                    <th class="sortable" data-sort="ma_direction_4h">Dir 4h</th>
-                                    <th class="sortable" data-sort="signal_2h">Sinal 2h</th>
-                                    <th class="sortable" data-sort="signal_4h">Sinal 4h</th>
-                                    <th class="sortable" data-sort="risk_level">Risco</th>
-                                    <th class="sortable" data-sort="volatility_24h">Vol %</th>
+                                    <th class="sortable" data-sort="risk_level">Nível Risco</th>
+                                    <th class="sortable" data-sort="trading_enabled">Trading</th>
                                     <th class="sortable" data-sort="data_quality_score">Qualidade</th>
+                                    <th class="sortable" data-sort="last_updated">Atualizado</th>
+                                    <th class="sortable" data-sort="age_days">Idade (dias)</th>
                                 </tr>
                             </thead>
                             <tbody id="validation-table-body">
@@ -315,10 +317,11 @@
                 });
             });
             
-            // Add change listener for checkbox filters
+            // Add change listener for filters
             const showOnlyValidCheckbox = document.getElementById('show-only-valid');
-            const showOnlyWithSignalsCheckbox = document.getElementById('show-only-with-signals');
             const priorityOnlyCheckbox = document.getElementById('priority-only');
+            const tradingEnabledOnlyCheckbox = document.getElementById('trading-enabled-only');
+            const riskLevelFilter = document.getElementById('risk-level-filter');
             
             if (showOnlyValidCheckbox) {
                 showOnlyValidCheckbox.addEventListener('change', function() {
@@ -328,16 +331,24 @@
                 });
             }
             
-            if (showOnlyWithSignalsCheckbox) {
-                showOnlyWithSignalsCheckbox.addEventListener('change', function() {
+            if (priorityOnlyCheckbox) {
+                priorityOnlyCheckbox.addEventListener('change', function() {
                     if (window.filterValidationTable) {
                         window.filterValidationTable();
                     }
                 });
             }
             
-            if (priorityOnlyCheckbox) {
-                priorityOnlyCheckbox.addEventListener('change', function() {
+            if (tradingEnabledOnlyCheckbox) {
+                tradingEnabledOnlyCheckbox.addEventListener('change', function() {
+                    if (window.filterValidationTable) {
+                        window.filterValidationTable();
+                    }
+                });
+            }
+            
+            if (riskLevelFilter) {
+                riskLevelFilter.addEventListener('change', function() {
                     if (window.filterValidationTable) {
                         window.filterValidationTable();
                     }

@@ -29,7 +29,7 @@ class BaseRepository:
             logger.error(f"Error getting {self.model_class.__name__} by ID {id}: {e}")
             return None
     
-    def get_all(self, session: Session, limit: Optional[int] = 1000) -> List[Any]:
+    def get_all(self, session: Session, limit: Optional[int] = None) -> List[Any]:
         """Get all records with optional limit."""
         try:
             query = session.query(self.model_class)
@@ -154,6 +154,49 @@ class AssetRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error updating validation for asset {symbol}: {e}")
             return None
+    
+    def get_assets_with_sorting(self, session: Session, 
+                               sort_by: str = "symbol", 
+                               sort_direction: str = "asc",
+                               filter_valid_only: bool = False,
+                               limit: Optional[int] = None,
+                               offset: int = 0) -> List[Asset]:
+        """Get assets with sorting and filtering options."""
+        try:
+            query = session.query(Asset)
+            
+            # Apply filter
+            if filter_valid_only:
+                query = query.filter(Asset.is_valid == True)
+            
+            # Apply sorting
+            sort_column = getattr(Asset, sort_by, Asset.symbol)
+            if sort_direction.lower() == "desc":
+                query = query.order_by(desc(sort_column))
+            else:
+                query = query.order_by(sort_column)
+            
+            # Apply pagination
+            if offset > 0:
+                query = query.offset(offset)
+            if limit is not None:
+                query = query.limit(limit)
+                
+            return query.all()
+        except SQLAlchemyError as e:
+            logger.error(f"Error getting sorted assets: {e}")
+            return []
+    
+    def get_filtered_count(self, session: Session, filter_valid_only: bool = False) -> int:
+        """Get count of assets with filters applied."""
+        try:
+            query = session.query(Asset)
+            if filter_valid_only:
+                query = query.filter(Asset.is_valid == True)
+            return query.count()
+        except SQLAlchemyError as e:
+            logger.error(f"Error counting filtered assets: {e}")
+            return 0
 
 
 class MarketDataRepository(BaseRepository):
