@@ -15,6 +15,7 @@ from analysis.volume import get_volume_analyzer
 from analysis.signals import get_signal_generator, SignalType
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger, performance_logger
+from api.web_api import manager as connection_manager
 
 logger = get_logger(__name__)
 
@@ -381,6 +382,22 @@ class AnalysisWorker:
                         }
                     }
                 )
+                
+                # Broadcast the new signal to connected WebSocket clients
+                signal_to_broadcast = {
+                    "type": "new_signal",
+                    "payload": {
+                        "symbol": symbol,
+                        "signal_type": signal_data['signal_type'],
+                        "strength": signal_data.get('confidence', 0),
+                        "timestamp": signal_data.get('timestamp', datetime.utcnow().isoformat()),
+                        "rules_triggered": signal_data.get('rules_triggered', []),
+                        "trading_recommendation": signal_data.get('trading_recommendation', {})
+                    }
+                }
+                await connection_manager.broadcast(signal_to_broadcast)
+                logger.info(f"Broadcasted new signal for {symbol}: {signal_data['signal_type']}")
+
             except Exception as e:
                 logger.warning(f"Error persisting signal for {symbol}: {e}")
     

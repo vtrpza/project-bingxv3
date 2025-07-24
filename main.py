@@ -24,6 +24,7 @@ from scanner.initial_scanner import InitialScanner
 from trading.engine import TradingEngine
 from trading.order_manager import OrderManager
 from trading.risk_manager import RiskManager
+from analysis.worker import AnalysisWorker
 from utils.logger import get_logger, setup_module_logger
 
 # Setup logging
@@ -53,6 +54,7 @@ class TradingBot:
         self.order_manager: Optional[OrderManager] = None
         self.risk_manager: Optional[RiskManager] = None
         self.trading_engine: Optional[TradingEngine] = None
+        self.analysis_worker: Optional[AnalysisWorker] = None
         
         # Tasks
         self.scanner_task: Optional[asyncio.Task] = None
@@ -183,12 +185,16 @@ class TradingBot:
                 asset_repo=self.asset_repo
             )
             
+            # Initialize analysis worker
+            self.analysis_worker = AnalysisWorker()
+            
             # Store components for cleanup
             self.components = {
                 'scanner': self.scanner,
                 'order_manager': self.order_manager,
                 'risk_manager': self.risk_manager,
-                'trading_engine': self.trading_engine
+                'trading_engine': self.trading_engine,
+                'analysis_worker': self.analysis_worker
             }
             
             logger.info("✅ Bot components initialized")
@@ -211,6 +217,7 @@ class TradingBot:
             await self.order_manager.start()
             await self.risk_manager.start()
             await self.trading_engine.start()
+            await self.analysis_worker.start()
             
             # Start background tasks
             await self._start_background_tasks()
