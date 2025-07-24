@@ -919,6 +919,16 @@
             }
         }
         
+        // Global function for timeout
+        window.forceHideLoading = function() {
+            const overlay = document.getElementById("loading-overlay");
+            if (overlay) {
+                overlay.style.display = "none";
+                showNotificationSafe("Timeout", "Carregamento demorou mais que esperado", "warning");
+                console.warn("⏰ Loading timeout reached - forcing hide");
+            }
+        };
+
         // Force Revalidation Function - Using Optimized Scanner
         async function forceRevalidation() {
             try {
