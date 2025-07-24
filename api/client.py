@@ -100,7 +100,7 @@ class BingXClient:
         """Test API connection and credentials."""
         try:
             # Test public endpoint
-            markets = await self._execute_with_retry(lambda: self.exchange.fetch_markets())
+            markets = await self._execute_with_retry(self.exchange.fetch_markets)
             if not markets:
                 raise BingXError("No markets available")
             
@@ -109,7 +109,7 @@ class BingXClient:
             # Test private endpoint (if not sandbox)
             if not (Settings.BINGX_TESTNET or Settings.BINGX_SANDBOX):
                 try:
-                    balance = await self._execute_with_retry(lambda: self.exchange.fetch_balance())
+                    balance = await self._execute_with_retry(self.exchange.fetch_balance)
                     if balance is not None:
                         logger.info("Private API access confirmed")
                 except Exception as e:
