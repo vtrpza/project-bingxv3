@@ -6,7 +6,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from sqlalchemy import desc, and_, or_, func
+from sqlalchemy import desc, and_, or_, func, String
 from sqlalchemy.exc import SQLAlchemyError
 
 from .models import Asset, MarketData, Indicator, Trade, Order, Signal, SystemConfig
