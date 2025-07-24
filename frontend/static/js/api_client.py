@@ -88,6 +88,9 @@ class APIClient:
             sort_by: Column to sort by
             sort_direction: Sort direction (asc/desc)
             filter_valid_only: Show only valid assets
+            risk_level_filter: Filter by risk level (LOW/MEDIUM/HIGH/ALL)
+            priority_only: Show only priority assets
+            trading_enabled_only: Show only trading enabled assets
         """
         params = []
         params.append(f"page={page}")
