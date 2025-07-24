@@ -37,7 +37,7 @@ class APIClient:
     async def post(self, endpoint, data=None):
         """Make POST request to API with improved error handling"""
         try:
-            headers = {"Content-Type": "application/json"}
+            headers = [["Content-Type", "application/json"]]
             body = json.dumps(data) if data else None
             
             response = await fetch(
