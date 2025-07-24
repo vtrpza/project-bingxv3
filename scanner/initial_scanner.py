@@ -214,7 +214,7 @@ class InitialScanner:
         
         # Optimized batch processing
         results = {}
-        max_concurrent = min(25, max(15, TradingConfig.MAX_ASSETS_TO_SCAN // 20))  # Larger batches
+        max_concurrent = min(50, max(30, TradingConfig.MAX_ASSETS_TO_SCAN // 10))  # Much larger batches for 2x speed
         processed_count = 0
         
         # Collect all validation results first, then save in bulk
@@ -260,17 +260,19 @@ class InitialScanner:
                     logger.info(f"Progress: {processed_count}/{len(sorted_symbols)} assets processed "
                                f"({valid_count} valid, {processed_count - valid_count} invalid)")
                 
-                # Intelligent delay based on rate limiter utilization
+                # Ultra-intelligent delay based on rate limiter utilization
                 if i + max_concurrent < len(sorted_symbols):
                     stats = self.rate_limiter.get_stats()
                     market_utilization = stats.get('market_data', {}).get('utilization_percent', 0)
                     
-                    if market_utilization < 50:
-                        delay = 0.1  # Very aggressive
-                    elif market_utilization < 70:
-                        delay = 0.3  # Moderate
+                    if market_utilization < 60:
+                        delay = 0.05  # Ultra aggressive - 50ms
+                    elif market_utilization < 80:
+                        delay = 0.15  # Fast - 150ms
+                    elif market_utilization < 90:
+                        delay = 0.3   # Moderate - 300ms
                     else:
-                        delay = 0.8  # Conservative
+                        delay = 0.5   # Conservative - 500ms
                     
                     await asyncio.sleep(delay)
                     

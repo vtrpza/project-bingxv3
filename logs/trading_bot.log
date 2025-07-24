@@ -10263,3 +10263,23 @@ NameError: name 'offset' is not defined
 2025-07-24 14:46:53,865 - api.web_api - INFO - WebSocket connected from 127.0.0.1
 2025-07-24 14:46:58,028 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
 2025-07-24 14:46:58,119 - api.web_api - INFO - Fetched 0 assets (total: 0, page: 1/1)
+2025-07-24 15:42:57,057 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 15:42:57,057 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 15:42:57,068 - api.web_api - INFO - Starting up with 0.14s delay to prevent deadlocks...
+2025-07-24 15:42:57,207 - api.web_api - INFO - Initializing database...
+2025-07-24 15:42:57,207 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 15:42:57,207 - database.connection - INFO - Using SQLite database
+2025-07-24 15:42:57,214 - database.connection - INFO - Database connection established successfully
+2025-07-24 15:42:57,215 - api.web_api - INFO - Dropping existing database tables (if any)...
+2025-07-24 15:42:57,215 - database.connection - WARNING - Could not terminate connections: (sqlite3.OperationalError) no such function: current_database
+[SQL: SELECT current_database()]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 15:42:57,215 - database.connection - WARNING - Transaction rolled back due to error: (sqlite3.OperationalError) no such function: pg_advisory_lock
+[SQL: SELECT pg_advisory_lock(12345)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-07-24 15:42:57,215 - database.connection - INFO - Retrying without advisory locks...
+2025-07-24 15:42:57,255 - database.connection - WARNING - Tables dropped successfully without advisory locks
+2025-07-24 15:42:57,255 - api.web_api - INFO - Creating database tables...
+2025-07-24 15:42:57,335 - database.connection - INFO - Database tables created successfully
+2025-07-24 15:42:57,335 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 15:42:57,335 - api.web_api - INFO - Background tasks started

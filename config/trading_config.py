@@ -65,10 +65,10 @@ class TradingConfig:
     VOLUME_SPIKE_THRESHOLD: Decimal = Decimal(os.getenv("VOLUME_SPIKE_THRESHOLD", "2.0"))  # 2x average volume
     VOLUME_SPIKE_LOOKBACK: int = int(os.getenv("VOLUME_SPIKE_LOOKBACK", "20"))  # Periods to look back for average
     
-    # Scanner Configuration - VST-ONLY MODE
-    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL_SECONDS", "15"))  # Faster scanning for single asset
+    # Scanner Configuration - OPTIMIZED FOR PERFORMANCE
+    SCAN_INTERVAL: int = int(os.getenv("SCAN_INTERVAL", "10"))  # Ultra-fast 10s scanning
     MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "1000"))  # Lower threshold for VST
-    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))  # Only VST
+    MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))  # Support up to 1500 assets
     
     # Timeframes Configuration
     ANALYSIS_TIMEFRAMES: List[str] = os.getenv("ANALYSIS_TIMEFRAMES", "2h,4h").split(",")

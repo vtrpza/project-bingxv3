@@ -42,15 +42,15 @@ class SmartCache:
             'total_requests': 0
         }
         
-        # Cache policies per data type
+        # Optimized cache policies for maximum performance
         self.policies = {
-            'market_summary': {'ttl': 30},      # 30s for market data
-            'ticker': {'ttl': 15},              # 15s for ticker data  
-            'candles': {'ttl': 60},             # 60s for OHLCV data
-            'volume_analysis': {'ttl': 45},     # 45s for volume analysis
-            'indicators': {'ttl': 120},         # 120s for calculated indicators
-            'validation': {'ttl': 300},         # 5min for validation results
-            'markets': {'ttl': 1800},           # 30min for market list
+            'market_summary': {'ttl': 45},      # 45s for market data
+            'ticker': {'ttl': 10},              # 10s for ticker data - faster updates
+            'candles': {'ttl': 90},             # 90s for OHLCV data - longer cache
+            'volume_analysis': {'ttl': 60},     # 60s for volume analysis
+            'indicators': {'ttl': 180},         # 3min for calculated indicators
+            'validation': {'ttl': 600},         # 10min for validation results
+            'markets': {'ttl': 3600},           # 60min for market list - rarely changes
         }
     
     def _make_key(self, category: str, identifier: str, **kwargs) -> str:
