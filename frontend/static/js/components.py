@@ -645,40 +645,27 @@ class UIComponents:
     
     @staticmethod
     def sort_validation_table(column):
-        """Sort validation table by column"""
+        """Sort validation table using server-side sorting"""
         try:
-            if not hasattr(UIComponents, '_validation_data'):
-                return
-            
             # Toggle sort direction if same column
-            if UIComponents._sort_column == column:
-                UIComponents._sort_direction = 'desc' if UIComponents._sort_direction == 'asc' else 'asc'
+            current_sort_column = getattr(UIComponents, '_sort_column', None)
+            current_sort_direction = getattr(UIComponents, '_sort_direction', 'asc')
+            
+            if current_sort_column == column:
+                new_direction = 'desc' if current_sort_direction == 'asc' else 'asc'
             else:
-                UIComponents._sort_column = column
-                UIComponents._sort_direction = 'asc'
+                new_direction = 'asc'
             
-            # Sort data
-            reverse = UIComponents._sort_direction == 'desc'
+            # Store sort state
+            UIComponents._sort_column = column
+            UIComponents._sort_direction = new_direction
             
-            def get_sort_value(item):
-                value = item.get(column)
-                if value is None:
-                    return 0 if isinstance(value, (int, float)) else ""
-                return value
-            
-            UIComponents._validation_data.sort(key=get_sort_value, reverse=reverse)
-            
-            # Reset to first page and re-render
-            UIComponents._current_page = 1
-            UIComponents._render_validation_page()
-            UIComponents._update_pagination_info()
-            
-            # Update header indicators
-            headers = document.querySelectorAll(".sortable")
-            for header in headers:
-                header.classList.remove("asc", "desc")
-                if header.getAttribute("data-sort") == column:
-                    header.classList.add(UIComponents._sort_direction)
+            # Use server-side sorting
+            from js import document
+            if hasattr(document, 'sortValidationTableServer'):
+                document.sortValidationTableServer(column, new_direction)
+            else:
+                console.warn("sortValidationTableServer function not available")
                     
         except Exception as e:
             console.error(f"Error sorting table: {str(e)}")
