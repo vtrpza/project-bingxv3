@@ -485,3 +485,20 @@
 2025-07-24 06:49:20,424 - scanner.initial_scanner - INFO - Initial asset scan completed - 0/0 valid
 2025-07-24 06:49:20,426 - __main__ - WARNING - No valid assets found for scanning
 2025-07-24 06:49:20,426 - __main__ - INFO - 📈 Starting trading monitor...
+2025-07-24 06:50:05,061 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 06:50:12,567 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:50:12,568 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:50:12,975 - __main__ - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 06:50:12,975 - __main__ - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 06:50:12,976 - __main__ - INFO - 📋 Validating configuration...
+2025-07-24 06:50:12,976 - __main__ - INFO - ✅ Configuration validation passed
+2025-07-24 06:50:12,976 - __main__ - INFO - 🗄️ Initializing database...
+2025-07-24 06:50:12,976 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:50:12,976 - database.connection - INFO - Using SQLite database
+2025-07-24 06:50:12,984 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:50:12,985 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:50:12,986 - __main__ - INFO - ✅ Database initialized successfully
+2025-07-24 06:50:12,986 - __main__ - INFO - 📚 Initializing repositories...
+2025-07-24 06:50:12,986 - __main__ - INFO - ✅ Repositories initialized
+2025-07-24 06:50:12,986 - __main__ - INFO - 🌐 Initializing API client...
+2025-07-24 06:50:13,733 - api.client - INFO - BingX API connection test successful - found 2246 markets

@@ -70,3 +70,4 @@
 {"timestamp": "2025-07-24T09:49:15.151019", "level": "INFO", "logger": "trading.engine", "message": "TradingEngine started successfully", "module": "engine", "function": "start", "line": 66, "taskName": "Task-1"}
 {"timestamp": "2025-07-24T09:49:15.151782", "level": "INFO", "logger": "trading.order_manager", "message": "Starting order monitoring", "module": "order_manager", "function": "_monitor_orders", "line": 578, "taskName": "Task-2"}
 {"timestamp": "2025-07-24T09:49:15.151986", "level": "INFO", "logger": "trading.risk_manager", "message": "Starting risk monitoring", "module": "risk_manager", "function": "_monitor_risk", "line": 400, "taskName": "Task-3"}
+{"timestamp": "2025-07-24T09:50:05.061247", "level": "INFO", "logger": "trading.risk_manager", "message": "\ud83d\udcca Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%", "module": "risk_manager", "function": "_log_risk_status", "line": 633, "taskName": "Task-3"}
