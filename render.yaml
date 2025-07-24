@@ -33,7 +33,7 @@ services:
   - type: worker
     name: bingx-scanner-worker
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
@@ -59,7 +59,7 @@ services:
   - type: worker
     name: bingx-analysis-worker
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
@@ -81,7 +81,7 @@ services:
   - type: worker
     name: bingx-maintenance-worker
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: |
       pip install --upgrade pip
       pip install -r requirements.txt
@@ -99,13 +99,13 @@ services:
   # Redis Cache
   - type: redis
     name: bingx-redis
-    plan: starter
+    plan: free
     ipAllowList: []
 
 databases:
   # PostgreSQL Database
   - name: bingx-postgres
-    plan: starter
+    plan: basic
     databaseName: bingx_trading
     user: bingx_user
     ipAllowList: []
