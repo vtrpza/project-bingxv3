@@ -1,0 +1,281 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for Development
+  postgres:
+    image: postgres:16-alpine
+    container_name: bingx_postgres_dev
+    environment:
+      POSTGRES_DB: bingx_trading
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: trading_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading_user -d bingx_trading"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - bingx_dev_network
+
+  # Redis Cache for Development
+  redis:
+    image: redis:7-alpine
+    container_name: bingx_redis_dev
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - bingx_dev_network
+
+  # pgAdmin for Database Management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bingx_pgadmin_dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bingx.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+      - ./database/pgadmin_servers.json:/pgadmin4/servers.json
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bingx_dev_network
+
+  # Web Interface (Development Mode)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: bingx_web_dev
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      - REDIS_URL=redis://redis:6379/0
+      - PAPER_TRADING=True
+      - TRADING_ENABLED=False
+      - BINGX_TESTNET=True
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - /app/__pycache__
+      - /app/frontend/node_modules
+    ports:
+      - "8000:8000"  # FastAPI
+      - "8001:8001"  # WebSocket (if needed)
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Running migrations...' &&
+        python -m alembic upgrade head &&
+        echo 'Starting web server...' &&
+        python -m uvicorn api.web_api:app --host 0.0.0.0 --port 8000 --reload
+      "
+    networks:
+      - bingx_dev_network
+    profiles:
+      - web
+
+  # Scanner Worker (Development)
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: bingx_scanner_dev
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      - REDIS_URL=redis://redis:6379/0
+      - PAPER_TRADING=True
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - /app/__pycache__
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(15)' &&
+        echo 'Starting scanner worker...' &&
+        python -m scanner.initial_scanner
+      "
+    networks:
+      - bingx_dev_network
+    profiles:
+      - workers
+
+  # Analysis Worker (Development)
+  analysis:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: bingx_analysis_dev
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - /app/__pycache__
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(20)' &&
+        echo 'Starting analysis worker...' &&
+        python -m analysis.worker
+      "
+    networks:
+      - bingx_dev_network
+    profiles:
+      - workers
+
+  # Trading Worker (Development - Disabled by default)
+  trading:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: bingx_trading_dev
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - DATABASE_URL=postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      - REDIS_URL=redis://redis:6379/0
+      - PAPER_TRADING=True
+      - TRADING_ENABLED=False  # Disabled by default in dev
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+      - /app/__pycache__
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python -c 'import time; time.sleep(25)' &&
+        echo 'Starting trading worker...' &&
+        python -m trading.worker
+      "
+    networks:
+      - bingx_dev_network
+    profiles:
+      - workers
+      - trading
+
+  # Monitoring Stack (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bingx_prometheus_dev
+    volumes:
+      - ./monitoring/prometheus.dev.yml:/etc/prometheus/prometheus.yml
+      - prometheus_dev_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - bingx_dev_network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: bingx_grafana_dev
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_dev_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - bingx_dev_network
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_dev_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/postgres
+  redis_dev_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data/redis
+  pgadmin_dev_data:
+    driver: local
+  prometheus_dev_data:
+    driver: local
+  grafana_dev_data:
+    driver: local
+
+networks:
+  bingx_dev_network:
+    name: bingx_dev_network
+    driver: bridge

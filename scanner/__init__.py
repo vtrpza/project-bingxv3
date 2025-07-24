@@ -1,0 +1,1 @@
+# Scanner module for BingX Trading Bot

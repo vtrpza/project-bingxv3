@@ -1,0 +1,114 @@
+services:
+  # Serviço Web Principal
+  - type: web
+    name: bingx-trading-bot
+    runtime: python
+    plan: standard
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python -m alembic upgrade head
+    startCommand: python main.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bingx-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: bingx-redis
+          property: connectionString
+      - key: BINGX_API_KEY
+        sync: false
+      - key: BINGX_SECRET_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+
+  # Worker de Escaneamento
+  - type: worker
+    name: bingx-scanner-worker
+    runtime: python
+    plan: starter
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python -m scanner.worker
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bingx-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: bingx-redis
+          property: connectionString
+      - key: BINGX_API_KEY
+        sync: false
+      - key: BINGX_SECRET_KEY
+        sync: false
+
+  # Worker de Análise
+  - type: worker
+    name: bingx-analysis-worker
+    runtime: python
+    plan: starter
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python -m analysis.worker
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bingx-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: bingx-redis
+          property: connectionString
+
+  # Cache Redis
+  - type: redis
+    name: bingx-redis
+    plan: starter
+    ipAllowList: []
+
+databases:
+  # Banco de Dados PostgreSQL
+  - name: bingx-postgres
+    plan: standard
+    databaseName: bingx_trading
+    user: bingx_user
+    ipAllowList: []
+
+# Cron Jobs
+cronJobs:
+  # Backup diário do banco
+  - name: daily-backup
+    schedule: "0 2 * * *"  # 2AM UTC
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m utils.backup
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bingx-postgres
+          property: connectionString
+
+  # Limpeza de logs antigos
+  - name: log-cleanup
+    schedule: "0 3 * * 0"  # Domingos 3AM UTC
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m utils.cleanup_logs
+    envVars:
+      - key: LOG_RETENTION_DAYS
+        value: 30

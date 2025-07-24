@@ -1,0 +1,1 @@
+# Configuration module for BingX Trading Bot

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyScript Test - BingX Trading Bot</title>
+    
+    <!-- PyScript imports -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <py-config>
+        {
+            "packages": ["pandas"]
+        }
+    </py-config>
+</head>
+<body>
+    <div id="app">
+        <h1>🧪 PyScript Test</h1>
+        <p>Testing static file serving and PyScript integration...</p>
+        
+        <div id="test-results">
+            <h2>Test Results:</h2>
+            <div id="css-test">❓ CSS Loading...</div>
+            <div id="js-test">❓ JavaScript Loading...</div>
+            <div id="pyscript-test">❓ PyScript Loading...</div>
+        </div>
+        
+        <button id="test-button" onclick="testAPI()">Test API Connection</button>
+        <div id="api-result"></div>
+    </div>
+
+    <script>
+        // Test if CSS is loaded
+        function checkCSS() {
+            const element = document.getElementById('css-test');
+            const styles = window.getComputedStyle(element);
+            if (styles.color !== 'rgb(0, 0, 0)') { // Check if custom CSS is applied
+                element.innerHTML = '✅ CSS Loaded Successfully';
+                element.style.color = 'green';
+            } else {
+                element.innerHTML = '❌ CSS Loading Failed';
+                element.style.color = 'red';
+            }
+        }
+        
+        // Test API connection
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            try {
+                const response = await fetch('/api/test');
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ API Working: ${data.message}`;
+                    resultDiv.style.color = 'green';
+                } else {
+                    resultDiv.innerHTML = `❌ API Error: ${response.status}`;
+                    resultDiv.style.color = 'red';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ API Connection Failed: ${error.message}`;
+                resultDiv.style.color = 'red';
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', function() {
+            setTimeout(checkCSS, 1000);
+            document.getElementById('js-test').innerHTML = '✅ JavaScript Working';
+            document.getElementById('js-test').style.color = 'green';
+        });
+    </script>
+
+    <!-- PyScript test -->
+    <py-script>
+        from js import document, console
+        
+        try:
+            # Test basic PyScript functionality
+            test_element = document.getElementById("pyscript-test")
+            test_element.innerHTML = "✅ PyScript Working!"
+            test_element.style.color = "green"
+            
+            console.log("PyScript test completed successfully")
+            
+        except Exception as e:
+            test_element = document.getElementById("pyscript-test")
+            test_element.innerHTML = f"❌ PyScript Error: {str(e)}"
+            test_element.style.color = "red"
+            console.error(f"PyScript error: {str(e)}")
+    </py-script>
+</body>
+</html>

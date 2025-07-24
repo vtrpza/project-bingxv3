@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Trading BingX - Dashboard</title>
+    
+    <!-- PyScript imports -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <py-config>
+        {
+            "packages": ["pandas"],
+            "files": {
+                "/static/js/api_client.py": "./api_client.py",
+                "/static/js/components.py": "./components.py"
+            }
+        }
+    </py-config>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🤖 BingX Trading Bot</h1>
+                <div class="connection-status" id="connection-status">
+                    <span class="status-indicator offline"></span>
+                    <span>Conectando...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-button active" onclick="showTab('scanner')">
+                📊 Scanner
+            </button>
+            <button class="tab-button" onclick="showTab('trading')">
+                💰 Trading
+            </button>
+            <button class="tab-button" onclick="showTab('analytics')">
+                📈 Analytics
+            </button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="main-content">
+            <!-- Scanner Tab -->
+            <div id="scanner-tab" class="tab-content active">
+                <div class="dashboard-section">
+                    <h2>🤖 Controle do Bot</h2>
+                    <div class="bot-controls">
+                        <div class="control-group">
+                            <h3>Sistema</h3>
+                            <button id="start-bot-btn" class="control-btn start-btn" onclick="startBot()">🚀 Iniciar Bot</button>
+                            <button id="stop-bot-btn" class="control-btn stop-btn" onclick="stopBot()" disabled>⏹️ Parar Bot</button>
+                            <span id="bot-status" class="status-indicator">🔴 Parado</span>
+                        </div>
+                        <div class="control-group">
+                            <h3>Trading</h3>
+                            <button id="start-trading-btn" class="control-btn start-btn" onclick="startTrading()" disabled>💰 Iniciar Trading</button>
+                            <button id="stop-trading-btn" class="control-btn stop-btn" onclick="stopTrading()" disabled>🛑 Parar Trading</button>
+                            <span id="trading-status" class="status-indicator">🔴 Inativo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📋 Validação de Ativos</h2>
+                    <div class="stats-row" id="validation-stats">
+                        <div class="stat-card">
+                            <h3>Total Símbolos</h3>
+                            <span class="stat-value" id="total-symbols-count">-</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Ativos Válidos</h3>
+                            <span class="stat-value" id="valid-assets-count">-</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Com Sinais</h3>
+                            <span class="stat-value" id="assets-with-signals-count">-</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Última Atualização</h3>
+                            <span class="stat-value" id="last-update">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📊 Tabela de Todos os Símbolos</h2>
+                    <div class="controls">
+                        <label>
+                            <input type="checkbox" id="show-only-valid" checked> Apenas válidos
+                        </label>
+                        <label>
+                            <input type="checkbox" id="show-only-with-signals"> Apenas com sinais
+                        </label>
+                        <label>
+                            <input type="checkbox" id="priority-only"> Apenas prioritários
+                        </label>
+                        <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar Tabela</button>
+                        <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="validation-table" id="validation-table">
+                            <thead>
+                                <tr>
+                                    <th class="sortable" data-sort="symbol">Símbolo</th>
+                                    <th class="sortable" data-sort="validation_status">Status</th>
+                                    <th class="sortable" data-sort="validation_score">Score</th>
+                                    <th class="sortable" data-sort="current_price">Preço</th>
+                                    <th class="sortable" data-sort="volume_24h_quote">Volume 24h</th>
+                                    <th class="sortable" data-sort="spread_percent">Spread %</th>
+                                    <th class="sortable" data-sort="rsi_2h">RSI 2h</th>
+                                    <th class="sortable" data-sort="rsi_4h">RSI 4h</th>
+                                    <th class="sortable" data-sort="ma_direction_2h">Dir 2h</th>
+                                    <th class="sortable" data-sort="ma_direction_4h">Dir 4h</th>
+                                    <th class="sortable" data-sort="signal_2h">Sinal 2h</th>
+                                    <th class="sortable" data-sort="signal_4h">Sinal 4h</th>
+                                    <th class="sortable" data-sort="risk_level">Risco</th>
+                                    <th class="sortable" data-sort="volatility_24h">Vol %</th>
+                                    <th class="sortable" data-sort="data_quality_score">Qualidade</th>
+                                </tr>
+                            </thead>
+                            <tbody id="validation-table-body">
+                                <!-- Table rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pagination" id="table-pagination">
+                        <button onclick="previousPage()">← Anterior</button>
+                        <span id="page-info">Página 1 de 1</span>
+                        <button onclick="nextPage()">Próxima →</button>
+                    </div>
+                    
+                    <div class="scanner-grid" id="scanner-grid" style="display: none;">
+                        <!-- Asset cards will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Tab -->
+            <div id="trading-tab" class="tab-content">
+                <div class="dashboard-section">
+                    <h2>💼 Posições Ativas</h2>
+                    <div class="summary-row" id="trading-summary">
+                        <div class="summary-card">
+                            <h3>P&L Total</h3>
+                            <span class="pnl-value" id="total-pnl">$0.00</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Posições Abertas</h3>
+                            <span class="stat-value" id="open-positions">0</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Trades Hoje</h3>
+                            <span class="stat-value" id="trades-today">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📈 Posições</h2>
+                    <div class="table-container">
+                        <table class="trades-table" id="positions-table">
+                            <thead>
+                                <tr>
+                                    <th>Ativo</th>
+                                    <th>Lado</th>
+                                    <th>Entrada</th>
+                                    <th>Atual</th>
+                                    <th>P&L</th>
+                                    <th>Stop Loss</th>
+                                    <th>Take Profit</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="positions-tbody">
+                                <!-- Positions will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📝 Histórico de Trades</h2>
+                    <div class="table-container">
+                        <table class="trades-table" id="trades-table">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Ativo</th>
+                                    <th>Lado</th>
+                                    <th>Quantidade</th>
+                                    <th>Preço</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trades-tbody">
+                                <!-- Trades will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analytics-tab" class="tab-content">
+                <div class="dashboard-section">
+                    <h2>📊 Performance Analytics</h2>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h3>P&L ao Longo do Tempo</h3>
+                            <canvas id="pnl-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h3>Taxa de Sucesso por Ativo</h3>
+                            <canvas id="success-rate-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-section">
+                    <h2>📈 Estatísticas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total de Trades</h3>
+                            <span class="stat-value" id="total-trades">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Taxa de Sucesso</h3>
+                            <span class="stat-value" id="win-rate">0%</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Lucro Médio</h3>
+                            <span class="stat-value" id="avg-profit">$0.00</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Perda Média</h3>
+                            <span class="stat-value" id="avg-loss">$0.00</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Maior Ganho</h3>
+                            <span class="stat-value" id="max-win">$0.00</span>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Maior Perda</h3>
+                            <span class="stat-value" id="max-loss">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Notifications Container -->
+        <div id="notifications" class="notifications-container"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Carregando dados...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript for tab switching -->
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Activate selected button
+            event.target.classList.add('active');
+        }
+
+        function refreshData() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            // PyScript will handle the actual refresh
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 1000);
+        }
+        
+        // Add event listener for sortable headers
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click listeners to sortable headers
+            const sortableHeaders = document.querySelectorAll('.sortable');
+            sortableHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.getAttribute('data-sort');
+                    if (window.sortTable) {
+                        window.sortTable(column);
+                    }
+                });
+            });
+            
+            // Add change listener for checkbox filters
+            const showOnlyValidCheckbox = document.getElementById('show-only-valid');
+            const showOnlyWithSignalsCheckbox = document.getElementById('show-only-with-signals');
+            const priorityOnlyCheckbox = document.getElementById('priority-only');
+            
+            if (showOnlyValidCheckbox) {
+                showOnlyValidCheckbox.addEventListener('change', function() {
+                    if (window.filterValidationTable) {
+                        window.filterValidationTable();
+                    }
+                });
+            }
+            
+            if (showOnlyWithSignalsCheckbox) {
+                showOnlyWithSignalsCheckbox.addEventListener('change', function() {
+                    if (window.filterValidationTable) {
+                        window.filterValidationTable();
+                    }
+                });
+            }
+            
+            if (priorityOnlyCheckbox) {
+                priorityOnlyCheckbox.addEventListener('change', function() {
+                    if (window.filterValidationTable) {
+                        window.filterValidationTable();
+                    }
+                });
+            }
+        });
+        
+        // Bot Control Functions
+        async function startBot() {
+            try {
+                const response = await fetch('/api/bot/start', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('start-bot-btn').disabled = true;
+                    document.getElementById('stop-bot-btn').disabled = false;
+                    document.getElementById('start-trading-btn').disabled = false;
+                    document.getElementById('bot-status').innerHTML = '🟢 Ativo';
+                    showNotification('Bot iniciado com sucesso!', 'success');
+                } else {
+                    showNotification('Erro ao iniciar bot: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+        
+        async function stopBot() {
+            try {
+                const response = await fetch('/api/bot/stop', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('start-bot-btn').disabled = false;
+                    document.getElementById('stop-bot-btn').disabled = true;
+                    document.getElementById('start-trading-btn').disabled = true;
+                    document.getElementById('stop-trading-btn').disabled = true;
+                    document.getElementById('bot-status').innerHTML = '🔴 Parado';
+                    document.getElementById('trading-status').innerHTML = '🔴 Inativo';
+                    showNotification('Bot parado com sucesso!', 'warning');
+                } else {
+                    showNotification('Erro ao parar bot: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+        
+        async function startTrading() {
+            try {
+                const response = await fetch('/api/trading/start', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('start-trading-btn').disabled = true;
+                    document.getElementById('stop-trading-btn').disabled = false;
+                    document.getElementById('trading-status').innerHTML = '🟢 Trading Ativo';
+                    showNotification('Trading iniciado com sucesso!', 'success');
+                } else {
+                    showNotification('Erro ao iniciar trading: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+        
+        async function stopTrading() {
+            try {
+                const response = await fetch('/api/trading/stop', { method: 'POST' });
+                const result = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('start-trading-btn').disabled = false;
+                    document.getElementById('stop-trading-btn').disabled = true;
+                    document.getElementById('trading-status').innerHTML = '🔴 Inativo';
+                    showNotification('Trading parado com sucesso!', 'warning');
+                } else {
+                    showNotification('Erro ao parar trading: ' + result.detail, 'error');
+                }
+            } catch (error) {
+                showNotification('Erro de conexão: ' + error.message, 'error');
+            }
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            const container = document.getElementById('notifications');
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+    </script>
+
+    <!-- PyScript application -->
+    <py-script src="/static/js/app.py"></py-script>
+</body>
+</html>

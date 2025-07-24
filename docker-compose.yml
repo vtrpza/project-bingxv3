@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # Banco de Dados PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: bingx_postgres
+    environment:
+      POSTGRES_DB: bingx_trading
+      POSTGRES_USER: trading_user
+      POSTGRES_PASSWORD: trading_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trading_user -d bingx_trading"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Cache Redis (Opcional)
+  redis:
+    image: redis:7-alpine
+    container_name: bingx_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Aplicação Principal
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bingx_trading_bot
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "8080:8080"  # Frontend
+      - "8081:8081"  # WebSocket
+    restart: unless-stopped
+    command: python main.py
+
+  # Worker de Escaneamento
+  scanner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bingx_scanner
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://trading_user:trading_password@postgres:5432/bingx_trading
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+    restart: unless-stopped
+    command: python -m scanner.worker
+
+  # pgAdmin para gerenciamento do banco (Desenvolvimento)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: bingx_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@bingx.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    profiles:
+      - dev
+
+  # Prometheus para monitoramento (Opcional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: bingx_prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  default:
+    name: bingx_network

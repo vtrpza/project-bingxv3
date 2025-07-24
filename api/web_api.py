@@ -1,0 +1,727 @@
+"""
+FastAPI Web API for BingX Trading Bot
+Provides REST endpoints and WebSocket connections for the frontend
+"""
+
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Dict, Any, Optional
+import asyncio
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
+from database.connection import get_db, init_database, create_tables
+from database.repository import (
+    AssetRepository, IndicatorRepository, 
+    SignalRepository, TradeRepository, OrderRepository
+)
+from sqlalchemy.orm import Session
+from utils.logger import get_logger
+from config.settings import get_settings
+
+logger = get_logger(__name__)
+settings = get_settings()
+
+app = FastAPI(
+    title="BingX Trading Bot API",
+    description="Real-time trading bot dashboard and control API",
+    version="1.0.0"
+)
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup."""
+    try:
+        logger.info("Initializing database...")
+        if not init_database():
+            logger.warning("Database initialization failed - running without database")
+            return
+        
+        logger.info("Creating database tables...")
+        if not create_tables():
+            logger.warning("Database table creation failed - running without database")
+            return
+        
+        logger.info("Database initialization completed successfully")
+        
+        # Start background tasks
+        await start_background_tasks()
+    
+    except Exception as e:
+        logger.warning(f"Database initialization failed: {e} - running without database")
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Static files
+frontend_path = Path(__file__).parent.parent / "frontend"
+static_path = frontend_path / "static"
+
+# Mount static assets first (more specific routes should come first)
+if static_path.exists():
+    app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
+
+# Add API routes before mounting the frontend root
+# (This is done below in the route definitions)
+
+# Mount the frontend directory last to serve index.html and other files
+# This should be after all API routes to avoid conflicts
+def mount_frontend():
+    if frontend_path.exists():
+        app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
+
+# WebSocket connection manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+    
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
+    
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
+    
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        try:
+            await websocket.send_text(message)
+        except Exception as e:
+            logger.error(f"Error sending personal message: {e}")
+            self.disconnect(websocket)
+    
+    async def broadcast(self, message: Dict[str, Any]):
+        if not self.active_connections:
+            return
+            
+        message_str = json.dumps(message, default=str)
+        disconnected = []
+        
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message_str)
+            except Exception as e:
+                logger.error(f"Error broadcasting to connection: {e}")
+                disconnected.append(connection)
+        
+        # Remove disconnected connections
+        for conn in disconnected:
+            self.disconnect(conn)
+
+manager = ConnectionManager()
+
+# Dependency injection
+def get_asset_repo():
+    return AssetRepository()
+
+def get_indicator_repo():
+    return IndicatorRepository()
+
+def get_signal_repo():
+    return SignalRepository()
+
+def get_trade_repo():
+    return TradeRepository()
+
+def get_position_repo():
+    return TradeRepository()
+
+# Note: Root endpoint is now handled by StaticFiles mount above
+
+# Health check
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow(),
+        "version": "1.0.0"
+    }
+
+@app.get("/api/test-db")
+async def test_database():
+    """Test database connection and assets"""
+    try:
+        from database.connection import get_session
+        asset_repo = AssetRepository()
+        
+        with get_session() as db:
+            assets = asset_repo.get_all(db, limit=5)
+            return {
+                "status": "success",
+                "assets_count": len(assets),
+                "sample_assets": [
+                    {
+                        "symbol": asset.symbol,
+                        "is_valid": asset.is_valid,
+                        "last_validation": asset.last_validation.isoformat() if asset.last_validation else None
+                    }
+                    for asset in assets[:3]
+                ]
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "error": str(e),
+            "type": type(e).__name__
+        }
+
+
+# Asset validation table endpoint
+@app.get("/api/assets/validation-table")
+async def get_asset_validation_table(
+    limit: Optional[int] = 50,
+    include_invalid: bool = True
+):
+    """Get comprehensive asset validation table with all metrics from database"""
+    try:
+        logger.info("Asset validation table requested - fetching from database")
+        
+        from database.connection import get_session
+        asset_repo = AssetRepository()
+        
+        with get_session() as db:
+            # Buscar todos os assets do banco de dados
+            all_assets = asset_repo.get_all(db, limit=limit or 1000)
+            
+            table_data = []
+            for asset in all_assets:
+                # Extrair dados de validação
+                val_data = asset.validation_data or {}
+                market_summary = val_data.get('market_summary', {})
+                
+                table_data.append({
+                    "symbol": asset.symbol,
+                    "base_currency": asset.base_currency,
+                    "quote_currency": asset.quote_currency,
+                    "validation_status": "VALID" if asset.is_valid else "INVALID",
+                    "validation_score": 100 if asset.is_valid else 0,
+                    "priority_asset": val_data.get('priority', False),
+                    "current_price": float(market_summary.get('price', 0)) if market_summary.get('price') else None,
+                    "price_change_24h": float(market_summary.get('change_24h', 0)) if market_summary.get('change_24h') else None,
+                    "price_change_percent_24h": float(market_summary.get('change_percent_24h', 0)) if market_summary.get('change_percent_24h') else None,
+                    "volume_24h_quote": float(market_summary.get('quote_volume_24h', 0)) if market_summary.get('quote_volume_24h') else None,
+                    "volume_change_percent": None,
+                    "volume_spike_detected": False,
+                    "volume_trend": None,
+                    "spread_percent": float(market_summary.get('spread_percent', 0)) if market_summary.get('spread_percent') else None,
+                    "mm1_2h": None,
+                    "center_2h": None,
+                    "rsi_2h": None,
+                    "mm1_4h": None,
+                    "center_4h": None,
+                    "rsi_4h": None,
+                    "ma_distance_2h": None,
+                    "ma_distance_4h": None,
+                    "ma_direction_2h": None,
+                    "ma_direction_4h": None,
+                    "rsi_condition_2h": None,
+                    "rsi_condition_4h": None,
+                    "signal_2h": None,
+                    "signal_4h": None,
+                    "signal_strength": None,
+                    "rules_triggered": [],
+                    "risk_level": "LOW" if asset.is_valid else "HIGH",
+                    "volatility_24h": abs(float(market_summary.get('change_percent_24h', 0))) if market_summary.get('change_percent_24h') else None,
+                    "last_updated": asset.last_validation.isoformat() if asset.last_validation else datetime.utcnow().isoformat(),
+                    "data_quality_score": 90 if asset.is_valid else 10,
+                    "api_response_time": val_data.get('validation_duration', 0),
+                    "validation_reasons": list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else []
+                })
+            
+            # Filtrar se necessário
+            if not include_invalid:
+                table_data = [d for d in table_data if d['validation_status'] == 'VALID']
+            
+            # Summary statistics
+            total_assets = len(table_data)
+            valid_assets = len([d for d in table_data if d['validation_status'] == 'VALID'])
+            priority_assets = len([d for d in table_data if d['priority_asset']])
+            assets_with_signals = len([d for d in table_data if d['signal_2h'] or d['signal_4h']])
+            
+            return {
+                "table_data": table_data,
+                "summary": {
+                    "total_assets": total_assets,
+                    "valid_assets": valid_assets,
+                    "invalid_assets": total_assets - valid_assets,
+                    "priority_assets": priority_assets,
+                    "assets_with_signals": assets_with_signals,
+                    "validation_success_rate": (valid_assets / total_assets * 100) if total_assets > 0 else 0,
+                    "last_updated": datetime.utcnow().isoformat()
+                }
+            }
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error generating validation table: {e}")
+        logger.error(f"Full traceback: {error_details}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+# Asset endpoints
+@app.get("/api/assets")
+async def get_assets(
+    valid_only: bool = True,
+    limit: int = 100,
+    repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Get list of assets"""
+    try:
+        from database.connection import get_session
+        
+        with get_session() as db:
+            if valid_only:
+                assets = repo.get_valid_assets(db)
+            else:
+                assets = repo.get_all(db, limit=limit)
+        return {
+            "assets": [
+                {
+                    "id": str(asset.id),
+                    "symbol": asset.symbol,
+                    "base_currency": asset.base_currency,
+                    "quote_currency": asset.quote_currency,
+                    "is_valid": asset.is_valid,
+                    "last_validation": asset.last_validation,
+                    "validation_data": asset.validation_data
+                }
+                for asset in assets
+            ],
+            "total": len(assets)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching assets: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/assets/{symbol}")
+async def get_asset_details(
+    symbol: str,
+    repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Get detailed information about a specific asset"""
+    try:
+        asset = await repo.get_asset_by_symbol(symbol)
+        if not asset:
+            raise HTTPException(status_code=404, detail="Asset not found")
+        
+        return {
+            "id": str(asset.id),
+            "symbol": asset.symbol,
+            "base_currency": asset.base_currency,
+            "quote_currency": asset.quote_currency,
+            "is_valid": asset.is_valid,
+            "last_validation": asset.last_validation,
+            "validation_data": asset.validation_data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching asset {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Indicator endpoints
+@app.get("/api/indicators/{symbol}")
+async def get_indicators(
+    symbol: str,
+    timeframe: Optional[str] = None,
+    limit: int = 50,
+    repo: IndicatorRepository = Depends(get_indicator_repo),
+    asset_repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Get technical indicators for a symbol"""
+    try:
+        from database.connection import get_session
+        
+        with get_session() as db:
+            # Get asset by symbol first
+            asset = asset_repo.get_by_symbol(db, symbol)
+            if not asset:
+                raise HTTPException(status_code=404, detail=f"Asset {symbol} not found")
+            
+            # Get indicators for this asset
+            indicators = repo.get_latest_indicators(db, asset_id=str(asset.id))
+        return {
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "indicators": [
+                {
+                    "id": str(ind.id),
+                    "timestamp": ind.timestamp.isoformat() if ind.timestamp else None,
+                    "timeframe": ind.timeframe,
+                    "mm1": float(ind.mm1) if ind.mm1 else None,
+                    "center": float(ind.center) if ind.center else None,
+                    "rsi": float(ind.rsi) if ind.rsi else None,
+                    "volume_sma": float(ind.volume_sma) if ind.volume_sma else None,
+                    "additional_data": ind.additional_data
+                }
+                for ind in indicators
+            ],
+            "total": len(indicators)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching indicators for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/indicators")
+async def get_latest_indicators(limit: int = 100):
+    """Get latest indicators for all symbols"""
+    try:
+        logger.info("Latest indicators requested - returning empty structure")
+        
+        return {
+            "indicators": [],
+            "total": 0
+        }
+    except Exception as e:
+        logger.error(f"Error fetching latest indicators: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Signal endpoints
+@app.get("/api/signals")
+async def get_signals(
+    symbol: Optional[str] = None,
+    signal_type: Optional[str] = None,
+    limit: int = 50,
+    repo: SignalRepository = Depends(get_signal_repo)
+):
+    """Get trading signals"""
+    try:
+        signals = await repo.get_signals(symbol, signal_type, limit)
+        return {
+            "signals": [
+                {
+                    "id": str(signal.id),
+                    "symbol": signal.symbol,
+                    "signal_type": signal.signal_type,
+                    "side": signal.side,
+                    "strength": float(signal.strength) if signal.strength else None,
+                    "confidence": float(signal.confidence) if signal.confidence else None,
+                    "price": float(signal.price) if signal.price else None,
+                    "data": signal.data,
+                    "is_processed": signal.is_processed,
+                    "created_at": signal.created_at
+                }
+                for signal in signals
+            ],
+            "total": len(signals)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching signals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/signals/active")
+async def get_active_signals(
+    repo: SignalRepository = Depends(get_signal_repo)
+):
+    """Get unprocessed signals"""
+    try:
+        signals = await repo.get_unprocessed_signals()
+        return {
+            "active_signals": [
+                {
+                    "id": str(signal.id),
+                    "symbol": signal.symbol,
+                    "signal_type": signal.signal_type,
+                    "side": signal.side,
+                    "strength": float(signal.strength) if signal.strength else None,
+                    "confidence": float(signal.confidence) if signal.confidence else None,
+                    "price": float(signal.price) if signal.price else None,
+                    "created_at": signal.created_at
+                }
+                for signal in signals
+            ],
+            "total": len(signals)
+        }
+    except Exception as e:
+        logger.error(f"Error fetching active signals: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Trade endpoints
+@app.get("/api/trades")
+async def get_trades(
+    symbol: Optional[str] = None,
+    status: Optional[str] = None,
+    limit: int = 50
+):
+    """Get trade history"""
+    try:
+        logger.info("Trades requested - returning empty structure")
+        
+        return {
+            "trades": [],
+            "total": 0
+        }
+    except Exception as e:
+        logger.error(f"Error fetching trades: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Position endpoints
+@app.get("/api/positions")
+async def get_positions(active_only: bool = True):
+    """Get current positions"""
+    try:
+        logger.info("Positions requested - returning empty structure")
+        
+        return {
+            "positions": [],
+            "total": 0
+        }
+    except Exception as e:
+        logger.error(f"Error fetching positions: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Bot control endpoints
+bot_status = {"running": False, "trading_enabled": False}
+
+@app.post("/api/bot/start")
+async def start_bot():
+    """Start the bot system"""
+    try:
+        global bot_status
+        if bot_status["running"]:
+            raise HTTPException(status_code=400, detail="Bot já está ativo")
+        
+        # TODO: Implement actual bot startup logic
+        # This would start the scanner workers, analysis workers, etc.
+        bot_status["running"] = True
+        
+        logger.info("Bot started via API")
+        
+        return {
+            "message": "Bot iniciado com sucesso",
+            "status": bot_status,
+            "timestamp": datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error starting bot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/bot/stop")
+async def stop_bot():
+    """Stop the bot system"""
+    try:
+        global bot_status
+        if not bot_status["running"]:
+            raise HTTPException(status_code=400, detail="Bot já está parado")
+        
+        # TODO: Implement actual bot shutdown logic
+        # This would stop all workers gracefully
+        bot_status["running"] = False
+        bot_status["trading_enabled"] = False
+        
+        logger.info("Bot stopped via API")
+        
+        return {
+            "message": "Bot parado com sucesso",
+            "status": bot_status,
+            "timestamp": datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error stopping bot: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/bot/status")
+async def get_bot_status():
+    """Get current bot status"""
+    return {
+        "status": bot_status,
+        "timestamp": datetime.utcnow()
+    }
+
+@app.post("/api/trading/start")
+async def start_trading():
+    """Enable trading operations"""
+    try:
+        global bot_status
+        if not bot_status["running"]:
+            raise HTTPException(status_code=400, detail="Bot deve estar ativo para iniciar trading")
+        
+        if bot_status["trading_enabled"]:
+            raise HTTPException(status_code=400, detail="Trading já está ativo")
+        
+        # TODO: Implement actual trading enable logic
+        # This would enable order execution, position management, etc.
+        bot_status["trading_enabled"] = True
+        
+        logger.info("Trading enabled via API")
+        
+        return {
+            "message": "Trading iniciado com sucesso",
+            "status": bot_status,
+            "timestamp": datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error starting trading: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/trading/stop")
+async def stop_trading():
+    """Disable trading operations"""
+    try:
+        global bot_status
+        if not bot_status["trading_enabled"]:
+            raise HTTPException(status_code=400, detail="Trading já está inativo")
+        
+        # TODO: Implement actual trading disable logic
+        # This would stop new order executions but keep monitoring
+        bot_status["trading_enabled"] = False
+        
+        logger.info("Trading disabled via API")
+        
+        return {
+            "message": "Trading parado com sucesso",
+            "status": bot_status,
+            "timestamp": datetime.utcnow()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error stopping trading: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Dashboard summary endpoint
+@app.get("/api/dashboard/summary")
+async def get_dashboard_summary():
+    """Get dashboard summary data"""
+    try:
+        logger.info("Dashboard summary requested - returning basic structure")
+        
+        # Return basic summary until database is properly configured
+        return {
+            "summary": {
+                "valid_assets": 0,
+                "active_signals": 0,
+                "active_positions": 0,
+                "total_unrealized_pnl": 0.0,
+                "recent_trades_count": 0
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error fetching dashboard summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# WebSocket endpoint
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive and handle incoming messages
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            # Handle different message types
+            if message.get("type") == "ping":
+                await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.utcnow().isoformat()}))
+            elif message.get("type") == "subscribe":
+                # Handle subscription requests
+                await websocket.send_text(json.dumps({"type": "subscribed", "data": message.get("data")}))
+            
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket)
+
+# Background task to broadcast real-time data
+async def broadcast_realtime_data():
+    """Background task to send real-time updates to connected clients"""
+    while True:
+        try:
+            if manager.active_connections:
+                # Get latest data
+                from database.connection import get_session
+                
+                indicator_repo = IndicatorRepository()
+                signal_repo = SignalRepository()
+                position_repo = TradeRepository()
+                
+                with get_session() as session:
+                    # Get latest indicators
+                    latest_indicators = indicator_repo.get_latest_indicators(session)
+                    
+                    # Get recent signals (last 24 hours)
+                    active_signals = signal_repo.get_recent_signals(session, hours=24)
+                    
+                    # Get open positions
+                    active_positions = position_repo.get_open_trades(session)
+                
+                # Prepare broadcast data
+                broadcast_data = {
+                    "type": "realtime_update",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "data": {
+                        "indicators": [
+                            {
+                                "symbol": ind.symbol,
+                                "timeframe": ind.timeframe,
+                                "mm1": float(ind.mm1) if ind.mm1 else None,
+                                "center": float(ind.center) if ind.center else None,
+                                "rsi": float(ind.rsi) if ind.rsi else None,
+                                "price": float(ind.price) if ind.price else None,
+                                "timestamp": ind.timestamp.isoformat()
+                            }
+                            for ind in latest_indicators
+                        ],
+                        "active_signals": len(active_signals),
+                        "active_positions": [
+                            {
+                                "symbol": pos.symbol,
+                                "side": pos.side,
+                                "unrealized_pnl": float(pos.unrealized_pnl) if pos.unrealized_pnl else None,
+                                "current_price": float(pos.current_price) if pos.current_price else None
+                            }
+                            for pos in active_positions
+                        ]
+                    }
+                }
+                
+                await manager.broadcast(broadcast_data)
+                
+        except Exception as e:
+            logger.error(f"Error in broadcast task: {e}")
+        
+        # Wait 5 seconds before next broadcast
+        await asyncio.sleep(5)
+
+# Start background task - merge with main startup event
+async def start_background_tasks():
+    """Start background tasks"""
+    asyncio.create_task(broadcast_realtime_data())
+    logger.info("Background tasks started")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup on shutdown"""
+    logger.info("FastAPI server shutting down")
+
+# Mount frontend after all API routes are defined
+mount_frontend()
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000,
+        log_level="info",
+        reload=settings.DEBUG
+    )
