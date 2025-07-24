@@ -11,6 +11,7 @@ from typing import List, Dict, Any, Optional
 import asyncio
 import json
 from datetime import datetime, timedelta
+from utils.datetime_utils import utc_now, safe_datetime_subtract
 from pathlib import Path
 from datetime import timedelta
 
@@ -159,7 +160,7 @@ def get_position_repo():
 async def health_check():
     return {
         "status": "healthy",
-        "timestamp": datetime.utcnow(),
+        "timestamp": utc_now(),
         "version": "1.0.0"
     }
 
@@ -249,7 +250,7 @@ async def get_asset_validation_table(
                     "spread_percent": float(market_summary.get('spread_percent', 0)) if market_summary.get('spread_percent') else None,
                     
                     # Validation metadata
-                    "last_updated": asset.last_validation.isoformat() if asset.last_validation else datetime.utcnow().isoformat(),
+                    "last_updated": asset.last_validation.isoformat() if asset.last_validation else utc_now().isoformat(),
                     "validation_duration": val_data.get('validation_duration', 0),
                     "validation_reasons": list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else [],
                     
@@ -262,7 +263,7 @@ async def get_asset_validation_table(
                     # Trading compatibility (for analysis, not execution)
                     "trading_enabled": asset.is_valid and market_summary.get('quote_volume_24h', 0) > 10000,
                     "market_cap_rank": val_data.get('market_cap_rank'),
-                    "age_days": (datetime.utcnow() - asset.created_at).days if asset.created_at else None
+                    "age_days": int(safe_datetime_subtract(utc_now(), asset.created_at) / 86400) if asset.created_at else None
                 })
             
             # Summary statistics (calculated from current page data)
@@ -297,7 +298,7 @@ async def get_asset_validation_table(
                     "priority_assets_on_page": priority_assets_on_page,
                     "trading_enabled_assets": trading_enabled_assets,
                     "validation_success_rate": (valid_assets_on_page / page_assets * 100) if page_assets > 0 else 0,
-                    "last_updated": datetime.utcnow().isoformat(),
+                    "last_updated": utc_now().isoformat(),
                     "data_freshness": "real-time" if filter_applied else "cached"
                 },
                 "pagination": pagination,
@@ -341,7 +342,7 @@ async def get_asset_trading_data(
         for symbol in symbol_list[:limit] if symbol_list else ["BTC/USDT", "ETH/USDT"][:limit]:
             trading_data.append({
                 "symbol": symbol,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": utc_now().isoformat(),
                 "rsi_2h": 58.5,
                 "rsi_4h": 55.2,
                 "mm1_2h": 42100.0,
@@ -354,7 +355,7 @@ async def get_asset_trading_data(
                 "signal_4h": "NEUTRAL",
                 "signal_strength": 0.73,
                 "rules_triggered": ["ma_crossover_2h", "rsi_range"],
-                "last_signal_time": datetime.utcnow().isoformat()
+                "last_signal_time": utc_now().isoformat()
             })
         
         return {
@@ -363,7 +364,7 @@ async def get_asset_trading_data(
                 "endpoint_version": "1.0",
                 "data_type": "trading_signals",
                 "refresh_rate": "15_seconds",
-                "last_update": datetime.utcnow().isoformat()
+                "last_update": utc_now().isoformat()
             }
         }
         
@@ -388,7 +389,7 @@ async def update_refresh_strategy(
         refresh_config = {
             "strategy": strategy,
             "interval_minutes": interval_minutes,
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": utc_now().isoformat(),
             "active": True
         }
         
@@ -759,7 +760,7 @@ async def start_bot():
         return {
             "message": "Bot iniciado com sucesso",
             "status": bot_status,
-            "timestamp": datetime.utcnow()
+            "timestamp": utc_now()
         }
     except HTTPException:
         raise
@@ -785,7 +786,7 @@ async def stop_bot():
         return {
             "message": "Bot parado com sucesso",
             "status": bot_status,
-            "timestamp": datetime.utcnow()
+            "timestamp": utc_now()
         }
     except HTTPException:
         raise
@@ -798,7 +799,7 @@ async def get_bot_status():
     """Get current bot status"""
     return {
         "status": bot_status,
-        "timestamp": datetime.utcnow()
+        "timestamp": utc_now()
     }
 
 @app.post("/api/trading/start")
@@ -821,7 +822,7 @@ async def start_trading():
         return {
             "message": "Trading iniciado com sucesso",
             "status": bot_status,
-            "timestamp": datetime.utcnow()
+            "timestamp": utc_now()
         }
     except HTTPException:
         raise
@@ -846,7 +847,7 @@ async def stop_trading():
         return {
             "message": "Trading parado com sucesso",
             "status": bot_status,
-            "timestamp": datetime.utcnow()
+            "timestamp": utc_now()
         }
     except HTTPException:
         raise
@@ -872,7 +873,7 @@ async def get_dashboard_summary(
         total_pnl = sum(p.unrealized_pnl for p in positions if p.unrealized_pnl)
         
         # Get recent trades
-        recent_trades = trade_repo.get_trades_since(db, datetime.utcnow() - timedelta(days=1))
+        recent_trades = trade_repo.get_trades_since(db, utc_now() - timedelta(days=1))
         
         return {
             "summary": {
@@ -882,7 +883,7 @@ async def get_dashboard_summary(
                 "total_unrealized_pnl": total_pnl,
                 "recent_trades_count": len(recent_trades)
             },
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": utc_now().isoformat()
         }
     except Exception as e:
         logger.error(f"Error fetching dashboard summary: {e}")
@@ -907,7 +908,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if message.get("type") == "ping":
                 await websocket.send_text(json.dumps({
                     "type": "pong", 
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": utc_now().isoformat(),
                     "server_info": "BingX Trading Bot WebSocket"
                 }))
                 logger.debug(f"Pong sent to {client_host}")
@@ -916,7 +917,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps({
                     "type": "subscribed", 
                     "data": message.get("data"),
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": utc_now().isoformat()
                 }))
                 logger.info(f"Subscription confirmed for {client_host}: {message.get('data')}")
             else:
@@ -937,7 +938,7 @@ async def broadcast_realtime_data():
     while True:
         try:
             if manager.active_connections:
-                current_time = datetime.utcnow()
+                current_time = utc_now()
                 
                 # Só faz broadcast a cada 15 segundos para evitar spam e concorrência
                 if (last_broadcast_time is None or 
