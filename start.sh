@@ -114,11 +114,10 @@ start_postgres() {
     sleep 10
 }
 
-# Run database migrations
+# Database initialization (handled by application)
 run_migrations() {
-    log "INFO" "Running database migrations..."
-    python3 -m alembic upgrade head
-    log "SUCCESS" "Migrations completed"
+    log "INFO" "Database initialization will be handled by the application..."
+    log "SUCCESS" "Skipping Alembic migrations (using SQLAlchemy create_tables)"
 }
 
 # Show help
