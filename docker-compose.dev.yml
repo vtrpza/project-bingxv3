@@ -97,8 +97,7 @@ services:
       sh -c "
         echo 'Waiting for database...' &&
         python -c 'import time; time.sleep(10)' &&
-        echo 'Running migrations...' &&
-        python -m alembic upgrade head &&
+        echo 'Database initialization handled by application...' &&
         echo 'Starting web server...' &&
         python -m uvicorn api.web_api:app --host 0.0.0.0 --port 8000 --reload
       "
