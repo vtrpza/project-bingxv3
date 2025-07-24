@@ -26,9 +26,9 @@ class TradingBotApp:
         self.last_validation_timestamp = None
         self.update_in_progress = False
         
-        # Client-side operation mode
-        self.scanning_active = False
-        self.client_side_cache = None  # Cache completo para operações client-side
+        # Client-side operation mode - DISABLED
+        self.scanning_active = False  # Force disable client-side mode
+        self.client_side_cache = None  # Cache disabled
         self.current_search_term = ""
         self.current_filters = {}
         self.current_sort = {'column': 'symbol', 'direction': 'asc'}
@@ -144,30 +144,22 @@ class TradingBotApp:
         console.warn("⏰ Loading timeout reached - forcing hide")
     
     async def check_scanning_status(self):
-        """Check if scanning is currently active"""
+        """Check if scanning is currently active - DISABLED: Always use server-side mode"""
         try:
-            status_data = await api_client.get_scanner_status()
-            if status_data:
-                old_status = self.scanning_active
-                self.scanning_active = status_data.get("scanning_active", False)
-                
-                # Se mudou o status, atualizar modo de operação
-                if old_status != self.scanning_active:
-                    if self.scanning_active:
-                        console.log("🔍 Scanning detected - switching to client-side table operations")
-                        await self.load_full_data_for_client_side()
-                    else:
-                        console.log("⏹️  Scanning stopped - reverting to server-side table operations")
-                        self.clear_client_side_cache()
-                        
-                return self.scanning_active
-        except Exception as e:
-            # Graceful fallback: assume server-side mode if endpoint not available
-            console.log(f"Scanner status endpoint not available (using server-side mode): {e}")
-            if self.scanning_active:
-                # Force switch back to server-side if we were in client-side mode
-                self.scanning_active = False
+            # Force disable client-side scanning mode
+            old_status = self.scanning_active
+            self.scanning_active = False
+            
+            # Se estava em client-side, limpar cache e voltar ao server-side
+            if old_status:
+                console.log("⏹️  Client-side scanning disabled - reverting to server-side table operations")
                 self.clear_client_side_cache()
+                
+            return False
+        except Exception as e:
+            console.log(f"Scanner status check disabled (using server-side mode): {e}")
+            self.scanning_active = False
+            self.clear_client_side_cache()
             return False
 
     async def load_full_data_for_client_side(self):
@@ -212,11 +204,11 @@ class TradingBotApp:
         )
 
     def show_client_side_mode_indicator(self, show):
-        """Show/hide the client-side mode indicator"""
+        """Show/hide the client-side mode indicator - ALWAYS HIDDEN"""
         try:
             indicator = document.getElementById("table-mode-indicator")
             if indicator:
-                indicator.style.display = "block" if show else "none"
+                indicator.style.display = "none"  # Always hidden
         except Exception as e:
             console.error(f"Error updating mode indicator: {e}")
 
@@ -233,7 +225,7 @@ class TradingBotApp:
             console.error(f"Error updating dashboard summary: {str(e)}")
     
     async def update_validation_table(self, page=1):
-        """Update asset validation table with adaptive client/server-side logic"""
+        """Update asset validation table - ALWAYS use server-side logic"""
         # Evita atualizações simultâneas
         if self.update_in_progress:
             console.log("Validation table update already in progress, skipping...")
@@ -242,13 +234,7 @@ class TradingBotApp:
         try:
             self.update_in_progress = True
             
-            # Se scanning ativo e temos cache, usar client-side
-            if self.scanning_active and self.client_side_cache:
-                console.log("Using client-side table update (scanning active)")
-                await self.update_table_client_side()
-                return
-            
-            # Senão, usar server-side normal
+            # Always use server-side mode (client-side disabled)
             console.log(f"Using server-side table update - page {page}")
             
             # Get validation table data with pagination
@@ -372,31 +358,26 @@ class TradingBotApp:
             return data
     
     async def search_and_update_table(self, search_term="", page=1):
-        """Search and update validation table with adaptive client/server-side logic"""
+        """Search and update validation table - ALWAYS use server-side logic"""
         try:
             console.log(f"Performing search for: '{search_term}' on page {page}")
             
             # Atualizar termo de busca atual
             self.current_search_term = search_term
             
-            # Se scanning ativo e temos cache, usar client-side
-            if self.scanning_active and self.client_side_cache:
-                console.log("Using client-side search (scanning active)")
-                await self.update_table_client_side()
-            else:
-                # Usar server-side normal
-                console.log("Using server-side search")
-                
-                # Get search results from API with pagination
-                validation_data = await api_client.get_validation_table(
-                    page=page,
-                    per_page=25,
-                    include_invalid=True,
-                    search=search_term if search_term else None
-                )
-                
-                if validation_data:
-                    ui_components.update_validation_table(validation_data)
+            # Always use server-side search
+            console.log("Using server-side search")
+            
+            # Get search results from API with pagination
+            validation_data = await api_client.get_validation_table(
+                page=page,
+                per_page=25,
+                include_invalid=True,
+                search=search_term if search_term else None
+            )
+            
+            if validation_data:
+                ui_components.update_validation_table(validation_data)
             
             # Update search indicator
             search_input = document.getElementById("symbol-search")
