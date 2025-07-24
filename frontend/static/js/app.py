@@ -59,40 +59,80 @@ class TradingBotApp:
         console.log("Dashboard initialized successfully")
     
     async def load_initial_data(self):
-        """Load initial dashboard data"""
+        """Load initial dashboard data with timeout protection"""
+        loading_overlay = document.getElementById("loading-overlay")
+        loading_overlay.style.display = "flex"
+        
+        # Set maximum loading time of 15 seconds
+        loading_timeout = setTimeout(lambda: self._force_hide_loading(), 15000)
+        
         try:
-            document.getElementById("loading-overlay").style.display = "flex"
+            # Load data with individual error handling (non-blocking)
+            tasks = []
             
-            # Load dashboard summary
-            await self.update_dashboard_summary()
+            # Dashboard summary (critical)
+            try:
+                await self.update_dashboard_summary()
+                console.log("✅ Dashboard summary loaded")
+            except Exception as e:
+                console.error(f"❌ Dashboard summary failed: {e}")
             
-            # Load validation table
-            await self.update_validation_table()
+            # Validation table (critical)
+            try:
+                await self.update_validation_table()
+                console.log("✅ Validation table loaded")
+            except Exception as e:
+                console.error(f"❌ Validation table failed: {e}")
             
-            # Load scanner data
-            await self.update_scanner_data()
+            # Scanner data (non-critical)
+            try:
+                await self.update_scanner_data()
+                console.log("✅ Scanner data loaded")
+            except Exception as e:
+                console.error(f"⚠️ Scanner data failed: {e}")
             
-            # Load trading data
-            await self.update_trading_data()
+            # Trading data (non-critical)
+            try:
+                await self.update_trading_data()
+                console.log("✅ Trading data loaded")
+            except Exception as e:
+                console.error(f"⚠️ Trading data failed: {e}")
             
-            # Load positions data
-            await self.update_positions_data()
+            # Positions data (non-critical)
+            try:
+                await self.update_positions_data()
+                console.log("✅ Positions data loaded")
+            except Exception as e:
+                console.error(f"⚠️ Positions data failed: {e}")
             
             ui_components.show_notification(
                 "Dashboard", 
-                "Dados carregados com sucesso", 
+                "Dados carregados", 
                 "success"
             )
             
         except Exception as e:
-            console.error(f"Error loading initial data: {str(e)}")
+            console.error(f"Critical error loading initial data: {str(e)}")
             ui_components.show_notification(
                 "Erro", 
-                "Falha ao carregar dados iniciais", 
+                "Falha crítica ao carregar dados", 
                 "error"
             )
         finally:
-            document.getElementById("loading-overlay").style.display = "none"
+            # Clear timeout and hide loading
+            clearTimeout(loading_timeout)
+            loading_overlay.style.display = "none"
+            console.log("Loading completed - overlay hidden")
+    
+    def _force_hide_loading(self):
+        """Force hide loading overlay after timeout"""
+        document.getElementById("loading-overlay").style.display = "none"
+        ui_components.show_notification(
+            "Timeout", 
+            "Carregamento demorou mais que esperado", 
+            "warning"
+        )
+        console.warn("⏰ Loading timeout reached - forcing hide")
     
     async def check_scanning_status(self):
         """Check if scanning is currently active"""
