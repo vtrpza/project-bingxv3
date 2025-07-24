@@ -614,6 +614,36 @@ class UIComponents:
             console.error(f"Error updating pagination: {str(e)}")
     
     @staticmethod
+    def _update_server_pagination_info(pagination):
+        """Update pagination information from server data"""
+        try:
+            current_page = pagination.get('current_page', 1)
+            total_pages = pagination.get('total_pages', 1)
+            total_records = pagination.get('total_records', 0)
+            showing_records = pagination.get('showing_records', 0)
+            
+            # Update page info
+            page_info = document.getElementById("page-info")
+            if page_info:
+                page_info.textContent = f"Página {current_page} de {total_pages}"
+            
+            # Update button states
+            prev_btn = document.querySelector(".pagination button:first-child")
+            next_btn = document.querySelector(".pagination button:last-child")
+            
+            if prev_btn:
+                prev_btn.disabled = current_page <= 1
+            if next_btn:
+                next_btn.disabled = current_page >= total_pages
+            
+            # Store pagination state for other functions
+            UIComponents._current_page = current_page
+            UIComponents._total_pages = total_pages
+                
+        except Exception as e:
+            console.error(f"Error updating server pagination: {str(e)}")
+    
+    @staticmethod
     def sort_validation_table(column):
         """Sort validation table by column"""
         try:
