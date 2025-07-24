@@ -1009,7 +1009,7 @@ async def get_positions(
         raise HTTPException(status_code=500, detail=str(e))
 
 # Bot control endpoints
-bot_status = {"running": False, "trading_enabled": False}
+bot_status = {"running": True, "trading_enabled": True}
 
 # Scanner status tracking
 scanner_status = {
