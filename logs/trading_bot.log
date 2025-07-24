@@ -788,3 +788,111 @@
 2025-07-24 06:53:22,180 - api.web_api - INFO - Background tasks started
 2025-07-24 06:53:24,953 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
 2025-07-24 06:53:24,972 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:53:27,033 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:53:27,035 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:53:27,036 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:53:27,036 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:53:29,184 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:53:34,538 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:53:34,538 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:53:34,639 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 06:53:36,691 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:53:36,691 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:53:36,701 - api.web_api - INFO - Initializing database...
+2025-07-24 06:53:36,701 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:53:36,701 - database.connection - INFO - Using SQLite database
+2025-07-24 06:53:36,710 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:53:36,711 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:53:36,712 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:53:36,712 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:53:36,712 - api.web_api - INFO - Background tasks started
+2025-07-24 06:53:37,896 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:53:39,458 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:53:40,375 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:53:40,375 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:53:40,375 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:53:41,099 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:53:41,100 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:53:43,680 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:53:43,682 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:53:43,683 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:53:43,683 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:53:43,686 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:53:43,712 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:53:43,763 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:53:43,810 - api.web_api - INFO - Positions requested - returning empty structure
+2025-07-24 06:53:43,859 - api.web_api - INFO - Trades requested - returning empty structure
+2025-07-24 06:53:52,123 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:53:52,123 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:53:54,914 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:53:54,915 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:53:54,915 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:53:54,918 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:53:54,923 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:53:54,924 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:53:54,973 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:53:55,021 - api.web_api - INFO - Positions requested - returning empty structure
+2025-07-24 06:53:55,069 - api.web_api - INFO - Trades requested - returning empty structure
+2025-07-24 06:54:06,620 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:54:06,621 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:54:08,667 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:54:08,669 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:54:10,602 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:54:15,501 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:54:15,502 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:54:15,508 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:54:15,555 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:54:27,349 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:54:27,350 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:54:29,387 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:54:31,421 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:55:44,881 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:55:44,881 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:55:44,891 - api.web_api - INFO - Initializing database...
+2025-07-24 06:55:44,891 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:55:44,891 - database.connection - INFO - Using SQLite database
+2025-07-24 06:55:44,900 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:55:44,900 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:55:44,902 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:55:44,902 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:55:44,902 - api.web_api - INFO - Background tasks started
+2025-07-24 06:55:49,012 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 06:57:36,463 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:57:36,463 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:57:36,473 - api.web_api - INFO - Initializing database...
+2025-07-24 06:57:36,473 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:57:36,473 - database.connection - INFO - Using SQLite database
+2025-07-24 06:57:36,481 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:57:36,482 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:57:36,483 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:57:36,483 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:57:36,483 - api.web_api - INFO - Background tasks started
+2025-07-24 06:57:55,937 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 06:57:55,938 - api.web_api - INFO - WebSocket connected. Total connections: 1
+2025-07-24 06:57:55,938 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 06:57:55,939 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:57:55,945 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:57:55,967 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:57:56,022 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:57:56,074 - api.web_api - INFO - Positions requested - returning empty structure
+2025-07-24 06:57:56,124 - api.web_api - INFO - Trades requested - returning empty structure
+2025-07-24 06:58:06,035 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:06,037 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:06,049 - api.web_api - INFO - Latest indicators requested - returning empty structure
+2025-07-24 06:58:06,119 - api.web_api - INFO - Dashboard summary requested - returning basic structure
+2025-07-24 06:58:09,225 - api.web_api - INFO - Asset validation table requested - offset: 0, limit: None
+2025-07-24 06:58:09,226 - api.web_api - INFO - Fetching ALL assets for revalidation: 0 total
+2025-07-24 06:58:09,290 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 06:58:09,290 - api.web_api - INFO - WebSocket disconnected. Total connections: 0
+2025-07-24 06:58:09,391 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 06:58:10,124 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 06:58:10,124 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 06:58:10,134 - api.web_api - INFO - Initializing database...
+2025-07-24 06:58:10,134 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 06:58:10,134 - database.connection - INFO - Using SQLite database
+2025-07-24 06:58:10,142 - database.connection - INFO - Database connection established successfully
+2025-07-24 06:58:10,142 - api.web_api - INFO - Creating database tables...
+2025-07-24 06:58:10,143 - database.connection - INFO - Database tables created successfully
+2025-07-24 06:58:10,143 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 06:58:10,143 - api.web_api - INFO - Background tasks started
+2025-07-24 06:58:11,116 - api.web_api - INFO - Dashboard summary requested - returning basic structure

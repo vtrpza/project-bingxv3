@@ -46,8 +46,7 @@ class ScannerWorker:
                 raise RuntimeError("Failed to initialize database")
             
             # Initialize API client
-            client = await get_client()
-            if not client:
+            if not await initialize_client():
                 raise RuntimeError("Failed to initialize API client")
                 
             logger.info("✅ Scanner Worker initialized successfully")

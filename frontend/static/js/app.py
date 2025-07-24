@@ -389,7 +389,7 @@ async def check_revalidation_status():
             )
 
 def forceRevalidation():
-    """Global function to force asset revalidation"""
+    """Global function to force asset revalidation with better feedback"""
     async def do_revalidation():
         try:
             ui_components.show_notification(
@@ -399,34 +399,36 @@ def forceRevalidation():
             )
             
             result = await api_client.force_revalidation()
-            print(f"Revalidation result: {result}")  # Debug
+            console.log(f"Revalidation result: {result}")
             
-            if result is not None:
-                if result.get("status", {}).get("running"):
+            if result and not result.get("error"):
+                if result.get("status") == "already_running":
                     ui_components.show_notification(
                         "Validação", 
-                        "Processo de revalidação já está em execução", 
+                        result.get("message", "Processo de revalidação já está em execução."), 
                         "warning"
                     )
                 else:
                     ui_components.show_notification(
                         "Validação", 
-                        "Revalidação iniciada com sucesso!", 
+                        result.get("message", "Revalidação iniciada com sucesso!"), 
                         "success"
                     )
                     # Start checking status
                     await check_revalidation_status()
             else:
+                error_detail = result.get("detail", "Erro desconhecido")
                 ui_components.show_notification(
-                    "Erro", 
-                    "Servidor não respondeu. Verifique se o bot está executando.", 
+                    "Erro de Validação", 
+                    f"Falha ao iniciar revalidação: {error_detail}", 
                     "error"
                 )
+
         except Exception as e:
-            print(f"Error in revalidation: {e}")  # Debug
+            console.error(f"Error in revalidation: {e}")
             ui_components.show_notification(
-                "Erro", 
-                f"Erro na revalidação: {str(e)}", 
+                "Erro Crítico", 
+                f"Erro inesperado na revalidação: {str(e)}", 
                 "error"
             )
     

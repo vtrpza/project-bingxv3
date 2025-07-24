@@ -35,7 +35,7 @@ class APIClient:
             return None
     
     async def post(self, endpoint, data=None):
-        """Make POST request to API"""
+        """Make POST request to API with improved error handling"""
         try:
             headers = {"Content-Type": "application/json"}
             body = json.dumps(data) if data else None
@@ -47,14 +47,25 @@ class APIClient:
                 body=body
             )
             
+            response_text = await response.text()
+            
             if response.ok:
-                return (await response.json()).to_py()
+                try:
+                    return json.loads(response_text)
+                except json.JSONDecodeError:
+                    return {"status": "success", "message": response_text}
             else:
-                console.error(f"API Error: {response.status} - {await response.text()}")
-                return None
+                console.error(f"API Error: {response.status} - {response_text}")
+                try:
+                    # Try to parse error response
+                    error_data = json.loads(response_text)
+                    return {"error": True, "status": response.status, "detail": error_data.get("detail", response_text)}
+                except json.JSONDecodeError:
+                    # Return raw text if not JSON
+                    return {"error": True, "status": response.status, "detail": response_text}
         except Exception as e:
             console.error(f"Request failed: {str(e)}")
-            return None
+            return {"error": True, "status": "network_error", "detail": str(e)}
     
     # Asset endpoints
     async def get_assets(self, valid_only=True, limit=100):
