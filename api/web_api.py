@@ -1241,8 +1241,25 @@ async def get_trading_live_data(
         
         for asset in assets_to_process:
             try:
-                # Get current market data from BingX
-                ticker = await client.fetch_ticker(asset.symbol)
+                # Validate asset exists on BingX before processing
+                try:
+                    ticker = await client.fetch_ticker(asset.symbol)
+                    if not ticker or not ticker.get('last'):
+                        logger.warning(f"Asset {asset.symbol} returned empty/invalid ticker - skipping")
+                        continue
+                except Exception as ticker_error:
+                    # Handle specific cases for invalid symbols
+                    if "does not have market symbol" in str(ticker_error):
+                        logger.warning(f"Asset {asset.symbol} not found on BingX - marking as invalid")
+                        # Mark asset as invalid in database
+                        try:
+                            asset_repo.update_validation_status(db, asset.symbol, False, {"error": "symbol_not_found", "timestamp": utc_now().isoformat()})
+                        except Exception as db_error:
+                            logger.error(f"Failed to update validation status for {asset.symbol}: {db_error}")
+                        continue
+                    else:
+                        # Re-raise other ticker errors for general handling
+                        raise ticker_error
                 current_price = float(ticker['last'])
                 volume_24h = float(ticker.get('quoteVolume', 0))
                 
@@ -1347,7 +1364,14 @@ async def get_trading_live_data(
                 trading_data.append(asset_data)
                 
             except Exception as e:
-                logger.error(f"Error processing asset {asset.symbol}: {e}")
+                # Enhanced error logging with exception type and context
+                logger.error(f"Error processing asset {asset.symbol}: {type(e).__name__}: {e}")
+                logger.debug(f"Asset processing failed - Symbol: {asset.symbol}, Error type: {type(e)}, Details: {str(e)}")
+                
+                # Check if this is a known symbol validation issue
+                if "does not have market symbol" in str(e) or "symbol" in str(e).lower():
+                    logger.warning(f"Asset {asset.symbol} appears to be invalid/delisted on BingX")
+                
                 # Continue with other assets
                 continue
         
@@ -2566,6 +2590,98 @@ def _calculate_data_quality(validation_data: dict) -> int:
         
     except Exception:
         return 50
+
+# Maintenance and fix endpoints
+@app.post("/api/maintenance/fix-invalid-assets")
+async def fix_invalid_assets(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Fix invalid assets that are causing 'Error processing asset: 4' errors"""
+    try:
+        logger.info("Starting invalid assets fix process")
+        
+        # List of assets that are causing "Error processing asset: 4"
+        invalid_assets = [
+            'ANIME/USDT',
+            'ANKR/USDT', 
+            'ANT/USDT',
+            'ANTT/USDT'
+        ]
+        
+        results = []
+        updated_count = 0
+        not_found_count = 0
+        
+        for symbol in invalid_assets:
+            try:
+                asset = asset_repo.get_by_symbol(db, symbol)
+                
+                if asset:
+                    if asset.is_valid:
+                        # Mark as invalid using the repository method
+                        updated_asset = asset_repo.update_validation_status(
+                            db, 
+                            symbol, 
+                            False, 
+                            {
+                                "error": "symbol_not_found_on_bingx",
+                                "timestamp": utc_now().isoformat(),
+                                "fixed_by": "maintenance_endpoint"
+                            }
+                        )
+                        if updated_asset:
+                            updated_count += 1
+                            results.append({
+                                "symbol": symbol,
+                                "status": "updated",
+                                "message": "Marked as invalid"
+                            })
+                        else:
+                            results.append({
+                                "symbol": symbol,
+                                "status": "error",
+                                "message": "Failed to update"
+                            })
+                    else:
+                        results.append({
+                            "symbol": symbol,
+                            "status": "already_invalid",
+                            "message": "Already marked as invalid"
+                        })
+                else:
+                    not_found_count += 1
+                    results.append({
+                        "symbol": symbol,
+                        "status": "not_found",
+                        "message": "Asset not found in database"
+                    })
+                    
+            except Exception as e:
+                logger.error(f"Error processing {symbol}: {e}")
+                results.append({
+                    "symbol": symbol,
+                    "status": "error",
+                    "message": str(e)
+                })
+        
+        logger.info(f"Invalid assets fix completed - Updated: {updated_count}, Not found: {not_found_count}")
+        
+        return {
+            "success": True,
+            "message": f"Processed {len(invalid_assets)} assets",
+            "summary": {
+                "total_processed": len(invalid_assets),
+                "updated": updated_count,
+                "not_found": not_found_count
+            },
+            "results": results,
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in fix_invalid_assets endpoint: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fixing invalid assets: {str(e)}")
 
 # Mount frontend after all API routes are defined
 mount_frontend()
