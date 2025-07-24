@@ -25,7 +25,8 @@ def create_database_backup():
         # Get database URL from environment
         database_url = os.getenv('DATABASE_URL')
         if not database_url:
-            raise ValueError("DATABASE_URL environment variable is required")
+            logger.warning("DATABASE_URL not set, skipping backup")
+            return False
         
         # Create backup filename with timestamp
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
