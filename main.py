@@ -143,12 +143,7 @@ class TradingBot:
         logger.info("🌐 Initializing API client...")
         
         try:
-            self.client = BingXClient(
-                api_key=Settings.BINGX_API_KEY,
-                secret_key=Settings.BINGX_SECRET_KEY,
-                testnet=Settings.BINGX_TESTNET
-            )
-            
+            self.client = BingXClient()
             await self.client.initialize()
             
             # Test API connection
