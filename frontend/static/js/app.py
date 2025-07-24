@@ -240,7 +240,10 @@ class TradingBotApp:
                 sort_direction=current_sort.get('direction', 'asc'),
                 filter_valid_only=filters.get('filter_valid_only', False),
                 include_invalid=not filters.get('filter_valid_only', False),
-                search=search_term if search_term else None
+                search=search_term if search_term else None,
+                risk_level_filter=filters.get('risk_level_filter'),
+                priority_only=filters.get('priority_only', False),
+                trading_enabled_only=filters.get('trading_enabled_only', False)
             )
             
             if validation_data:
