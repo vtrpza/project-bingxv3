@@ -469,10 +469,10 @@ async def update_refresh_strategy(
 revalidation_status = {"running": False, "progress": 0, "total": 0, "completed": False, "error": None}
 
 async def run_revalidation_task():
-    """Run the revalidation task and track its progress"""
+    """Run the revalidation task with performance-optimized scanner"""
     global revalidation_status
     try:
-        from scanner.initial_scanner import perform_initial_scan
+        from scanner.initial_scanner import InitialScanner
         
         revalidation_status["running"] = True
         revalidation_status["progress"] = 0
@@ -480,14 +480,22 @@ async def run_revalidation_task():
         revalidation_status["completed"] = False
         revalidation_status["error"] = None
         
-        logger.info("Starting full asset revalidation...")
-        result = await perform_initial_scan(force_refresh=True)
+        logger.info("Starting full asset revalidation with optimized scanner...")
+        
+        # Use the optimized initial scanner with new performance settings
+        scanner = InitialScanner()
+        result = await scanner.scan_all_assets(
+            force_refresh=True,
+            max_assets=int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))
+        )
         
         if result:
             revalidation_status["total"] = result.total_discovered
             revalidation_status["progress"] = result.total_discovered
             revalidation_status["completed"] = True
-            logger.info(f"Revalidation completed: {result.get_summary()}")
+            summary = result.get_summary()
+            logger.info(f"Revalidation completed: {summary['valid_assets_count']}/{summary['total_discovered']} valid "
+                       f"({summary['success_rate']:.1f}% success rate) in {summary['scan_duration_seconds']:.1f}s")
         else:
             revalidation_status["error"] = "Revalidation failed"
             
