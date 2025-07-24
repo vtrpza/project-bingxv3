@@ -1324,7 +1324,7 @@ async def get_trading_live_data(
                         "candle_color": candle_2h_color
                     },
                     "timeframe_4h": {
-                        "price": self._safe_get_candle_price(candles_4h, current_price),
+                        "price": _safe_get_candle_price(candles_4h, current_price),
                         "mm1": float(indicators_4h.mm1) if indicators_4h and indicators_4h.mm1 else None,
                         "center": float(indicators_4h.center) if indicators_4h and indicators_4h.center else None,
                         "rsi": float(indicators_4h.rsi) if indicators_4h and indicators_4h.rsi else None,
