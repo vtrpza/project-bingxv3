@@ -64,7 +64,12 @@ class TradingBotApp:
         loading_overlay.style.display = "flex"
         
         # Set maximum loading time of 15 seconds
-        loading_timeout = setTimeout(lambda: self._force_hide_loading(), 15000)
+        loading_timeout = None
+        try:
+            loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
+        except:
+            # Fallback if setTimeout not available
+            console.warn("setTimeout not available, using manual timeout")
         
         try:
             # Load data with individual error handling (non-blocking)
