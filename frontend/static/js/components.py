@@ -432,13 +432,21 @@ class UIComponents:
             if not tbody:
                 return
             
-            if not positions_data:
+            # Validate data type - ensure it's a list
+            if not positions_data or isinstance(positions_data, str):
                 tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Nenhuma posição ativa</td></tr>'
+                return
+            
+            # Ensure it's iterable (list/array)
+            if not hasattr(positions_data, '__iter__'):
+                console.error(f"Invalid positions data type: {type(positions_data)}")
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">Erro no formato dos dados</td></tr>'
                 return
             
             rows_html = ""
             for position in positions_data:
-                rows_html += UIComponents.render_position_row(position)
+                if isinstance(position, dict):  # Ensure each position is a dict
+                    rows_html += UIComponents.render_position_row(position)
             
             tbody.innerHTML = rows_html
             
@@ -453,13 +461,21 @@ class UIComponents:
             if not tbody:
                 return
             
-            if not trades_data:
+            # Validate data type - ensure it's a list
+            if not trades_data or isinstance(trades_data, str):
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Nenhum trade encontrado</td></tr>'
+                return
+            
+            # Ensure it's iterable (list/array)
+            if not hasattr(trades_data, '__iter__'):
+                console.error(f"Invalid trades data type: {type(trades_data)}")
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Erro no formato dos dados</td></tr>'
                 return
             
             rows_html = ""
             for trade in trades_data:
-                rows_html += UIComponents.render_trade_row(trade)
+                if isinstance(trade, dict):  # Ensure each trade is a dict
+                    rows_html += UIComponents.render_trade_row(trade)
             
             tbody.innerHTML = rows_html
             
