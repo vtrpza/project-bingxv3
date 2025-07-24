@@ -1,0 +1,85 @@
+# Simplified Render.com deployment for BingX Trading Bot
+# Quick deployment with minimal configuration
+
+services:
+  # Main Web Service - All-in-one deployment
+  - type: web
+    name: bingx-trading-bot
+    runtime: python
+    plan: starter  # Use starter plan for cost-effective deployment
+    region: oregon # Choose closest region
+    
+    # Build configuration
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      mkdir -p logs
+    
+    # Start command - runs both web server and bot
+    startCommand: python start_render.py
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      # Python configuration
+      - key: PYTHON_VERSION
+        value: "3.11"
+      
+      # Application settings
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "false"
+      
+      # Database (PostgreSQL from Render)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bingx-db
+          property: connectionString
+      
+      # BingX API credentials (set these manually in Render dashboard)
+      - key: BINGX_API_KEY
+        sync: false
+      - key: BINGX_SECRET_KEY
+        sync: false
+      - key: BINGX_TESTNET
+        value: "false"
+      
+      # Security
+      - key: SECRET_KEY
+        generateValue: true
+      
+      # Logging
+      - key: LOG_LEVEL
+        value: INFO
+      - key: LOG_FILE
+        value: logs/trading_bot.log
+      
+      # Trading configuration
+      - key: MAX_CONCURRENT_TRADES
+        value: "5"
+      - key: MIN_ORDER_SIZE_USDT
+        value: "10.0"
+      - key: INITIAL_STOP_LOSS_PERCENT
+        value: "0.02"
+      - key: SCAN_INTERVAL_SECONDS
+        value: "30"
+      - key: MIN_VOLUME_24H_USDT
+        value: "100000"
+      
+      # Web server
+      - key: API_HOST
+        value: "0.0.0.0"
+      - key: API_PORT
+        value: $PORT
+      - key: WS_PORT
+        value: $PORT
+
+# Database
+databases:
+  - name: bingx-db
+    plan: starter  # Use starter plan for cost-effective deployment
+    databaseName: bingx_trading
+    user: bingx_user
