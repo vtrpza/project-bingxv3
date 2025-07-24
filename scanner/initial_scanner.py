@@ -157,15 +157,9 @@ class InitialScanner:
         """Extract USDT trading pair symbols from market data with validation."""
         symbols = []
         
-        # Get valid symbols from the API first to filter out non-existent ones
-        try:
-            valid_symbols_set = set()
-            if hasattr(self.market_api, 'get_valid_symbols'):
-                valid_symbols_list = asyncio.run(self.market_api.get_valid_symbols())
-                valid_symbols_set = set(valid_symbols_list)
-        except Exception as e:
-            logger.warning(f"Could not fetch valid symbols list: {e}")
-            valid_symbols_set = set()
+        # For now, skip the valid symbols check in sync method to avoid asyncio.run
+        # This will be handled by the validation process later
+        valid_symbols_set = set()
         
         for market in markets:
             try:
