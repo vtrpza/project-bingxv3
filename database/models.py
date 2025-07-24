@@ -49,7 +49,7 @@ class Asset(Base):
     is_valid = Column(Boolean, default=True, index=True)
     min_order_size = Column(Numeric(20, 8))
     last_validation = Column(DateTime(timezone=True))
-    validation_data = Column(JSONB)
+    validation_data = Column(JSONType)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
@@ -246,7 +246,7 @@ class Order(Base):
     id = Column(UUIDType, primary_key=True, default=get_uuid)
     
     # Foreign key
-    trade_id = Column(UUID(as_uuid=True), ForeignKey('trades.id'), nullable=False)
+    trade_id = Column(UUIDType, ForeignKey('trades.id'), nullable=False)
     
     # Order data
     exchange_order_id = Column(String(100), unique=True)
@@ -294,7 +294,7 @@ class Signal(Base):
     
     # Foreign keys
     asset_id = Column(UUIDType, ForeignKey('assets.id'), nullable=False)
-    trade_id = Column(UUID(as_uuid=True), ForeignKey('trades.id'))
+    trade_id = Column(UUIDType, ForeignKey('trades.id'))
     
     # Signal data
     timestamp = Column(DateTime(timezone=True), nullable=False)
