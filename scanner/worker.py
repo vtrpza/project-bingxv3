@@ -87,7 +87,7 @@ class ScannerWorker:
                         for asset in batch
                     ]
                     
-                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    batch_results = await asyncio.gather(*[self._process_single_asset_optimized(asset, session) for asset in batch], return_exceptions=True)
                     
                     # Process results
                     for j, result in enumerate(batch_results):
@@ -193,7 +193,7 @@ class ScannerWorker:
     async def _store_indicators(self, session, asset, indicators, timeframe):
         """Store calculated indicators in database."""
         try:
-            self.indicator_repo.create_or_update(
+            self.indicator_repo.upsert_indicators(
                 session=session,
                 asset_id=asset.id,
                 timeframe=timeframe,
