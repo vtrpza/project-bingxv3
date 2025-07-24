@@ -120,7 +120,8 @@ class TimeFormatter:
             return "N/A"
         
         if end_time is None:
-            end_time = datetime.utcnow().replace(tzinfo=timezone.utc)
+            from utils.datetime_utils import utc_now
+            end_time = utc_now()
         
         # Ensure both timestamps have timezone info
         if start_time.tzinfo is None:

@@ -14,6 +14,7 @@ from scanner.validator import get_asset_validator
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger
 from utils.formatters import DataFormatter
+from utils.datetime_utils import utc_now, safe_datetime_subtract
 
 logger = get_logger(__name__)
 
@@ -34,7 +35,7 @@ class InitialScanResult:
         self.valid_assets.append({
             'symbol': symbol,
             'validation_data': validation_data,
-            'added_timestamp': datetime.utcnow().isoformat()
+            'added_timestamp': utc_now().isoformat()
         })
     
     def add_invalid_asset(self, symbol: str, reason: str, validation_data: Dict[str, Any] = None):
@@ -43,7 +44,7 @@ class InitialScanResult:
             'symbol': symbol,
             'reason': reason,
             'validation_data': validation_data or {},
-            'rejected_timestamp': datetime.utcnow().isoformat()
+            'rejected_timestamp': utc_now().isoformat()
         })
     
     def add_error(self, symbol: str, error: str):
@@ -51,7 +52,7 @@ class InitialScanResult:
         self.errors.append({
             'symbol': symbol,
             'error': error,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': utc_now().isoformat()
         })
     
     def get_summary(self) -> Dict[str, Any]:
@@ -91,7 +92,7 @@ class InitialScanner:
                             max_assets: Optional[int] = None) -> InitialScanResult:
         """Perform complete initial scan of all available assets."""
         logger.info("Starting initial asset scan...")
-        scan_start = datetime.utcnow()
+        scan_start = utc_now()
         result = InitialScanResult()
         result.scan_timestamp = scan_start.isoformat()
         
@@ -125,7 +126,7 @@ class InitialScanner:
             logger.info("Results already persisted incrementally during validation process")
             
             # Calculate final metrics
-            scan_end = datetime.utcnow()
+            scan_end = utc_now()
             result.scan_duration = (scan_end - scan_start).total_seconds()
             
             # Log summary
@@ -142,7 +143,7 @@ class InitialScanner:
         except Exception as e:
             logger.error(f"Error during initial scan: {e}")
             result.add_error("SCAN_ERROR", str(e))
-            result.scan_duration = (datetime.utcnow() - scan_start).total_seconds()
+            result.scan_duration = (utc_now() - scan_start).total_seconds()
             return result
     
     async def _discover_markets(self, force_refresh: bool = False) -> List[Dict[str, Any]]:
@@ -232,7 +233,7 @@ class InitialScanner:
                             'symbol': symbol,
                             'is_valid': False,
                             'reason': f"Validation exception: {str(result)}",
-                            'validation_timestamp': datetime.utcnow().isoformat(),
+                            'validation_timestamp': utc_now().isoformat(),
                             'validation_duration_seconds': 0
                         }
                         results[symbol] = validation_result
@@ -281,7 +282,7 @@ class InitialScanner:
                 'symbol': symbol,
                 'is_valid': False,
                 'reason': f"Processing error: {str(e)}",
-                'validation_timestamp': datetime.utcnow().isoformat(),
+                'validation_timestamp': utc_now().isoformat(),
                 'validation_duration_seconds': 0
             }
     
@@ -335,7 +336,7 @@ class InitialScanner:
                             quote_currency=quote_currency,
                             is_valid=is_valid,
                             min_order_size=min_order_size,
-                            last_validation=datetime.utcnow(),
+                            last_validation=utc_now(),
                             validation_data=db_validation_data
                         )
                         
@@ -421,7 +422,7 @@ class InitialScanner:
                                     quote_currency=quote_currency,
                                     is_valid=True,
                                     min_order_size=min_order_size,
-                                    last_validation=datetime.utcnow(),
+                                    last_validation=utc_now(),
                                     validation_data=validation_data.get('data', {})
                                 )
                             
@@ -504,7 +505,7 @@ class InitialScanner:
                     'valid_assets_count': len(valid_assets),
                     'invalid_assets_count': len(all_assets) - len(valid_assets),
                     'valid_symbols': [asset.symbol for asset in valid_assets],
-                    'needs_refresh': (datetime.utcnow() - last_scan_time).total_seconds() > 86400,  # 24 hours
+                    'needs_refresh': safe_datetime_subtract(utc_now(), last_scan_time) > 86400,  # 24 hours
                 }
                 
         except Exception as e:
