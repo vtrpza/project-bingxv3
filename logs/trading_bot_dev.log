@@ -9495,3 +9495,15 @@ RuntimeError: Database not initialized - call init_database() first
 2025-07-24 05:43:45,905 - api.client - ERROR - Exchange error: bingx does not have market symbol BID/USDT
 2025-07-24 05:43:45,905 - api.client - ERROR - Error fetching ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
 2025-07-24 05:43:45,905 - api.market_data - ERROR - Error fetching market summary for BID/USDT: Failed to fetch ticker for BID/USDT: Exchange error: bingx does not have market symbol BID/USDT
+2025-07-24 05:44:56,189 - api.client - ERROR - Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 05:44:56,189 - api.client - ERROR - Error fetching ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 05:44:56,189 - api.market_data - ERROR - Error fetching market summary for CBK/USDT: Failed to fetch ticker for CBK/USDT: Exchange error: bingx does not have market symbol CBK/USDT
+2025-07-24 05:45:36,304 - api.market_data - ERROR - Error analyzing volume for COA/USDT: Insufficient data for volume analysis: 22 < 24
+2025-07-24 05:47:33,037 - api.client - ERROR - Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 05:47:33,038 - api.client - ERROR - Error fetching ticker for DOLO/USDT: Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 05:47:33,038 - api.market_data - ERROR - Error fetching market summary for DOLO/USDT: Failed to fetch ticker for DOLO/USDT: Exchange error: bingx does not have market symbol DOLO/USDT
+2025-07-24 05:47:44,713 - api.client - ERROR - Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753346864326}
+2025-07-24 05:47:44,713 - api.client - ERROR - Error fetching ticker for DUSK/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753346864326}
+2025-07-24 05:47:44,713 - api.market_data - ERROR - Error fetching market summary for DUSK/USDT: Failed to fetch ticker for DUSK/USDT: Exchange error: bingx {"code":100204,"msg":"symbol is not found.","timestamp":1753346864326}
+2025-07-24 05:47:49,517 - scanner.initial_scanner - ERROR - Failed to save validation result for BTC/USDT: Database not initialized - call init_database() first
+2025-07-24 05:47:50,156 - scanner.initial_scanner - ERROR - Failed to save validation result for ETH/USDT: Database not initialized - call init_database() first

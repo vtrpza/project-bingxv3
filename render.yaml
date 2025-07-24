@@ -91,10 +91,10 @@ databases:
     user: bingx_user
     ipAllowList: []
 
-# Cron Jobs
-cronJobs:
+# Background Jobs (using cron service type for Render)
   # Backup diário do banco
-  - name: daily-backup
+  - type: cron
+    name: daily-backup
     schedule: "0 2 * * *"  # 2AM UTC
     buildCommand: pip install -r requirements.txt
     startCommand: python -m utils.backup
@@ -105,7 +105,8 @@ cronJobs:
           property: connectionString
 
   # Limpeza de logs antigos
-  - name: log-cleanup
+  - type: cron
+    name: log-cleanup
     schedule: "0 3 * * 0"  # Domingos 3AM UTC
     buildCommand: pip install -r requirements.txt
     startCommand: python -m utils.cleanup_logs
