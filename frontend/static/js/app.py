@@ -1009,13 +1009,7 @@ def executeSignalTrade(symbol, signal_type, signal_data):
         console.error("Global app instance not available for trade execution")
         ui_components.show_notification("Erro", "Sistema não inicializado", "error")
 
-def toggleAutoTrading(enable):
-    """Global function to toggle auto trading"""
-    try:
-        asyncio.create_task(app.toggle_auto_trading(enable))
-    except NameError:
-        console.error("Global app instance not available for auto trading toggle")
-        ui_components.show_notification("Erro", "Sistema não inicializado", "error")
+# Removed toggleAutoTrading function to avoid conflicts with JavaScript version
 
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)
@@ -1041,7 +1035,7 @@ document.updateTradingDataTable = create_proxy(updateTradingDataTable)
 document.filterTradingDataTable = create_proxy(filterTradingDataTable)
 document.refreshTradingData = create_proxy(refreshTradingData)
 document.executeSignalTrade = create_proxy(executeSignalTrade)
-document.toggleAutoTrading = create_proxy(toggleAutoTrading)
+# Removed toggleAutoTrading from document proxy to avoid conflicts
 
 # Also make all functions available on window object for JavaScript compatibility
 window.showNotification = create_proxy(ui_components.show_notification)
@@ -1059,7 +1053,7 @@ window.updateTradingDataTable = create_proxy(updateTradingDataTable)
 window.filterTradingDataTable = create_proxy(filterTradingDataTable)
 window.refreshTradingData = create_proxy(refreshTradingData)
 window.executeSignalTrade = create_proxy(executeSignalTrade)
-window.toggleAutoTrading = create_proxy(toggleAutoTrading)
+# Removed toggleAutoTrading from window proxy to avoid conflicts
 
 # Initialize the application
 app = TradingBotApp()
