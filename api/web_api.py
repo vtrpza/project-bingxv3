@@ -244,7 +244,10 @@ async def get_asset_validation_table(
                 filter_valid_only=filter_applied,
                 search=search,
                 limit=limit,
-                offset=offset
+                offset=offset,
+                risk_level_filter=risk_level_filter,
+                priority_only=priority_only,
+                trading_enabled_only=trading_enabled_only
             )
             
             logger.info(f"Fetched {len(all_assets)} assets (total: {total_count}, page: {page}/{total_pages})")
