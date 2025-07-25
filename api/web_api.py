@@ -3315,12 +3315,51 @@ async def websocket_endpoint(websocket: WebSocket):
                     }), websocket, retry=False
                 )
             
-    except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected from {client_host}")
-        manager.disconnect(websocket)
+    except WebSocketDisconnect as disconnect_error:
+        # Client initiated disconnect
+        logger.info(f"WebSocket client-initiated disconnect from {client_host} (code: {getattr(disconnect_error, 'code', 'unknown')})")
+        manager.disconnect(websocket, "client_disconnect")
+        
+    except asyncio.CancelledError:
+        # Task was cancelled (e.g., server shutdown)
+        logger.info(f"WebSocket task cancelled for {client_host}")
+        manager.disconnect(websocket, "task_cancelled")
+        
+    except json.JSONDecodeError as json_error:
+        # JSON parsing error
+        logger.warning(f"WebSocket JSON error from {client_host}: {json_error}")
+        manager.disconnect(websocket, "json_error")
+        
+    except ConnectionResetError:
+        # Connection reset by peer
+        logger.info(f"WebSocket connection reset by {client_host}")
+        manager.disconnect(websocket, "connection_reset")
+        
     except Exception as e:
-        logger.error(f"WebSocket error from {client_host}: {e}")
-        manager.disconnect(websocket)
+        # Unexpected error
+        error_type = type(e).__name__
+        logger.error(f"WebSocket unexpected error from {client_host} ({error_type}): {e}")
+        manager.disconnect(websocket, f"unexpected_error: {error_type}")
+        
+    finally:
+        # Ensure cleanup happens regardless of how we exit
+        if websocket in manager.active_connections:
+            logger.debug(f"Final cleanup for WebSocket connection from {client_host}")
+            manager.disconnect(websocket, "final_cleanup*")
+
+# Helper function to format WebSocket error responses
+def create_websocket_error_response(error_type: str, message: str, details: dict = None) -> dict:
+    """Create standardized WebSocket error response."""
+    response = {
+        "type": "error",
+        "error": error_type,
+        "message": message,
+        "timestamp": utc_now().isoformat(),
+        "server_version": "1.0.0"
+    }
+    if details:
+        response["details"] = details
+    return response
 
 async def _get_current_price(symbol: str) -> float:
     """Helper function to get current price for WebSocket updates."""
