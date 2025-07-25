@@ -469,3 +469,106 @@
 2025-07-25 14:16:48,034 - database.connection - INFO - Using SQLite database
 2025-07-25 14:16:48,034 - database.connection - INFO - Database connection established successfully
 2025-07-25 14:16:48,038 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:16:58,750 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:16:58,750 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:16:58,750 - database.connection - INFO - Using SQLite database
+2025-07-25 14:16:58,751 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:16:58,754 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:09,025 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:09,025 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:09,026 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:09,026 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:09,030 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:19,542 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:19,542 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:19,542 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:19,543 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:19,546 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:29,249 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:29,250 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:29,250 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:29,251 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:29,254 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:39,788 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:39,788 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:39,788 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:39,789 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:39,793 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:50,180 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:50,180 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:50,180 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:50,181 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:50,184 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:17:59,739 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:17:59,739 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:17:59,739 - database.connection - INFO - Using SQLite database
+2025-07-25 14:17:59,740 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:17:59,744 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:08,761 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:08,761 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 1
+2025-07-25 14:18:08,762 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:08,762 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 0
+2025-07-25 14:18:08,861 - api.web_api - INFO - FastAPI server shutting down
+2025-07-25 14:18:08,861 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 14:18:08,862 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-25 14:18:09,937 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-25 14:18:09,937 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-25 14:18:10,212 - api.web_api - INFO - BingX client initialized successfully
+2025-07-25 14:18:10,240 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-25 14:18:10,240 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-25 14:18:10,240 - api.web_api - INFO - Database initialization starting with 0.41s delay...
+2025-07-25 14:18:10,248 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:18:10,401 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:10,401 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:10,410 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:10,430 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:10,650 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-25 14:18:10,651 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:10,651 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:10,652 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:10,653 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-25 14:18:10,654 - database.connection - INFO - Database tables created successfully
+2025-07-25 14:18:10,654 - api.web_api - INFO - Database initialization completed successfully
+2025-07-25 14:18:11,241 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-25 14:18:11,241 - api.web_api - INFO - Starting automated risk management task
+2025-07-25 14:18:11,241 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-25 14:18:11,241 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 14:18:14,401 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:14,401 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:14,402 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:14,412 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:14,413 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 1
+2025-07-25 14:18:14,413 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:14,421 - api.web_api - INFO - Subscription confirmed for 127.0.0.1: trading_data
+2025-07-25 14:18:14,423 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:14,423 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 2
+2025-07-25 14:18:14,423 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:20,767 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:18:20,767 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:20,767 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:20,768 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:20,772 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:22,021 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:22,022 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 1
+2025-07-25 14:18:22,022 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:22,022 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 0
+2025-07-25 14:18:22,124 - api.web_api - INFO - FastAPI server shutting down
+2025-07-25 14:18:22,125 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 14:18:22,125 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-25 14:18:23,086 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-25 14:18:23,086 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-25 14:18:23,369 - api.web_api - INFO - BingX client initialized successfully
+2025-07-25 14:18:23,393 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-25 14:18:23,393 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-25 14:18:23,394 - api.web_api - INFO - Database initialization starting with 0.23s delay...
+2025-07-25 14:18:23,456 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:23,456 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:23,467 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:23,469 - database.connection - INFO - Database tables created successfully
+2025-07-25 14:18:23,620 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-25 14:18:23,620 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:23,620 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:23,621 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:23,622 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-25 14:18:23,623 - database.connection - INFO - Database tables created successfully
+2025-07-25 14:18:23,623 - api.web_api - INFO - Database initialization completed successfully

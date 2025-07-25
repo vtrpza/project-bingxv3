@@ -1479,6 +1479,24 @@ async def get_dashboard_summary(
 ):
     """Get dashboard summary data"""
     try:
+        # Ensure database is initialized
+        from database.connection import init_database
+        try:
+            init_database()
+        except Exception as init_error:
+            logger.warning(f"Database initialization issue: {init_error}")
+            # Return basic summary if database is not available
+            return {
+                "summary": {
+                    "valid_assets": 0,
+                    "active_signals": 0,
+                    "active_positions": 0,
+                    "total_unrealized_pnl": 0.0,
+                    "recent_trades_count": 0
+                },
+                "timestamp": utc_now().isoformat()
+            }
+        
         valid_assets = asset_repo.get_valid_assets_count(db)
         active_signals = signal_repo.get_active_signals_count(db)
         
