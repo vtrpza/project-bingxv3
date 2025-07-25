@@ -49,6 +49,10 @@ class EnhancedScannerWorker:
         self.rate_limiter = get_rate_limiter()
         self.cache = get_smart_cache()
         
+        # Trading-specific components
+        self.symbol_selector = get_symbol_selector()
+        self.trading_cache = get_trading_cache()
+        
         # Performance tracking
         self.scan_metrics = {
             'total_scans': 0,
@@ -83,24 +87,28 @@ class EnhancedScannerWorker:
             logger.error(f"❌ Failed to initialize enhanced scanner worker: {e}")
             return False
     
-    async def _ensure_valid_assets(self):
-        """Ensure we have valid assets to scan."""
+    async def _ensure_trading_symbols(self):
+        """Ensure we have symbols selected for trading."""
         try:
-            with get_session() as session:
-                valid_assets = self.asset_repo.get_valid_assets(session)
+            # Check if we need to select/re-select symbols
+            if await self.trading_cache.needs_reselection():
+                logger.info("🎯 Selecting symbols for trading...")
+                selected_symbols = await self.symbol_selector.select_trading_symbols(force_refresh=True)
+                await self.trading_cache.update_selected_symbols(selected_symbols)
                 
-                if not valid_assets:
-                    logger.info("No valid assets found, running initial scan...")
-                    result = await self.initial_scanner.scan_all_assets(
-                        force_refresh=True,
-                        max_assets=self.config.MAX_ASSETS_TO_SCAN
-                    )
-                    logger.info(f"Initial scan completed: {len(result.valid_assets)} valid assets found")
+                if selected_symbols:
+                    logger.info(f"✅ Selected {len(selected_symbols)} symbols for trading")
+                    # Log top symbols
+                    for i, sym in enumerate(selected_symbols[:5], 1):
+                        logger.info(f"{i}. {sym.symbol} - Score: {sym.selection_score:.2f}")
                 else:
-                    logger.info(f"Found {len(valid_assets)} valid assets ready for scanning")
+                    logger.warning("❌ No symbols selected for trading")
+            else:
+                symbols = await self.trading_cache.get_selected_symbols()
+                logger.info(f"Using cached {len(symbols)} trading symbols")
                     
         except Exception as e:
-            logger.error(f"Error ensuring valid assets: {e}")
+            logger.error(f"Error ensuring trading symbols: {e}")
     
     async def scan_cycle(self):
         """Execute one complete scan cycle with performance tracking."""
