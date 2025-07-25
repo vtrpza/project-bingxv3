@@ -216,6 +216,7 @@ class BingXClient:
                 self._record_success()
                 return result
             except ccxt.RateLimitExceeded as e:
+                self._record_failure()  # Record failure for circuit breaker
                 logger.warning(f"Rate limit hit on attempt {attempt + 1}: {e}")
                 if attempt == max_retries - 1:
                     raise RateLimitError(f"Rate limit exceeded after {max_retries} attempts")
