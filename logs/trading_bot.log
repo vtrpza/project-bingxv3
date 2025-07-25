@@ -13507,3 +13507,23 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 22:37:24,421 - database.connection - INFO - Using DATABASE_URL from environment
 2025-07-24 22:37:24,421 - database.connection - INFO - Using SQLite database
 2025-07-24 22:37:24,429 - database.connection - INFO - Database connection established successfully
+2025-07-24 22:52:35,492 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:52:35,492 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:52:35,673 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 22:52:35,737 - api.__main__ - INFO - ✅ FastAPI application imported successfully
+2025-07-24 22:52:35,773 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-24 22:52:35,773 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-24 22:52:35,773 - api.web_api - INFO - Database initialization starting with 0.21s delay...
+2025-07-24 22:52:35,990 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-24 22:52:35,991 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 22:52:35,991 - database.connection - INFO - Using SQLite database
+2025-07-24 22:52:35,998 - database.connection - INFO - Database connection established successfully
+2025-07-24 22:52:35,999 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-24 22:52:36,000 - database.connection - INFO - Database tables created successfully
+2025-07-24 22:52:36,000 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 22:52:36,776 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting
+2025-07-24 22:52:36,777 - api.web_api - INFO - Starting automated risk management task
+2025-07-24 22:52:36,777 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-24 22:56:03,767 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:56:03,768 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:56:03,973 - api.web_api - INFO - BingX client initialized successfully
