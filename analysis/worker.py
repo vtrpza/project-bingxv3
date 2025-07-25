@@ -98,6 +98,10 @@ class AnalysisWorker:
         # Shutdown executor
         self.executor.shutdown(wait=True)
         
+        # Unregister from coordinator
+        await self.coordinator.unregister_worker(self.worker_id)
+        logger.info(f"Unregistered analysis worker from coordinator: {self.worker_id}")
+        
         logger.info("Analysis worker stopped")
     
     async def _run_analysis_loop(self):
