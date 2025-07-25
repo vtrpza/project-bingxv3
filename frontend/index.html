@@ -227,6 +227,23 @@
                         console.error('❌ Erro no scanner:', data.payload);
                         this.updateScanProgress('error', data.payload);
                         break;
+                    case 'scanner_status_update':
+                        console.log('🔍 Scanner status update:', data.payload);
+                        if (window.updateScannerActivity) {
+                            window.updateScannerActivity({
+                                active: data.payload.scanning_active,
+                                monitored_assets: data.payload.monitored_assets || data.payload.assets_being_scanned,
+                                signals_detected: data.payload.signals_count || 0
+                            });
+                        }
+                        break;
+                    case 'new_signal':
+                        console.log('🎯 Novo sinal detectado:', data.payload);
+                        // Refresh scanner status when new signals are detected
+                        if (window.refreshScannerStatus) {
+                            setTimeout(() => window.refreshScannerStatus(), 500);
+                        }
+                        break;
                     default:
                         console.log('Unknown message type:', data.type);
                 }
