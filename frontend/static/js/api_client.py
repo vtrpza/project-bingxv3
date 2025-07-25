@@ -357,10 +357,10 @@ class APIClient:
             console.error(f"WebSocket message processing error: {str(e)}")
     
     def on_websocket_open(self, event):
-        """Handle WebSocket connection open"""
+        """Handle WebSocket connection open with enhanced coordination"""
         self.is_connected = True
         self.reconnect_attempts = 0  # Reset reconnection attempts on successful connection
-        console.log("WebSocket connected successfully")
+        console.log("PyScript WebSocket connected successfully")
         self.update_connection_status(True)
         
         # Stop polling if it was active
@@ -368,9 +368,17 @@ class APIClient:
             self.stop_polling_fallback()
             console.log("Stopped polling fallback - WebSocket connected")
         
+        # Subscribe to channels that PyScript needs
+        self.subscribe_to_channel('general')
+        self.subscribe_to_channel('trading_data')
+        
         # Send ping to keep connection alive
         if self.websocket:
-            ping_message = json.dumps({"type": "ping"})
+            ping_message = json.dumps({
+                "type": "ping",
+                "source": "pyscript_websocket",
+                "timestamp": datetime.now().isoformat()
+            })
             self.websocket.send(ping_message)
     
     def on_websocket_close(self, event):
@@ -396,17 +404,51 @@ class APIClient:
             self.handle_websocket_unavailable()
     
     def on_websocket_error(self, event):
-        """Handle WebSocket error"""
-        console.error("WebSocket error:", event)
+        """Handle WebSocket error with enhanced debugging"""
+        console.error("PyScript WebSocket error:", event)
         self.is_connected = False
         self.update_connection_status(False)
+        
+        # Check for specific error conditions
+        error_type = getattr(event, 'type', 'unknown')
+        error_code = getattr(event, 'code', None)
+        
+        console.log(f"WebSocket error details - Type: {error_type}, Code: {error_code}")
+        
+        # If JavaScript WebSocket is available, gracefully fall back
+        if hasattr(document.defaultView, 'tradingWebSocket'):
+            js_ws = document.defaultView.tradingWebSocket
+            if js_ws and js_ws.isConnected:
+                console.log("Falling back to JavaScript WebSocket for real-time updates")
+                self.handle_websocket_unavailable()
+            else:
+                console.log("JavaScript WebSocket also unavailable - enabling polling")
+                self.handle_websocket_unavailable()
     
     def connect_websocket(self):
-        """Connect to WebSocket server with enhanced error handling"""
+        """Connect to WebSocket server with enhanced error handling and connection state management"""
+        # Prevent multiple connection attempts
+        if self.websocket and self.is_connected:
+            console.log("WebSocket already connected - skipping connection attempt")
+            return
+            
+        # Check if JavaScript WebSocket is already active
+        if hasattr(document.defaultView, 'tradingWebSocket') and document.defaultView.tradingWebSocket:
+            js_ws = document.defaultView.tradingWebSocket
+            if js_ws.isConnected:
+                console.log("JavaScript WebSocket active - using polling fallback for PyScript")
+                self.handle_websocket_unavailable()
+                return
+        
         try:
+            # Clean up any existing connection
+            if self.websocket:
+                self.websocket.close()
+                self.websocket = None
+                
             # Get WebSocket URL using improved method
             self.ws_url = self.get_websocket_url()
-            console.log(f"Attempting WebSocket connection to: {self.ws_url}")
+            console.log(f"Attempting PyScript WebSocket connection to: {self.ws_url}")
             
             self.websocket = WebSocket.new(self.ws_url)
             self.websocket.onopen = create_proxy(self.on_websocket_open)

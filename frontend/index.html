@@ -261,7 +261,14 @@
                         }
                         break;
                     default:
-                        console.log('Unknown message type:', data.type);
+                        // Handle broadcast messages with broadcast_info
+                        if (data.broadcast_info) {
+                            const channel = data.broadcast_info.channel || 'unknown';
+                            const priority = data.broadcast_info.priority || 'normal';
+                            console.log(`📡 Broadcast on ${channel} (${priority}):`, data.type);
+                        } else {
+                            console.log('📨 Unknown message type:', data.type, data);
+                        }
                 }
             }
             
