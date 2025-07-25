@@ -227,6 +227,23 @@
                         console.error('❌ Erro no scanner:', data.payload);
                         this.updateScanProgress('error', data.payload);
                         break;
+                    case 'scanner_status_update':
+                        console.log('🔍 Scanner status update:', data.payload);
+                        if (window.updateScannerActivity) {
+                            window.updateScannerActivity({
+                                active: data.payload.scanning_active,
+                                monitored_assets: data.payload.monitored_assets || data.payload.assets_being_scanned,
+                                signals_detected: data.payload.signals_count || 0
+                            });
+                        }
+                        break;
+                    case 'new_signal':
+                        console.log('🎯 Novo sinal detectado:', data.payload);
+                        // Refresh scanner status when new signals are detected
+                        if (window.refreshScannerStatus) {
+                            setTimeout(() => window.refreshScannerStatus(), 500);
+                        }
+                        break;
                     default:
                         console.log('Unknown message type:', data.type);
                 }
@@ -2397,6 +2414,64 @@
         }
     }
     
+    async function refreshScannerStatus() {
+        try {
+            const response = await fetch('/api/scanner/status');
+            if (!response.ok) {
+                console.error('Failed to fetch scanner status:', response.status);
+                return;
+            }
+            
+            const data = await response.json();
+            
+            // Update scanner activity with real data
+            updateScannerActivity({
+                active: data.scanning_active,
+                monitored_assets: data.monitored_assets || data.assets_being_scanned,
+                signals_detected: await getScannerSignalsCount(),
+                next_scan: formatNextScanTime(data.scan_interval)
+            });
+            
+            console.log('Scanner status updated:', data);
+            
+        } catch (error) {
+            console.error('Error refreshing scanner status:', error);
+            
+            // Fallback to default values
+            updateScannerActivity({
+                active: true,
+                monitored_assets: 0,
+                signals_detected: 0,
+                next_scan: '--:--'
+            });
+        }
+    }
+    
+    async function getScannerSignalsCount() {
+        try {
+            const response = await fetch('/api/signals/active');
+            if (response.ok) {
+                const data = await response.json();
+                return data.length || 0;
+            }
+        } catch (error) {
+            console.error('Error getting signals count:', error);
+        }
+        return 0;
+    }
+    
+    function formatNextScanTime(intervalSeconds) {
+        if (!intervalSeconds) return '--:--';
+        
+        const now = new Date();
+        const nextScan = new Date(now.getTime() + (intervalSeconds * 1000));
+        return nextScan.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
     function updateScannerActivity(data) {
         const scannerStatus = document.getElementById('scanner-status');
         const scanningIndicator = document.getElementById('scanning-indicator');
@@ -2526,13 +2601,14 @@
     }
     
     // Initialize robot dashboard
-    function initializeRobotDashboard() {
+    async function initializeRobotDashboard() {
         console.log('🤖 Inicializando Robot Dashboard...');
         
         // ====== AUTO-REFRESH AND REAL-TIME UPDATES ======
         
-        // Auto-refresh interval for trading data
+        // Auto-refresh intervals
         let tradingDataRefreshInterval = null;
+        let scannerStatusRefreshInterval = null;
         
         // Start auto-refresh for trading data
         function startTradingDataAutoRefresh(intervalMs = 30000) { // 30 seconds default
@@ -2551,12 +2627,36 @@
             addActivityLog('🔄', `Auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
         }
         
-        // Stop auto-refresh
+        // Start auto-refresh for scanner status
+        function startScannerStatusAutoRefresh(intervalMs = 15000) { // 15 seconds default
+            stopScannerStatusAutoRefresh(); // Clear any existing interval
+            
+            // Initial refresh
+            refreshScannerStatus();
+            
+            // Set up periodic refresh
+            scannerStatusRefreshInterval = setInterval(() => {
+                refreshScannerStatus();
+            }, intervalMs);
+            
+            console.log(`🔍 Scanner auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
+        }
+        
+        // Stop auto-refresh for trading data
         function stopTradingDataAutoRefresh() {
             if (tradingDataRefreshInterval) {
                 clearInterval(tradingDataRefreshInterval);
                 tradingDataRefreshInterval = null;
                 addActivityLog('⏹️', 'Auto-refresh desativado');
+            }
+        }
+        
+        // Stop auto-refresh for scanner status
+        function stopScannerStatusAutoRefresh() {
+            if (scannerStatusRefreshInterval) {
+                clearInterval(scannerStatusRefreshInterval);
+                scannerStatusRefreshInterval = null;
+                console.log('🔍 Scanner auto-refresh desativado');
             }
         }
         
@@ -2629,17 +2729,18 @@
         window.closePosition = closePosition;
         window.startTradingDataAutoRefresh = startTradingDataAutoRefresh;
         window.stopTradingDataAutoRefresh = stopTradingDataAutoRefresh;
+        window.startScannerStatusAutoRefresh = startScannerStatusAutoRefresh;
+        window.stopScannerStatusAutoRefresh = stopScannerStatusAutoRefresh;
+        window.refreshScannerStatus = refreshScannerStatus;
+        window.updateScannerActivity = updateScannerActivity;
         
         // Set initial state
         updateRobotStatus('active', 'Sistema Iniciando', 25);
         addActivityLog('🤖', 'Dashboard inicializado - Sistema de trading carregado');
         
-        // Initialize scanner activity
-        updateScannerActivity({ 
-            active: true, 
-            monitored_assets: 1, 
-            signals_detected: 0 
-        });
+        // Initialize scanner activity with real data and start auto-refresh
+        await refreshScannerStatus();
+        startScannerStatusAutoRefresh(); // Auto-refresh scanner status every 15 seconds
         
         // Initialize positions
         updatePositionsInfo({ 
@@ -2694,13 +2795,7 @@
             updateRobotStatus(currentAction.status, currentAction.action, progress);
             addActivityLog('system', currentAction.action, currentAction.icon);
             
-            // Update scanner signals occasionally
-            if (Math.random() < 0.2) {
-                const currentSignals = parseInt(document.getElementById('signals-detected')?.textContent || 0);
-                updateScannerActivity({ 
-                    signals_detected: Math.max(0, currentSignals + (Math.random() < 0.7 ? 1 : -1))
-                });
-            }
+            // Scanner status is now updated via API and WebSocket, no simulation needed
             
             actionIndex++;
         }, 10000);

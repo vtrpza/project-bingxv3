@@ -1148,11 +1148,17 @@ async def get_bot_status():
     }
 
 @app.get("/api/scanner/status")
-async def get_scanner_status():
-    """Get current scanner status"""
+async def get_scanner_status(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Get current scanner status with real asset count"""
     try:
         # Check if scanning should be considered active based on recent activity
         current_time = utc_now()
+        
+        # Get real count of valid assets from database
+        valid_assets_count = asset_repo.get_valid_assets_count(db)
         
         # If we have a last scan start time and no end time, scanning is active
         if (scanner_status["last_scan_start"] and 
@@ -1167,25 +1173,35 @@ async def get_scanner_status():
             else:
                 scanner_status["scanning_active"] = False
         
-        # For demo purposes, simulate scanning when bot is running
-        # In real implementation, this would check actual scanner worker status
+        # Set scanner status based on bot running state
         if bot_status["running"]:
             scanner_status["scanning_active"] = True
-            # Simulate some assets being scanned
-            if scanner_status["assets_being_scanned"] == 0:
-                scanner_status["assets_being_scanned"] = 150  # Mock value
+            # Use real asset count instead of mock value
+            scanner_status["assets_being_scanned"] = valid_assets_count
         else:
             scanner_status["scanning_active"] = False
             scanner_status["assets_being_scanned"] = 0
         
-        return {
+        status_data = {
             "scanning_active": scanner_status["scanning_active"],
             "assets_being_scanned": scanner_status["assets_being_scanned"],
+            "monitored_assets": valid_assets_count,  # Add explicit monitored assets count
             "last_scan_start": scanner_status["last_scan_start"],
             "last_scan_end": scanner_status["last_scan_end"],
             "scan_interval": scanner_status["scan_interval"],
             "timestamp": current_time
         }
+        
+        # Broadcast scanner status update to WebSocket clients
+        try:
+            await manager.broadcast({
+                "type": "scanner_status_update",
+                "payload": status_data
+            })
+        except Exception as e:
+            logger.warning(f"Failed to broadcast scanner status update: {e}")
+        
+        return status_data
     except Exception as e:
         logger.error(f"Error getting scanner status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -2819,12 +2835,61 @@ async def automated_risk_management():
             # Continue running even if there's an error
             continue
 
+async def broadcast_scanner_status():
+    """Background task to broadcast scanner status periodically"""
+    logger.info("Starting scanner status broadcast task")
+    
+    while True:
+        try:
+            # Broadcast scanner status every 30 seconds
+            await asyncio.sleep(30)
+            
+            if manager.active_connections:
+                # Get scanner status data
+                try:
+                    with get_session() as db:
+                        asset_repo = AssetRepository()
+                        valid_assets_count = asset_repo.get_valid_assets_count(db)
+                        signals_count = SignalRepository().get_active_signals_count(db)
+                        
+                        # Create status update
+                        status_data = {
+                            "scanning_active": scanner_status.get("scanning_active", False),
+                            "assets_being_scanned": scanner_status.get("assets_being_scanned", 0),
+                            "monitored_assets": valid_assets_count,
+                            "signals_count": signals_count,
+                            "last_scan_start": scanner_status.get("last_scan_start"),
+                            "last_scan_end": scanner_status.get("last_scan_end"),
+                            "scan_interval": scanner_status.get("scan_interval", 60),
+                            "timestamp": utc_now().isoformat()
+                        }
+                        
+                        # Broadcast to all connected clients
+                        await manager.broadcast({
+                            "type": "scanner_status_update",
+                            "payload": status_data
+                        })
+                        
+                        logger.debug(f"Broadcasted scanner status: {valid_assets_count} assets monitored, {signals_count} active signals")
+                        
+                except Exception as e:
+                    logger.error(f"Error broadcasting scanner status: {e}")
+                    
+        except asyncio.CancelledError:
+            logger.info("Scanner status broadcast task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in scanner status broadcast task: {e}")
+            # Continue running even if there's an error
+            continue
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
     """Start background tasks"""
     asyncio.create_task(broadcast_realtime_data())
     asyncio.create_task(automated_risk_management())
-    logger.info("Background tasks started: real-time data broadcasting and automated risk management")
+    asyncio.create_task(broadcast_scanner_status())
+    logger.info("Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting")
 
 @app.on_event("shutdown")
 async def shutdown_event():
