@@ -286,7 +286,10 @@
                         this.handleTradingUpdate(data.data);
                         break;
                     case 'trading_data_snapshot':
-                        this.handleTradingSnapshot(data.data);
+                        this.handleTradingDataSnapshot(data);
+                        break;
+                    case 'trading_signals_snapshot':
+                        this.handleTradingSignalsSnapshot(data);
                         break;
                     case 'positions_update':
                         this.handlePositionsUpdate(data.data);
