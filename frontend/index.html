@@ -2712,13 +2712,16 @@
         window.closePosition = closePosition;
         window.startTradingDataAutoRefresh = startTradingDataAutoRefresh;
         window.stopTradingDataAutoRefresh = stopTradingDataAutoRefresh;
+        window.startScannerStatusAutoRefresh = startScannerStatusAutoRefresh;
+        window.stopScannerStatusAutoRefresh = stopScannerStatusAutoRefresh;
         
         // Set initial state
         updateRobotStatus('active', 'Sistema Iniciando', 25);
         addActivityLog('🤖', 'Dashboard inicializado - Sistema de trading carregado');
         
-        // Initialize scanner activity with real data
+        // Initialize scanner activity with real data and start auto-refresh
         await refreshScannerStatus();
+        startScannerStatusAutoRefresh(); // Auto-refresh scanner status every 15 seconds
         
         // Initialize positions
         updatePositionsInfo({ 
