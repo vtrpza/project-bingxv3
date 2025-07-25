@@ -15,7 +15,10 @@ def setup_environment():
     os.environ['DATABASE_URL'] = 'sqlite:///vst_trading.db'
     os.environ['DEBUG'] = 'true'
     os.environ['LOG_LEVEL'] = 'INFO'
-    
+    os.environ['TRADING_ENABLED'] = 'true'
+    os.environ['BINGX_TESTNET'] = 'true'
+    os.environ['MAX_ASSETS_TO_SCAN'] = '1500'
+
     # Check if API keys are set
     if not os.environ.get('BINGX_API_KEY'):
         print("⚠️  BINGX_API_KEY not found in environment")
