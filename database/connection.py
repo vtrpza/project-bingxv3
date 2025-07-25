@@ -54,14 +54,19 @@ class DatabaseManager:
                     future=True
                 )
             else:
-                # PostgreSQL configuration (with connection pooling)
+                # PostgreSQL configuration optimized for Render
                 self.engine = create_engine(
                     database_url,
                     poolclass=QueuePool,
-                    pool_size=20,
-                    max_overflow=40,
-                    pool_timeout=30,
+                    pool_size=5,      # Reduced for Render constraints
+                    max_overflow=10,  # Reduced overflow
+                    pool_timeout=60,  # Increased timeout for Render
                     pool_recycle=3600,
+                    pool_pre_ping=True,  # Test connections before use
+                    connect_args={
+                        "connect_timeout": 30,
+                        "application_name": "bingx_trading_bot"
+                    },
                     echo=os.getenv("DB_ECHO", "false").lower() == "true",
                     future=True
                 )

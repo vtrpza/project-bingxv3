@@ -169,10 +169,30 @@ async def start_background_tasks_delayed():
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "*",  # Allow all for now, can be restricted later
+        "https://*.onrender.com",  # Render subdomains
+        "https://bingx-trading-bot-3i13.onrender.com",  # Specific production URL
+        "http://localhost:*",  # Local development
+        "https://localhost:*"  # Local HTTPS development
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type", 
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Mx-ReqToken",
+        "Keep-Alive",
+        "X-Requested-With",
+        "If-Modified-Since"
+    ],
+    expose_headers=["*"]
 )
 
 def _safe_get_candle_price(candles, fallback_price):
@@ -381,17 +401,71 @@ def get_position_repo():
 # Health check
 @app.get("/health")
 async def health_check():
-    """Fast health check that responds immediately during startup."""
+    """Enhanced health check for Render deployment with detailed status."""
     global startup_complete, database_ready
     
+    # Always return 200 OK for basic health check to prevent 502 errors
+    status_code = 200
+    
+    # Determine overall health status
+    if startup_complete and database_ready:
+        status = "healthy"
+        message = "All systems operational"
+    elif startup_complete:
+        status = "degraded" 
+        message = "Server running, database initializing"
+    else:
+        status = "starting"
+        message = "Server starting up"
+    
+    # Get connection stats if available
+    connection_stats = {}
+    try:
+        connection_stats = manager.get_connection_stats()
+    except Exception as e:
+        logger.debug(f"Error getting WebSocket stats: {e}")
+    
     return {
-        "status": "healthy",
-        "timestamp": utc_now(),
+        "status": status,
+        "http_status": status_code,
+        "timestamp": utc_now().isoformat(),
         "version": "1.0.0",
+        "environment": "production" if os.getenv("RENDER") else "development",
         "startup_complete": startup_complete,
         "database_ready": database_ready,
-        "message": "Server is running"
+        "websocket_connections": connection_stats.get("total_connections", 0),
+        "message": message,
+        "render_service": os.getenv("RENDER_SERVICE_NAME", "unknown")
     }
+
+# WebSocket connection monitoring endpoint
+@app.get("/ws/stats")
+async def websocket_stats():
+    """Get WebSocket connection statistics for monitoring."""
+    try:
+        stats = manager.get_connection_stats()
+        
+        # Add additional metadata
+        stats.update({
+            "timestamp": utc_now().isoformat(),
+            "heartbeat_interval": manager.heartbeat_interval,
+            "connection_metadata_count": len(manager.connection_metadata)
+        })
+        
+        return {
+            "success": True,
+            "data": stats
+        }
+    except Exception as e:
+        logger.error(f"Error getting WebSocket stats: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "total_connections": 0,
+                "timestamp": utc_now().isoformat()
+            }
+        }
 
 # Readiness check (for internal use)
 @app.get("/ready")
@@ -3089,13 +3163,34 @@ async def broadcast_scanner_status():
             # Continue running even if there's an error
             continue
 
+async def websocket_heartbeat_task():
+    """Background task to maintain WebSocket connections with heartbeat."""
+    logger.info("Starting WebSocket heartbeat task")
+    
+    while True:
+        try:
+            await asyncio.sleep(30)  # Check connections every 30 seconds
+            
+            if manager.active_connections:
+                await manager.heartbeat_check()
+                logger.debug(f"WebSocket heartbeat check completed for {len(manager.active_connections)} connections")
+            
+        except asyncio.CancelledError:
+            logger.info("WebSocket heartbeat task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in WebSocket heartbeat task: {e}")
+            # Continue running even if there's an error
+            continue
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
     """Start background tasks"""
     asyncio.create_task(broadcast_realtime_data())
     asyncio.create_task(automated_risk_management())
     asyncio.create_task(broadcast_scanner_status())
-    logger.info("Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting")
+    asyncio.create_task(websocket_heartbeat_task())
+    logger.info("Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat")
 
 async def shutdown_event():
     """Cleanup on shutdown"""
