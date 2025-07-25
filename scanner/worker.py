@@ -381,6 +381,8 @@ async def main():
         logger.error(f"Fatal error in scanner worker: {e}")
         sys.exit(1)
     finally:
+        # Proper cleanup
+        await worker.stop()
         logger.info("👋 Scanner worker shutdown complete")
 
 if __name__ == "__main__":
