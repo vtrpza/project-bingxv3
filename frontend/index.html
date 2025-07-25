@@ -1455,9 +1455,37 @@
                 const result = await response.json();
                 
                 if (result.status && result.status.running) {
-                    // Still running, check again in 2 seconds
-                    setTimeout(checkRevalidationStatus, 2000);
+                    // Update progress display if elements exist
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressPercentage = document.getElementById('progress-percentage');
+                    
+                    if (progressBar && result.status.progress_percentage !== undefined) {
+                        progressBar.style.width = result.status.progress_percentage + '%';
+                    }
+                    if (progressPercentage && result.status.progress_percentage !== undefined) {
+                        progressPercentage.textContent = Math.round(result.status.progress_percentage) + '%';
+                    }
+                    
+                    // Update message if available
+                    const calculandoMsg = document.querySelector('.calculando-msg');
+                    if (calculandoMsg && result.status.message) {
+                        calculandoMsg.textContent = result.status.message;
+                    }
+                    
+                    // Still running, check again in 1 second for more responsive updates
+                    setTimeout(checkRevalidationStatus, 1000);
                 } else if (result.status && result.status.completed) {
+                    // Ensure progress shows 100% when completed
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressPercentage = document.getElementById('progress-percentage');
+                    
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                    }
+                    if (progressPercentage) {
+                        progressPercentage.textContent = '100%';
+                    }
+                    
                     showNotificationSafe('Concluído', 
                         `Revalidação concluída! ${result.status.progress}/${result.status.total} ativos processados.`, 
                         'success');
