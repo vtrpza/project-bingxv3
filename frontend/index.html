@@ -2397,6 +2397,64 @@
         }
     }
     
+    async function refreshScannerStatus() {
+        try {
+            const response = await fetch('/api/scanner/status');
+            if (!response.ok) {
+                console.error('Failed to fetch scanner status:', response.status);
+                return;
+            }
+            
+            const data = await response.json();
+            
+            // Update scanner activity with real data
+            updateScannerActivity({
+                active: data.scanning_active,
+                monitored_assets: data.monitored_assets || data.assets_being_scanned,
+                signals_detected: await getScannerSignalsCount(),
+                next_scan: formatNextScanTime(data.scan_interval)
+            });
+            
+            console.log('Scanner status updated:', data);
+            
+        } catch (error) {
+            console.error('Error refreshing scanner status:', error);
+            
+            // Fallback to default values
+            updateScannerActivity({
+                active: true,
+                monitored_assets: 0,
+                signals_detected: 0,
+                next_scan: '--:--'
+            });
+        }
+    }
+    
+    async function getScannerSignalsCount() {
+        try {
+            const response = await fetch('/api/signals/active');
+            if (response.ok) {
+                const data = await response.json();
+                return data.length || 0;
+            }
+        } catch (error) {
+            console.error('Error getting signals count:', error);
+        }
+        return 0;
+    }
+    
+    function formatNextScanTime(intervalSeconds) {
+        if (!intervalSeconds) return '--:--';
+        
+        const now = new Date();
+        const nextScan = new Date(now.getTime() + (intervalSeconds * 1000));
+        return nextScan.toLocaleTimeString('pt-BR', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            second: '2-digit'
+        });
+    }
+
     function updateScannerActivity(data) {
         const scannerStatus = document.getElementById('scanner-status');
         const scanningIndicator = document.getElementById('scanning-indicator');
