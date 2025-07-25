@@ -978,8 +978,40 @@
 
         <!-- Loading Overlay -->
         <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <p>Carregando dados...</p>
+            <div class="progress-container">
+                <div class="progress-header">
+                    <div class="progress-title">Inicializando Sistema</div>
+                    <div class="progress-subtitle" id="progress-subtitle">Carregando dados...</div>
+                </div>
+                
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                
+                <div class="progress-stats">
+                    <span class="progress-percentage" id="progress-percentage">0%</span>
+                    <span class="progress-eta" id="progress-eta">Calculando...</span>
+                </div>
+                
+                <div class="progress-details" id="progress-details" style="display: none;">
+                    <div class="progress-step" id="progress-step">Iniciando...</div>
+                    
+                    <div class="progress-counts" id="progress-counts">
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="processed-count">0</span>
+                            <span class="progress-count-label">Processados</span>
+                        </div>
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="valid-count">0</span>
+                            <span class="progress-count-label">Válidos</span>
+                        </div>
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="total-count">0</span>
+                            <span class="progress-count-label">Total</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -2605,3 +2605,134 @@ input:focus {
       font-size: 12px;
   }
   }
+
+/* Modern Progress Bar */
+.progress-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 20px auto;
+    background: rgba(22, 27, 34, 0.8);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(110, 118, 129, 0.2);
+}
+
+.progress-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.progress-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.progress-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.progress-bar-wrapper {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: var(--bg-primary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2ea043 0%, #3fb950 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.progress-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.progress-percentage {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.progress-eta {
+    color: var(--accent-info);
+}
+
+.progress-details {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(110, 118, 129, 0.2);
+}
+
+.progress-step {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.progress-step::before {
+    content: '🔄';
+    margin-right: 8px;
+    animation: spin 2s linear infinite;
+}
+
+.progress-counts {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.progress-count-item {
+    text-align: center;
+    padding: 8px;
+    background: rgba(110, 118, 129, 0.1);
+    border-radius: 6px;
+}
+
+.progress-count-value {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progress-count-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
