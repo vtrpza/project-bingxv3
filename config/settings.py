@@ -96,8 +96,8 @@ class Settings:
         
         # Database configuration - Allow SQLite fallback for easy deployment
         # DATABASE_URL or DB_PASSWORD required only in production
-        if cls.is_production() and not cls.DATABASE_URL and not cls.DB_PASSWORD:
-            errors.append("DATABASE_URL must be provided in production environment")
+        if cls.IS_RENDER and not cls.DATABASE_URL:
+            errors.append("DATABASE_URL must be provided in the Render environment")
         
         # Validate numeric ranges
         if cls.DB_POOL_SIZE < 1:
