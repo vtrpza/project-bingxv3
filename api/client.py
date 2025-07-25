@@ -47,18 +47,18 @@ class BingXClient:
         # Market interfaces: 100 requests per 10 seconds per IP
         # Account interfaces: 1,000 requests per 10 seconds per IP (final limit)
         self._rate_limits = {
-            # Market data endpoints (100 req/10s = 10 req/s)
-            'fetch_ticker': 8,       # Conservative: 8 per second
-            'fetch_ohlcv': 8,        # Conservative: 8 per second
-            'fetch_markets': 5,      # Less frequent calls
-            'fetch_orderbook': 8,    # Conservative: 8 per second
+            # Market data endpoints - MUITO mais conservativo para evitar rate limit
+            'fetch_ticker': 2,       # 2 por segundo (muito conservativo)
+            'fetch_ohlcv': 2,        # 2 por segundo (muito conservativo)
+            'fetch_markets': 1,      # 1 por segundo (escaneamento inicial apenas)
+            'fetch_orderbook': 2,    # 2 por segundo (muito conservativo)
             
-            # Account endpoints (1000 req/10s = 100 req/s)
-            'create_order': 50,      # Conservative: 50 per second
-            'cancel_order': 50,      # Conservative: 50 per second
-            'fetch_balance': 20,     # Conservative: 20 per second
-            'fetch_order_status': 30,# Conservative: 30 per second
-            'fetch_open_orders': 20, # Conservative: 20 per second
+            # Account endpoints - conservativo
+            'create_order': 10,      # 10 por segundo (conservativo)
+            'cancel_order': 10,      # 10 por segundo (conservativo)
+            'fetch_balance': 2,      # 2 por segundo (muito conservativo)
+            'fetch_order_status': 5, # 5 por segundo (conservativo)
+            'fetch_open_orders': 2,  # 2 por segundo (muito conservativo)
         }
         # Track requests per endpoint for rate limiting
         self._request_timestamps = defaultdict(deque)
@@ -76,7 +76,7 @@ class BingXClient:
                 'apiKey': Settings.BINGX_API_KEY,
                 'secret': Settings.BINGX_SECRET_KEY,
                 'enableRateLimit': True,
-                'rateLimit': 100,  # 100ms between requests (10 req/s baseline)
+                'rateLimit': 1000,  # 1000ms between requests (1 req/s muito conservativo)
                 'timeout': Settings.REQUEST_TIMEOUT * 1000,  # Convert to ms
                 'options': {
                     'defaultType': 'swap',  # Perpetual futures trading

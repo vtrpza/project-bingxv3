@@ -13362,3 +13362,116 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 21:02:58,619 - scanner.worker - INFO - Rate limiter utilization: 3.2%
 2025-07-24 21:02:58,619 - __main__ - INFO - ✅ Scan cycle completed without coroutine errors!
 2025-07-24 21:02:58,619 - __main__ - INFO - ✅ All tests passed! The coroutine issue has been fixed.
+2025-07-24 21:29:49,078 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:29:49,078 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:29:49,465 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:29:49,482 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 21:29:49,482 - database.connection - INFO - Using SQLite database
+2025-07-24 21:29:49,489 - database.connection - INFO - Database connection established successfully
+2025-07-24 21:29:49,490 - database.connection - INFO - Database tables created successfully
+2025-07-24 21:29:50,413 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:29:50,416 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:29:53,913 - scanner.initial_scanner - INFO - Extracting all active USDT pairs...
+2025-07-24 21:29:53,913 - scanner.initial_scanner - INFO - Found 2 active USDT pairs.
+2025-07-24 21:30:06,643 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:30:06,643 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:30:07,350 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:30:07,652 - main - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 21:30:07,653 - main - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 21:30:07,653 - main - INFO - 📋 Validating configuration...
+2025-07-24 21:30:07,653 - main - INFO - ✅ Configuration validation passed
+2025-07-24 21:30:07,653 - main - INFO - 🗄️ Initializing database...
+2025-07-24 21:30:07,653 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 21:30:07,653 - database.connection - INFO - Using SQLite database
+2025-07-24 21:30:07,661 - database.connection - INFO - Database connection established successfully
+2025-07-24 21:30:07,662 - database.connection - INFO - Database tables created successfully
+2025-07-24 21:30:07,662 - main - INFO - ✅ Database initialized successfully
+2025-07-24 21:30:07,662 - main - INFO - 📚 Initializing repositories...
+2025-07-24 21:30:07,663 - main - INFO - ✅ Repositories initialized
+2025-07-24 21:30:07,663 - main - INFO - 🌐 Initializing API client...
+2025-07-24 21:30:08,512 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:30:08,515 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:30:13,038 - main - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 21:30:13,038 - main - INFO - ⚙️ Initializing bot components...
+2025-07-24 21:30:13,038 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 21:30:13,039 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 21:30:13,039 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 21:30:13,039 - main - INFO - ✅ Bot components initialized
+2025-07-24 21:30:13,039 - main - INFO - ✅ Bot initialization completed successfully
+2025-07-24 21:30:13,039 - main - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 21:30:13,053 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 21:30:13,054 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 21:30:13,055 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 21:30:13,058 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 21:30:14,980 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:30:14,982 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:30:18,525 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 21:30:18,525 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 21:30:18,525 - analysis.worker - INFO - Starting analysis worker...
+2025-07-24 21:30:18,526 - utils.worker_coordinator - INFO - Registered worker analysis_worker of type analysis
+2025-07-24 21:30:18,526 - analysis.worker - INFO - Registered analysis worker with coordinator: analysis_worker
+2025-07-24 21:30:18,528 - analysis.worker - INFO - Starting analysis cycle for 1 assets
+2025-07-24 21:30:18,528 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 21:30:18,528 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 21:30:18,530 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 21:30:18,530 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 21:30:19,349 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:30:19,351 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:30:19,351 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 21:30:23,515 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:23,835 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:24,189 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:24,287 - trading - INFO - Signal generated
+2025-07-24 21:30:24,287 - analysis.worker - WARNING - Error generating signal for BTC/USDT: object dict can't be used in 'await' expression
+2025-07-24 21:30:24,297 - analysis.worker - INFO - Analysis cycle complete: 1/1 successful, 1 signals generated
+2025-07-24 21:30:24,297 - performance.performance - INFO - Operation timing: analysis_cycle
+2025-07-24 21:30:28,532 - analysis.worker - INFO - Starting analysis cycle for 1 assets
+2025-07-24 21:30:28,534 - trading.risk_manager - INFO - 📊 Risk Status - Active: 0, Daily P&L: 0.00%, Risk Score: 0.30, Win Rate: 0.0%
+2025-07-24 21:30:28,845 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:29,176 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:29,496 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-24 21:30:29,576 - trading - INFO - Signal generated
+2025-07-24 21:30:29,577 - analysis.worker - WARNING - Error generating signal for BTC/USDT: object dict can't be used in 'await' expression
+2025-07-24 21:30:29,584 - analysis.worker - INFO - Analysis cycle complete: 1/1 successful, 1 signals generated
+2025-07-24 21:30:29,585 - performance.performance - INFO - Operation timing: analysis_cycle
+2025-07-24 21:31:28,130 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:31:28,130 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:31:28,862 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:31:29,164 - main - INFO - 🤖 BingX Trading Bot initialized
+2025-07-24 21:31:29,164 - main - INFO - 🚀 Initializing BingX Trading Bot...
+2025-07-24 21:31:29,164 - main - INFO - 📋 Validating configuration...
+2025-07-24 21:31:29,164 - main - INFO - ✅ Configuration validation passed
+2025-07-24 21:31:29,164 - main - INFO - 🗄️ Initializing database...
+2025-07-24 21:31:29,164 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 21:31:29,164 - database.connection - INFO - Using SQLite database
+2025-07-24 21:31:29,173 - database.connection - INFO - Database connection established successfully
+2025-07-24 21:31:29,175 - database.connection - INFO - Database tables created successfully
+2025-07-24 21:31:29,175 - main - INFO - ✅ Database initialized successfully
+2025-07-24 21:31:29,176 - main - INFO - 📚 Initializing repositories...
+2025-07-24 21:31:29,176 - main - INFO - ✅ Repositories initialized
+2025-07-24 21:31:29,176 - main - INFO - 🌐 Initializing API client...
+2025-07-24 21:31:31,155 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:31:31,158 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:31:35,708 - main - INFO - ✅ API client initialized - Balance: 0.0 USDT
+2025-07-24 21:31:35,708 - main - INFO - ⚙️ Initializing bot components...
+2025-07-24 21:31:35,708 - trading.order_manager - INFO - OrderManager initialized
+2025-07-24 21:31:35,708 - trading.risk_manager - INFO - RiskManager initialized
+2025-07-24 21:31:35,709 - trading.engine - INFO - TradingEngine initialized with max 1 concurrent trades
+2025-07-24 21:31:35,709 - main - INFO - ✅ Bot components initialized
+2025-07-24 21:31:35,709 - main - INFO - ✅ Bot initialization completed successfully
+2025-07-24 21:31:35,709 - main - INFO - 🚀 Starting BingX Trading Bot...
+2025-07-24 21:31:35,724 - trading.order_manager - INFO - Loaded 0 active orders from database
+2025-07-24 21:31:35,724 - trading.order_manager - INFO - OrderManager started successfully
+2025-07-24 21:31:35,726 - trading.risk_manager - INFO - Loaded trailing stops for 0 open trades
+2025-07-24 21:31:35,729 - trading.risk_manager - INFO - RiskManager started successfully
+2025-07-24 21:31:37,780 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:31:37,783 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:31:41,637 - trading.engine - INFO - Loaded 0 open trades from database
+2025-07-24 21:31:41,637 - trading.engine - INFO - TradingEngine started successfully
+2025-07-24 21:31:41,637 - analysis.worker - INFO - Starting analysis worker...
+2025-07-24 21:31:41,637 - utils.worker_coordinator - INFO - Registered worker analysis_worker of type analysis
+2025-07-24 21:31:41,637 - analysis.worker - INFO - Registered analysis worker with coordinator: analysis_worker
+2025-07-24 21:31:41,639 - analysis.worker - INFO - Starting analysis cycle for 1 assets
+2025-07-24 21:31:41,639 - trading.order_manager - INFO - Starting order monitoring
+2025-07-24 21:31:41,640 - trading.risk_manager - INFO - Starting risk monitoring
+2025-07-24 21:31:41,641 - api.market_data - INFO - Initializing BingX client...
