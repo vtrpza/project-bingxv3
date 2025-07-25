@@ -920,6 +920,32 @@ body {
     background: #d47534;
 }
 
+.initial-scan-btn {
+    background: var(--accent-buy);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: 0 2px 4px rgba(46, 160, 67, 0.2);
+}
+
+.initial-scan-btn:hover:not(:disabled) {
+    background: #238538;
+    box-shadow: 0 4px 8px rgba(46, 160, 67, 0.3);
+    transform: translateY(-1px);
+}
+
+.initial-scan-btn:disabled {
+    background: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* Scanner Grid */
 .scanner-grid {
     display: grid;

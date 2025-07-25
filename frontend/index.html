@@ -200,17 +200,65 @@
                     case 'pong':
                         console.log('Pong received');
                         break;
+                    case 'scanner_started':
+                        console.log('🚀 Scanner iniciado:', data.payload);
+                        this.updateScanProgress('started', data.payload);
+                        break;
                     case 'scanner_progress':
+                        console.log('📊 Progresso do scanner:', data.payload);
+                        this.updateScanProgress('progress', data.payload);
+                        break;
                     case 'scanner_completion':
-                    case 'scanner_error':
-                        if (window.handleScannerMessage) {
-                            window.handleScannerMessage(data);
-                        } else {
-                            console.warn('window.handleScannerMessage not available yet');
+                    case 'scanner_completed':
+                        console.log('✅ Scanner concluído:', data.payload);
+                        this.updateScanProgress('completed', data.payload);
+                        // Refresh validation table
+                        if (window.refreshValidationTable) {
+                            setTimeout(() => window.refreshValidationTable(), 1000);
                         }
+                        break;
+                    case 'scanner_error':
+                        console.error('❌ Erro no scanner:', data.payload);
+                        this.updateScanProgress('error', data.payload);
                         break;
                     default:
                         console.log('Unknown message type:', data.type);
+                }
+            }
+            
+            updateScanProgress(status, payload) {
+                const btn = document.querySelector('[onclick="startInitialScan()"]');
+                
+                if (status === 'started') {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '⏳ Escaneando...';
+                    }
+                    this.showMessage('Scan inicial iniciado! Aguarde...', 'info');
+                } else if (status === 'progress') {
+                    if (btn && payload.progress_percent) {
+                        btn.innerHTML = `⏳ ${payload.progress_percent.toFixed(1)}% (${payload.processed_count}/${payload.total_assets})`;
+                    }
+                } else if (status === 'completed') {
+                    if (btn) {
+                        btn.innerHTML = '✅ Concluído!';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '🚀 Scan Completo';
+                        }, 3000);
+                    }
+                    const valid = payload.valid_assets || payload.valid_assets_count || 0;
+                    const total = payload.total_assets || 0;
+                    this.showMessage(`Scan concluído! ${valid}/${total} ativos válidos`, 'success');
+                } else if (status === 'error') {
+                    if (btn) {
+                        btn.innerHTML = '❌ Erro';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '🚀 Scan Completo';
+                        }, 3000);
+                    }
+                    this.showMessage(`Erro no scan: ${payload.message || 'Erro desconhecido'}`, 'error');
                 }
             }
             
@@ -476,6 +524,7 @@
                         </div>
                         <div class="action-container">
                             <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar</button>
+                            <button onclick="startInitialScan()" class="initial-scan-btn">🚀 Scan Completo</button>
                             <button onclick="forceRevalidation()" class="revalidate-btn">🔄 Revalidar</button>
                             <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
                         </div>
@@ -1150,6 +1199,57 @@
             }
         };
 
+        // Função para Scan Inicial Completo - TODOS os ativos
+        async function startInitialScan() {
+            try {
+                const btn = document.querySelector('[onclick="startInitialScan()"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳ Iniciando...';
+                }
+
+                console.log('🚀 Starting complete initial scan...');
+                
+                // Chamar o novo endpoint para scan inicial completo
+                const response = await fetch('/api/scanner/initial-scan', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Initial scan started:', result);
+                    
+                    // Aguardar progresso via WebSocket
+                    // O WebSocket já está configurado para receber mensagens do tipo:
+                    // - scanner_started
+                    // - scanner_progress  
+                    // - scanner_completed
+                    // - scanner_error
+                    
+                } else {
+                    console.error('❌ Failed to start initial scan');
+                    alert('Erro ao iniciar scan inicial');
+                }
+
+            } catch (error) {
+                console.error('Error starting initial scan:', error);
+                alert('Erro ao iniciar scan inicial: ' + error.message);
+            } finally {
+                // Reset button after 5 seconds
+                setTimeout(() => {
+                    const btn = document.querySelector('[onclick="startInitialScan()"]');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 Scan Completo';
+                    }
+                }, 5000);
+            }
+        }
+
+        // Tornar função global
+        window.startInitialScan = startInitialScan;
+
         // Force Revalidation Function - Using Optimized Scanner
         async function forceRevalidation() {
             try {
@@ -1221,6 +1321,94 @@
         // Make the function globally available
         window.forceRevalidation = forceRevalidation;
         
+        // ====== UTILITY FUNCTIONS FOR TRADING INTERFACE ======
+        
+        // Loading indicator functions
+        function showLoadingIndicator(message = 'Carregando...') {
+            let indicator = document.getElementById('global-loading-indicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'global-loading-indicator';
+                indicator.className = 'loading-indicator';
+                indicator.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-message">${message}</div>
+                    </div>
+                `;
+                document.body.appendChild(indicator);
+            } else {
+                indicator.querySelector('.loading-message').textContent = message;
+                indicator.style.display = 'flex';
+            }
+        }
+        
+        function hideLoadingIndicator() {
+            const indicator = document.getElementById('global-loading-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        // Activity log function
+        function addActivityLog(icon, message, type = 'info') {
+            try {
+                const logContainer = document.getElementById('activities-log');
+                if (!logContainer) return;
+                
+                // Remove the initial placeholder if it exists
+                const placeholder = logContainer.querySelector('.log-entry.system');
+                if (placeholder && placeholder.textContent.includes('Aguardando inicialização')) {
+                    placeholder.remove();
+                }
+                
+                // Create new log entry
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                
+                const now = new Date();
+                logEntry.innerHTML = `
+                    <div class="log-time">${now.toLocaleTimeString('pt-BR')}</div>
+                    <div class="log-icon">${icon}</div>
+                    <div class="log-message">${message}</div>
+                `;
+                
+                // Add to top of log
+                logContainer.insertBefore(logEntry, logContainer.firstChild);
+                
+                // Keep only last 50 entries
+                const entries = logContainer.querySelectorAll('.log-entry');
+                if (entries.length > 50) {
+                    entries[entries.length - 1].remove();
+                }
+                
+            } catch (error) {
+                console.error('Error adding activity log:', error);
+            }
+        }
+        
+        // Clear activity log function
+        function clearActivityLog() {
+            try {
+                const logContainer = document.getElementById('activities-log');
+                if (logContainer) {
+                    logContainer.innerHTML = `
+                        <div class="log-entry system">
+                            <div class="log-time">${new Date().toLocaleTimeString('pt-BR')}</div>
+                            <div class="log-icon">🧹</div>
+                            <div class="log-message">Log de atividades limpo</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error clearing activity log:', error);
+            }
+        }
+        
+        // Make functions globally available
+        window.clearActivityLog = clearActivityLog;
+        window.addActivityLog = addActivityLog;
+        
         // Trading Tab Functions
         async function toggleAutoTradingJS() {
             const btn = document.getElementById('auto-trade-btn');
@@ -1263,28 +1451,244 @@
             }
         }
         
+        // ====== COMPREHENSIVE TRADING DATA INTEGRATION ======
+        
         async function refreshTradingData() {
             try {
-                const response = await fetch('/api/trading/live-data?limit=50');
-                const data = await response.json();
+                showLoadingIndicator('Atualizando dados de trading...');
                 
-                if (response.ok) {
-                    // Update trading data via PyScript
-                    if (typeof document.updateTradingDataTable === 'function') {
-                        document.updateTradingDataTable(data);
+                // Fetch multiple data sources concurrently for comprehensive update
+                const [liveDataResponse, summaryResponse, positionsResponse] = await Promise.all([
+                    fetch('/api/trading/live-data?limit=50'),
+                    fetch('/api/trading/summary'),
+                    fetch('/api/trading/positions')
+                ]).catch(error => {
+                    console.error('Error fetching trading data:', error);
+                    return [null, null, null];
+                });
+                
+                let hasData = false;
+                
+                // Process live trading data
+                if (liveDataResponse && liveDataResponse.ok) {
+                    const liveData = await liveDataResponse.json();
+                    if (liveData.success && liveData.trading_data) {
+                        updateTradingTable(liveData.trading_data);
+                        hasData = true;
                     }
-                    
-                    // Update last update timestamp
-                    const now = new Date();
-                    document.getElementById('trading-last-update').textContent = 
-                        `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
-                        
+                }
+                
+                // Process trading summary
+                if (summaryResponse && summaryResponse.ok) {
+                    const summaryData = await summaryResponse.json();
+                    if (summaryData.success) {
+                        updateTradingSummary(summaryData.summary);
+                        hasData = true;
+                    }
+                }
+                
+                // Process positions data
+                if (positionsResponse && positionsResponse.ok) {
+                    const positionsData = await positionsResponse.json();
+                    if (positionsData.success) {
+                        updatePositionsDisplay(positionsData.positions);
+                        hasData = true;
+                    }
+                }
+                
+                // Update timestamp and show success message
+                const now = new Date();
+                document.getElementById('trading-last-update').textContent = 
+                    `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
+                
+                if (hasData) {
                     showNotificationSafe('Sucesso', 'Dados de trading atualizados!', 'success');
                 } else {
-                    showNotificationSafe('Erro', 'Erro ao carregar dados: ' + data.detail, 'error');
+                    showNotificationSafe('Aviso', 'Nenhum dado de trading disponível', 'warning');
                 }
+                
+                hideLoadingIndicator();
+                
             } catch (error) {
+                console.error('Error refreshing trading data:', error);
                 showNotificationSafe('Erro de Conexão', error.message, 'error');
+                hideLoadingIndicator();
+            }
+        }
+        
+        // ====== TRADING DATA DISPLAY FUNCTIONS ======
+        
+        // Update trading table with live data
+        function updateTradingTable(tradingData) {
+            try {
+                const tbody = document.getElementById('trading-data-tbody');
+                if (!tbody) return;
+                
+                if (!tradingData || tradingData.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="22" style="text-align: center; padding: 20px;">
+                                <div class="no-data-message">
+                                    📊 Nenhum dado de trading disponível
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Clear existing data
+                tbody.innerHTML = '';
+                
+                // Populate table with trading data
+                tradingData.forEach(asset => {
+                    const row = createTradingDataRow(asset);
+                    tbody.appendChild(row);
+                });
+                
+                addActivityLog('📊', `Tabela de trading atualizada com ${tradingData.length} ativos`);
+                
+            } catch (error) {
+                console.error('Error updating trading table:', error);
+            }
+        }
+        
+        // Create table row for trading data
+        function createTradingDataRow(asset) {
+            const row = document.createElement('tr');
+            row.className = 'trading-data-row';
+            
+            // Determine signal status
+            const signal = asset.signal || 'NEUTRO';
+            const signalClass = signal === 'COMPRA' ? 'signal-buy' : 
+                              signal === 'VENDA' ? 'signal-sell' : 'signal-neutral';
+            
+            // Format price values
+            const formatPrice = (price) => price ? `$${parseFloat(price).toFixed(4)}` : '-';
+            const formatRSI = (rsi) => rsi ? parseFloat(rsi).toFixed(1) : '-';
+            const formatVolume = (volume) => volume ? `${(parseFloat(volume)/1000).toFixed(0)}K` : '-';
+            
+            row.innerHTML = `
+                <td class="asset-cell">
+                    <strong>${asset.symbol}</strong>
+                </td>
+                <td class="datetime-cell">
+                    ${asset.timestamp ? new Date(asset.timestamp).toLocaleTimeString('pt-BR') : '-'}
+                </td>
+                
+                <!-- SPOT Data -->
+                <td class="price-cell">${formatPrice(asset.spot?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.spot?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.spot?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.spot?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.spot?.volume)}</td>
+                
+                <!-- 2H Data -->
+                <td class="candle-cell">${asset.timeframe_2h?.candle || '🔴'}</td>
+                <td class="price-cell">${formatPrice(asset.timeframe_2h?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.timeframe_2h?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.timeframe_2h?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.timeframe_2h?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.timeframe_2h?.volume)}</td>
+                
+                <!-- 4H Data -->
+                <td class="candle-cell">${asset.timeframe_4h?.candle || '🔴'}</td>
+                <td class="price-cell">${formatPrice(asset.timeframe_4h?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.timeframe_4h?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.timeframe_4h?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.timeframe_4h?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.timeframe_4h?.volume)}</td>
+                
+                <!-- Signal and Position -->
+                <td class="signal-cell ${signalClass}">
+                    <span class="signal-badge">${signal}</span>
+                    ${asset.signal_strength ? `<br><small>${(asset.signal_strength * 100).toFixed(0)}%</small>` : ''}
+                </td>
+                <td class="position-cell">
+                    ${asset.position ? `<span class="position-active">ATIVA</span>` : '<span class="position-none">-</span>'}
+                </td>
+                <td class="pnl-cell">
+                    ${asset.pnl ? `<span class="pnl-${asset.pnl >= 0 ? 'positive' : 'negative'}">$${asset.pnl.toFixed(2)}</span>` : '-'}
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        // Update trading summary cards
+        function updateTradingSummary(summary) {
+            try {
+                // Update positions card
+                const positionsCard = document.getElementById('open-positions');
+                const totalValueCard = document.getElementById('total-position-value');
+                const marginUsedCard = document.getElementById('margin-used');
+                const positionsStatus = document.getElementById('positions-status');
+                const activeTradesCount = document.getElementById('active-trades-count');
+                
+                const openPositions = summary.open_positions || 0;
+                const totalPnl = summary.total_unrealized_pnl || 0;
+                const realizedPnl = summary.total_realized_pnl_today || 0;
+                const winRate = summary.win_rate || 0;
+                
+                if (positionsCard) positionsCard.textContent = openPositions;
+                if (positionsStatus) positionsStatus.textContent = `${openPositions} ATIVAS`;
+                if (activeTradesCount) {
+                    const maxTrades = document.getElementById('max-concurrent-trades')?.value || 10;
+                    activeTradesCount.textContent = `Trades Ativos: ${openPositions}/${maxTrades}`;
+                }
+                
+                // Update total position value with color coding
+                if (totalValueCard) {
+                    totalValueCard.textContent = `$${totalPnl.toFixed(2)}`;
+                    totalValueCard.className = `summary-value ${totalPnl >= 0 ? 'profit' : 'loss'}`;
+                }
+                
+                // Update margin usage (placeholder - implement when margin data is available)
+                if (marginUsedCard) marginUsedCard.textContent = '0%';
+                
+                // Update activity log with performance info
+                addActivityLog('📊', `Performance: ${winRate.toFixed(1)}% win rate, P&L hoje: $${realizedPnl.toFixed(2)}, Não realizados: $${totalPnl.toFixed(2)}`);
+                
+            } catch (error) {
+                console.error('Error updating trading summary:', error);
+            }
+        }
+        
+        // Update positions display
+        function updatePositionsDisplay(positions) {
+            try {
+                if (!positions || !Array.isArray(positions)) return;
+                
+                // Count open positions
+                const openPositions = positions.filter(p => p.status === 'OPEN').length;
+                const positionsCard = document.getElementById('open-positions');
+                if (positionsCard) positionsCard.textContent = openPositions;
+                
+                // Calculate total unrealized P&L
+                let totalUnrealizedPnl = 0;
+                positions.forEach(position => {
+                    if (position.status === 'OPEN' && position.unrealized_pnl) {
+                        totalUnrealizedPnl += parseFloat(position.unrealized_pnl);
+                    }
+                });
+                
+                const totalValueCard = document.getElementById('total-position-value');
+                if (totalValueCard) {
+                    totalValueCard.textContent = `$${totalUnrealizedPnl.toFixed(2)}`;
+                    totalValueCard.className = `summary-value ${totalUnrealizedPnl >= 0 ? 'profit' : 'loss'}`;
+                }
+                
+                // Update positions status
+                const positionsStatus = document.getElementById('positions-status');
+                if (positionsStatus) positionsStatus.textContent = `${openPositions} ATIVAS`;
+                
+                // Log position update
+                if (openPositions > 0) {
+                    addActivityLog('💰', `${openPositions} posições ativas, P&L não realizado: $${totalUnrealizedPnl.toFixed(2)}`);
+                }
+                
+            } catch (error) {
+                console.error('Error updating positions display:', error);
             }
         }
         
