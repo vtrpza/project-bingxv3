@@ -830,6 +830,15 @@ class TradingBotApp:
         """
         console.log("Real-time update received...")
         try:
+            # Convert JsProxy data if needed
+            if data is not None:
+                converted_data = convert_jsproxy_to_dict(data)
+                if converted_data is not None:
+                    console.log(f"Real-time update data converted: {type(converted_data)}")
+                    # Could process the converted data here if needed
+                else:
+                    console.warn("Failed to convert real-time update data")
+            
             # Só atualiza se não há uma atualização em progresso
             if not self.update_in_progress:
                 console.log("Triggering debounced data refresh...")
