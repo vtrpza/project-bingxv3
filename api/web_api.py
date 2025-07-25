@@ -3095,7 +3095,8 @@ async def start_background_tasks():
     asyncio.create_task(broadcast_realtime_data())
     asyncio.create_task(automated_risk_management())
     asyncio.create_task(broadcast_scanner_status())
-    logger.info("Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting")
+    asyncio.create_task(websocket_heartbeat_task())
+    logger.info("Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat")
 
 async def shutdown_event():
     """Cleanup on shutdown"""
