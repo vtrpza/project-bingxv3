@@ -174,7 +174,7 @@ class APIClient:
     async def get_positions(self, active_only=True):
         """Get current positions"""
         params = f"?active_only={str(active_only).lower()}"
-        return await self.get(f"/positions{params}")
+        return await self.get(f"/api/positions{params}")
     
     # Dashboard endpoint
     async def get_dashboard_summary(self):
