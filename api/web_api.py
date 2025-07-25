@@ -615,7 +615,7 @@ async def run_revalidation_task():
         scanner = InitialScanner()
         result = await scanner.scan_all_assets(
             force_refresh=True,
-            max_assets=int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))
+            max_assets=None  # Remover limitação - pegar TODOS os ativos
         )
         
         if result:
@@ -633,6 +633,74 @@ async def run_revalidation_task():
         revalidation_status["error"] = str(e)
     finally:
         revalidation_status["running"] = False
+
+# Endpoint para scan inicial completo (frontend button)
+@app.post("/api/scanner/initial-scan")
+async def start_initial_scan():
+    """Inicia scan inicial completo de TODOS os ativos disponíveis"""
+    try:
+        from scanner.initial_scanner import InitialScanner
+        
+        # Broadcast início do scan
+        await manager.broadcast({
+            "type": "scanner_started",
+            "payload": {
+                "status": "starting",
+                "message": "Iniciando scan completo de todos os ativos...",
+                "timestamp": utc_now().isoformat()
+            }
+        })
+        
+        # Executar scan de forma assíncrona
+        async def run_initial_scan():
+            try:
+                logger.info("🚀 Starting complete initial asset scan from frontend request...")
+                scanner = InitialScanner()
+                
+                # Executar scan completo SEM limitações
+                result = await scanner.scan_all_assets(
+                    force_refresh=True,
+                    max_assets=None  # TODOS os ativos
+                )
+                
+                # Broadcast resultados finais
+                await manager.broadcast({
+                    "type": "scanner_completed",
+                    "payload": {
+                        "status": "completed",
+                        "total_assets": result.total_discovered,
+                        "valid_assets": len(result.valid_assets),
+                        "invalid_assets": len(result.invalid_assets),
+                        "duration": result.scan_duration,
+                        "timestamp": utc_now().isoformat()
+                    }
+                })
+                
+                logger.info(f"✅ Complete initial scan finished: {len(result.valid_assets)}/{result.total_discovered} valid assets")
+                
+            except Exception as e:
+                logger.error(f"❌ Error in initial scan: {e}")
+                await manager.broadcast({
+                    "type": "scanner_error", 
+                    "payload": {
+                        "status": "error", 
+                        "message": str(e),
+                        "timestamp": utc_now().isoformat()
+                    }
+                })
+        
+        # Iniciar task assíncrona
+        asyncio.create_task(run_initial_scan())
+        
+        return {
+            "message": "Scan inicial iniciado com sucesso!",
+            "status": "started",
+            "timestamp": utc_now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting initial scan: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao iniciar scan: {str(e)}")
 
 # Force revalidation endpoint
 @app.post("/api/assets/force-revalidation")
