@@ -625,10 +625,10 @@ class APIClient:
     
     def handle_websocket_unavailable(self):
         """Handle case where WebSocket is not available - use efficient polling fallback"""
-        console.log("WebSocket unavailable - JavaScript WebSocket will handle real-time updates")
+        console.log("PyScript WebSocket unavailable - JavaScript WebSocket will handle real-time updates")
         
-        # Update UI to show we're using polling mode
-        self.update_connection_status(False)
+        # Don't update connection status to False if JavaScript WebSocket is working
+        # The update_connection_status method will handle the coordination
         
         # Show user notification about using JS WebSocket instead
         try:
