@@ -443,6 +443,12 @@ class IndicatorRepository(BaseRepository):
                          volume_sma: Decimal = None, additional_data: Dict = None) -> Optional[Indicator]:
         """Insert or update technical indicators."""
         try:
+            # Validate numeric values to prevent overflow
+            if volume_sma is not None and abs(volume_sma) >= Decimal('10') ** 22:
+                # Volume SMA too large for Numeric(30, 8), truncate/cap it
+                logger.warning(f"Volume SMA value {volume_sma} is too large, capping at 10^21")
+                volume_sma = Decimal('10') ** 21 if volume_sma > 0 else -(Decimal('10') ** 21)
+            
             # Try to find existing indicators
             existing = (session.query(Indicator)
                        .filter(and_(
@@ -481,6 +487,8 @@ class IndicatorRepository(BaseRepository):
                 )
         except SQLAlchemyError as e:
             logger.error(f"Error upserting indicators: {e}")
+            # Rollback the session to prevent "transaction rolled back" error
+            session.rollback()
             return None
 
 

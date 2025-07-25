@@ -96,7 +96,7 @@ class MarketData(Base):
     high = Column(Numeric(20, 8), nullable=False)
     low = Column(Numeric(20, 8), nullable=False)
     close = Column(Numeric(20, 8), nullable=False)
-    volume = Column(Numeric(20, 8), nullable=False)
+    volume = Column(Numeric(30, 8), nullable=False)  # Increased precision for large volume values
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
