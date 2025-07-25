@@ -1428,6 +1428,182 @@
             }
         }
         
+        // ====== TRADING DATA DISPLAY FUNCTIONS ======
+        
+        // Update trading table with live data
+        function updateTradingTable(tradingData) {
+            try {
+                const tbody = document.getElementById('trading-data-tbody');
+                if (!tbody) return;
+                
+                if (!tradingData || tradingData.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="22" style="text-align: center; padding: 20px;">
+                                <div class="no-data-message">
+                                    📊 Nenhum dado de trading disponível
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Clear existing data
+                tbody.innerHTML = '';
+                
+                // Populate table with trading data
+                tradingData.forEach(asset => {
+                    const row = createTradingDataRow(asset);
+                    tbody.appendChild(row);
+                });
+                
+                addActivityLog('📊', `Tabela de trading atualizada com ${tradingData.length} ativos`);
+                
+            } catch (error) {
+                console.error('Error updating trading table:', error);
+            }
+        }
+        
+        // Create table row for trading data
+        function createTradingDataRow(asset) {
+            const row = document.createElement('tr');
+            row.className = 'trading-data-row';
+            
+            // Determine signal status
+            const signal = asset.signal || 'NEUTRO';
+            const signalClass = signal === 'COMPRA' ? 'signal-buy' : 
+                              signal === 'VENDA' ? 'signal-sell' : 'signal-neutral';
+            
+            // Format price values
+            const formatPrice = (price) => price ? `$${parseFloat(price).toFixed(4)}` : '-';
+            const formatRSI = (rsi) => rsi ? parseFloat(rsi).toFixed(1) : '-';
+            const formatVolume = (volume) => volume ? `${(parseFloat(volume)/1000).toFixed(0)}K` : '-';
+            
+            row.innerHTML = `
+                <td class="asset-cell">
+                    <strong>${asset.symbol}</strong>
+                </td>
+                <td class="datetime-cell">
+                    ${asset.timestamp ? new Date(asset.timestamp).toLocaleTimeString('pt-BR') : '-'}
+                </td>
+                
+                <!-- SPOT Data -->
+                <td class="price-cell">${formatPrice(asset.spot?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.spot?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.spot?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.spot?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.spot?.volume)}</td>
+                
+                <!-- 2H Data -->
+                <td class="candle-cell">${asset.timeframe_2h?.candle || '🔴'}</td>
+                <td class="price-cell">${formatPrice(asset.timeframe_2h?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.timeframe_2h?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.timeframe_2h?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.timeframe_2h?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.timeframe_2h?.volume)}</td>
+                
+                <!-- 4H Data -->
+                <td class="candle-cell">${asset.timeframe_4h?.candle || '🔴'}</td>
+                <td class="price-cell">${formatPrice(asset.timeframe_4h?.price)}</td>
+                <td class="mm1-cell">${formatPrice(asset.timeframe_4h?.mm1)}</td>
+                <td class="center-cell">${formatPrice(asset.timeframe_4h?.center)}</td>
+                <td class="rsi-cell">${formatRSI(asset.timeframe_4h?.rsi)}</td>
+                <td class="volume-cell">${formatVolume(asset.timeframe_4h?.volume)}</td>
+                
+                <!-- Signal and Position -->
+                <td class="signal-cell ${signalClass}">
+                    <span class="signal-badge">${signal}</span>
+                    ${asset.signal_strength ? `<br><small>${(asset.signal_strength * 100).toFixed(0)}%</small>` : ''}
+                </td>
+                <td class="position-cell">
+                    ${asset.position ? `<span class="position-active">ATIVA</span>` : '<span class="position-none">-</span>'}
+                </td>
+                <td class="pnl-cell">
+                    ${asset.pnl ? `<span class="pnl-${asset.pnl >= 0 ? 'positive' : 'negative'}">$${asset.pnl.toFixed(2)}</span>` : '-'}
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        // Update trading summary cards
+        function updateTradingSummary(summary) {
+            try {
+                // Update positions card
+                const positionsCard = document.getElementById('open-positions');
+                const totalValueCard = document.getElementById('total-position-value');
+                const marginUsedCard = document.getElementById('margin-used');
+                const positionsStatus = document.getElementById('positions-status');
+                const activeTradesCount = document.getElementById('active-trades-count');
+                
+                const openPositions = summary.open_positions || 0;
+                const totalPnl = summary.total_unrealized_pnl || 0;
+                const realizedPnl = summary.total_realized_pnl_today || 0;
+                const winRate = summary.win_rate || 0;
+                
+                if (positionsCard) positionsCard.textContent = openPositions;
+                if (positionsStatus) positionsStatus.textContent = `${openPositions} ATIVAS`;
+                if (activeTradesCount) {
+                    const maxTrades = document.getElementById('max-concurrent-trades')?.value || 10;
+                    activeTradesCount.textContent = `Trades Ativos: ${openPositions}/${maxTrades}`;
+                }
+                
+                // Update total position value with color coding
+                if (totalValueCard) {
+                    totalValueCard.textContent = `$${totalPnl.toFixed(2)}`;
+                    totalValueCard.className = `summary-value ${totalPnl >= 0 ? 'profit' : 'loss'}`;
+                }
+                
+                // Update margin usage (placeholder - implement when margin data is available)
+                if (marginUsedCard) marginUsedCard.textContent = '0%';
+                
+                // Update activity log with performance info
+                addActivityLog('📊', `Performance: ${winRate.toFixed(1)}% win rate, P&L hoje: $${realizedPnl.toFixed(2)}, Não realizados: $${totalPnl.toFixed(2)}`);
+                
+            } catch (error) {
+                console.error('Error updating trading summary:', error);
+            }
+        }
+        
+        // Update positions display
+        function updatePositionsDisplay(positions) {
+            try {
+                if (!positions || !Array.isArray(positions)) return;
+                
+                // Count open positions
+                const openPositions = positions.filter(p => p.status === 'OPEN').length;
+                const positionsCard = document.getElementById('open-positions');
+                if (positionsCard) positionsCard.textContent = openPositions;
+                
+                // Calculate total unrealized P&L
+                let totalUnrealizedPnl = 0;
+                positions.forEach(position => {
+                    if (position.status === 'OPEN' && position.unrealized_pnl) {
+                        totalUnrealizedPnl += parseFloat(position.unrealized_pnl);
+                    }
+                });
+                
+                const totalValueCard = document.getElementById('total-position-value');
+                if (totalValueCard) {
+                    totalValueCard.textContent = `$${totalUnrealizedPnl.toFixed(2)}`;
+                    totalValueCard.className = `summary-value ${totalUnrealizedPnl >= 0 ? 'profit' : 'loss'}`;
+                }
+                
+                // Update positions status
+                const positionsStatus = document.getElementById('positions-status');
+                if (positionsStatus) positionsStatus.textContent = `${openPositions} ATIVAS`;
+                
+                // Log position update
+                if (openPositions > 0) {
+                    addActivityLog('💰', `${openPositions} posições ativas, P&L não realizado: $${totalUnrealizedPnl.toFixed(2)}`);
+                }
+                
+            } catch (error) {
+                console.error('Error updating positions display:', error);
+            }
+        }
+        
         function filterTradingData() {
             // Filter trading data based on checkboxes
             if (typeof document.filterTradingDataTable === 'function') {
