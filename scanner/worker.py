@@ -52,6 +52,9 @@ class ScannerWorker:
             if not init_database():
                 raise RuntimeError("Failed to initialize database")
             
+            # Register with coordinator
+            await self.coordinator.register_worker(self.worker_id, 'scanner')
+            
             # Initialize API client
             if not await initialize_client():
                 raise RuntimeError("Failed to initialize API client")
