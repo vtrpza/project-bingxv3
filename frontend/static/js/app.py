@@ -609,13 +609,38 @@ class TradingBotApp:
                 console.log("Trading data table updated successfully")
             else:
                 console.warn("No trading data received from API")
+                # Check if we should show scan required notification
+                ui_components.show_notification(
+                    "🔍 Scan Inicial", 
+                    "Nenhum dado de trading disponível - execute o scan inicial", 
+                    "warning"
+                )
         except Exception as e:
-            console.error(f"Error updating trading data: {str(e)}")
-            ui_components.show_notification(
-                "Erro Trading", 
-                "Falha ao carregar dados de trading", 
-                "error"
-            )
+            error_msg = str(e)
+            console.error(f"Error updating trading data: {error_msg}")
+            
+            # Check if error indicates scan is required (specific exception from api_client)
+            if error_msg.startswith("SCAN_REQUIRED:"):
+                ui_components.show_notification(
+                    "🔍 Scan Inicial Necessário", 
+                    "Execute o scan inicial para descobrir ativos válidos para trading", 
+                    "warning"
+                )
+                console.warn("Trading data requires initial scan - showing user guidance")
+            elif ("no_valid_symbols" in error_msg or 
+                  "424" in error_msg or 
+                  ("500" in error_msg and "trading data error" in error_msg.lower())):
+                ui_components.show_notification(
+                    "🔍 Scan Inicial Necessário", 
+                    "Execute o scan inicial para descobrir ativos válidos", 
+                    "warning"
+                )
+            else:
+                ui_components.show_notification(
+                    "Erro Trading", 
+                    "Falha ao carregar dados de trading", 
+                    "error"
+                )
     
     async def update_positions_data(self):
         """Update positions and trades tables"""
@@ -651,12 +676,22 @@ class TradingBotApp:
                 "success"
             )
         except Exception as e:
-            console.error(f"Error refreshing trading data: {str(e)}")
-            ui_components.show_notification(
-                "Erro", 
-                "Falha ao atualizar dados de trading", 
-                "error"
-            )
+            error_msg = str(e)
+            console.error(f"Error refreshing trading data: {error_msg}")
+            
+            # Check if error indicates scan is required
+            if error_msg.startswith("SCAN_REQUIRED:"):
+                ui_components.show_notification(
+                    "🔍 Scan Inicial Necessário", 
+                    "Execute o scan inicial antes de atualizar dados de trading", 
+                    "warning"
+                )
+            else:
+                ui_components.show_notification(
+                    "Erro", 
+                    "Falha ao atualizar dados de trading", 
+                    "error"
+                )
     
     async def execute_auto_trade(self, symbol, signal_type, signal_data):
         """Execute automatic trade when signal is detected"""
