@@ -102,6 +102,14 @@
                             clearTimeout(this.reconnectTimer);
                             this.reconnectTimer = null;
                         }
+                        
+                        // Ensure status stays connected by refreshing it after a brief delay
+                        setTimeout(() => {
+                            if (this.isConnected) {
+                                this.updateConnectionStatus('Conectado', 'online');
+                                console.log('🔄 Refreshed connection status to ensure visibility');
+                            }
+                        }, 1000);
                     };
                     
                     this.ws.onmessage = (event) => {

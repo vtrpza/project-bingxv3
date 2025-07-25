@@ -4832,3 +4832,17 @@
 2025-07-25 15:39:52,112 - api.web_api - INFO - Starting automated risk management task
 2025-07-25 15:39:52,112 - api.web_api - INFO - Starting scanner status broadcast task
 2025-07-25 15:39:52,112 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 15:39:54,660 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 15:39:54,660 - api.web_api - INFO - WebSocket connected: conn_1_1753468794 from 127.0.0.1. Total: 1
+2025-07-25 15:39:54,661 - api.web_api - INFO - WebSocket connected: conn_1_1753468794 from 127.0.0.1
+2025-07-25 15:39:55,701 - api.web_api - INFO - Subscription confirmed for conn_1_1753468794: trading_data
+2025-07-25 15:39:55,703 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:39:55,796 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:39:55,796 - database.connection - INFO - Using SQLite database
+2025-07-25 15:39:55,797 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:39:55,801 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:39:55,802 - api.web_api - INFO - Subscription confirmed for conn_1_1753468794: scanner_status
+2025-07-25 15:39:55,803 - api.web_api - INFO - Subscription confirmed for conn_1_1753468794: general
+2025-07-25 15:40:00,092 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:00,092 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:00,093 - database.connection - INFO - Database connection established successfully
