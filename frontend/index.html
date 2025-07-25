@@ -197,6 +197,12 @@
                     case 'stop_loss_triggered':
                         this.handleStopLossTriggered(data.data);
                         break;
+                    case 'scanner_progress':
+                        this.handleScannerProgress(data.payload);
+                        break;
+                    case 'scanner_completion':
+                        this.handleScannerCompletion(data.payload);
+                        break;
                     case 'pong':
                         console.log('Pong received');
                         break;
