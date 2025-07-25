@@ -20,6 +20,10 @@ class APIClient:
         self.reconnect_interval = 5000
         self.max_reconnect_attempts = 5
         self.reconnect_attempts = 0
+        self.connection_id = None
+        self.server_version = None
+        self.last_ping_time = None
+        self.auto_subscribe_channels = ["general", "trading_data"]  # Default subscriptions
         
     async def get(self, endpoint):
         """Make GET request to API with enhanced error handling"""
@@ -265,20 +269,92 @@ class APIClient:
         self.callbacks[event_type] = callback
     
     def on_websocket_message(self, event):
-        """Handle WebSocket message"""
+        """Enhanced WebSocket message handler with improved error handling and message validation."""
         try:
             data = json.loads(event.data)
             message_type = data.get("type")
             
-            if message_type in self.callbacks:
+            # Log received message for debugging
+            console.log(f"WebSocket received: {message_type}")
+            
+            # Handle connection establishment
+            if message_type == "connection_established":
+                connection_info = data.get("data", {})
+                self.connection_id = connection_info.get("connection_id")
+                self.server_version = connection_info.get("server_version")
+                console.log(f"Connection established: {self.connection_id}")
+                
+                # Auto-subscribe to default channels if configured
+                if hasattr(self, 'auto_subscribe_channels'):
+                    for channel in self.auto_subscribe_channels:
+                        self.subscribe_to_channel(channel)
+            
+            # Handle subscription confirmations
+            elif message_type == "subscribed":
+                channel_info = data.get("data", {})
+                channel = channel_info.get("channel", "unknown")
+                console.log(f"Subscribed to channel: {channel}")
+                
+            # Handle unsubscription confirmations
+            elif message_type == "unsubscribed":
+                channel_info = data.get("data", {})
+                channel = channel_info.get("channel", "unknown")
+                console.log(f"Unsubscribed from channel: {channel}")
+                
+            # Handle errors
+            elif message_type == "error":
+                error_info = data.get("error", "unknown_error")
+                error_message = data.get("message", "Unknown error occurred")
+                console.error(f"WebSocket error ({error_info}): {error_message}")
+                
+                # Show user-friendly error message
+                try:
+                    from components import ui_components
+                    ui_components.show_notification(
+                        "Erro de Conexão", 
+                        error_message, 
+                        "error"
+                    )
+                except:
+                    pass
+            
+            # Handle pong responses
+            elif message_type == "pong":
+                server_time = data.get("timestamp")
+                if server_time:
+                    # Calculate latency if we have a ping timestamp
+                    if hasattr(self, 'last_ping_time'):
+                        latency = (datetime.now() - self.last_ping_time).total_seconds() * 1000
+                        console.log(f"WebSocket latency: {latency:.2f}ms")
+                        
+            # Handle custom callbacks
+            elif message_type in self.callbacks:
                 self.callbacks[message_type](data)
+                
+            # Handle real-time updates (legacy compatibility)
             elif message_type == "realtime_update":
-                # Handle real-time updates
                 if "realtime_update" in self.callbacks:
                     self.callbacks["realtime_update"](data.get("data", {}))
             
+            # Handle broadcast messages
+            elif message_type and "broadcast_info" in data:
+                broadcast_info = data.get("broadcast_info", {})
+                channel = broadcast_info.get("channel", "general")
+                
+                # Route to channel-specific callback if available
+                channel_callback = f"channel_{channel}"
+                if channel_callback in self.callbacks:
+                    self.callbacks[channel_callback](data)
+                elif message_type in self.callbacks:
+                    self.callbacks[message_type](data)
+                    
+            else:
+                console.warn(f"Unhandled WebSocket message type: {message_type}")
+            
+        except json.JSONDecodeError as json_error:
+            console.error(f"WebSocket JSON decode error: {str(json_error)}")
         except Exception as e:
-            console.error(f"WebSocket message error: {str(e)}")
+            console.error(f"WebSocket message processing error: {str(e)}")
     
     def on_websocket_open(self, event):
         """Handle WebSocket connection open"""
@@ -362,7 +438,7 @@ class APIClient:
                 status_text.textContent = "Desconectado"
     
     def send_websocket_message(self, message):
-        """Send message through WebSocket with validation"""
+        """Enhanced WebSocket message sending with validation and queuing."""
         if not self.websocket:
             console.warn("WebSocket not initialized")
             return False
@@ -371,14 +447,73 @@ class APIClient:
             console.warn("WebSocket not connected - attempting reconnection")
             self.connect_websocket()
             return False
+        
+        # Validate message structure
+        if not isinstance(message, dict) or "type" not in message:
+            console.error("Invalid message format - must be dict with 'type' field")
+            return False
             
         try:
-            self.websocket.send(json.dumps(message))
+            message_str = json.dumps(message)
+            self.websocket.send(message_str)
+            console.log(f"WebSocket sent: {message.get('type')}")
             return True
         except Exception as e:
             console.error(f"WebSocket send error: {str(e)}")
             self.is_connected = False
             return False
+    
+    def subscribe_to_channel(self, channel, send_snapshot=True):
+        """Subscribe to a specific WebSocket channel."""
+        message = {
+            "type": "subscribe",
+            "data": {
+                "channel": channel,
+                "send_snapshot": send_snapshot,
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+        return self.send_websocket_message(message)
+    
+    def unsubscribe_from_channel(self, channel):
+        """Unsubscribe from a specific WebSocket channel."""
+        message = {
+            "type": "unsubscribe",
+            "data": {
+                "channel": channel,
+                "timestamp": datetime.now().isoformat()
+            }
+        }
+        return self.send_websocket_message(message)
+    
+    def request_manual_update(self, update_type="general", **kwargs):
+        """Request a manual update from the server."""
+        message = {
+            "type": "request_update",
+            "data": {
+                "type": update_type,
+                "timestamp": datetime.now().isoformat(),
+                **kwargs
+            }
+        }
+        return self.send_websocket_message(message)
+    
+    def get_connection_stats(self):
+        """Request connection statistics from the server."""
+        message = {
+            "type": "get_stats",
+            "timestamp": datetime.now().isoformat()
+        }
+        return self.send_websocket_message(message)
+    
+    def send_ping(self):
+        """Send ping to server and measure latency."""
+        self.last_ping_time = datetime.now()
+        message = {
+            "type": "ping",
+            "timestamp": self.last_ping_time.isoformat()
+        }
+        return self.send_websocket_message(message)
     
     def handle_websocket_unavailable(self):
         """Handle case where WebSocket is not available"""
