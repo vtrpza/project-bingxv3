@@ -2795,13 +2795,7 @@
             updateRobotStatus(currentAction.status, currentAction.action, progress);
             addActivityLog('system', currentAction.action, currentAction.icon);
             
-            // Update scanner signals occasionally
-            if (Math.random() < 0.2) {
-                const currentSignals = parseInt(document.getElementById('signals-detected')?.textContent || 0);
-                updateScannerActivity({ 
-                    signals_detected: Math.max(0, currentSignals + (Math.random() < 0.7 ? 1 : -1))
-                });
-            }
+            // Scanner status is now updated via API and WebSocket, no simulation needed
             
             actionIndex++;
         }, 10000);
