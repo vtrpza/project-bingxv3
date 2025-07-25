@@ -8,20 +8,17 @@ O módulo Scanner é responsável por escanear e validar ativos na BingX, manten
 
 ### Componentes
 
-1. **InitialScanner** (`initial_scanner.py`)
-   - Escaneia todos os ativos disponíveis
-   - Aplica critérios de validação
-   - Gera lista de ativos válidos/inválidos
+1. **InitialScanner** (`initial_scanner.py`) 
+   - Descobre todos os ativos disponíveis na BingX
+   - Coleta dados básicos do mercado
+   - Popula o banco de dados com símbolos descobertos
+   - Deixa a validação para o ContinuousScanner
 
 2. **ContinuousScanner** (`continuous_scanner.py`)
-   - Monitora ativos válidos continuamente
-   - Coleta dados de preço e indicadores
+   - Valida e monitora ativos descobertos
+   - Coleta dados de preço e indicadores em tempo real
    - Detecta sinais de trading
-
-3. **AssetValidator** (`validator.py`)
-   - Valida ativos por volume mínimo
-   - Verifica disponibilidade de trading
-   - Aplica filtros customizados
+   - Aplica critérios de validação por volume
 
 ## 📊 Estrutura de Dados
 
