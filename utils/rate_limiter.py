@@ -30,9 +30,10 @@ class IntelligentRateLimiter:
     
     def __init__(self):
         # Rate limits per endpoint category - Optimized for maximum performance
+        # Reduced safety factor to allow higher throughput
         self.limits = {
-            'market_data': RateLimit(100, 10, 0.95),  # 95% of 100 req/10s = 9.5 req/s
-            'account': RateLimit(1000, 10, 0.95),     # 95% of 1000 req/10s = 95 req/s
+            'market_data': RateLimit(100, 10, 0.85),  # 85% of 100 req/10s = 8.5 req/s  
+            'account': RateLimit(1000, 10, 0.90),     # 90% of 1000 req/10s = 90 req/s
         }
         
         # Track requests per category
@@ -89,7 +90,8 @@ class IntelligentRateLimiter:
             # Add dynamic delay if we've been getting rate limited
             dynamic_delay = self.dynamic_delays.get(category, 0)
             
-            return max(ideal_interval + dynamic_delay, 0.01)  # Min 10ms for faster processing
+            # Reduced minimum delay for better throughput
+            return max(ideal_interval + dynamic_delay, 0.005)  # Min 5ms for faster processing
         
         # If we're at/over limit, wait until oldest request expires
         oldest_request = history[0]
@@ -106,7 +108,7 @@ class IntelligentRateLimiter:
         
         wait_time = self._calculate_wait_time(category)
         
-        if wait_time > 0.01:  # Only sleep if meaningful delay needed
+        if wait_time > 0.005:  # Only sleep if meaningful delay needed (reduced threshold)
             await asyncio.sleep(wait_time)
         
         # Record this request
@@ -117,17 +119,17 @@ class IntelligentRateLimiter:
         """Record successful request to adjust dynamic delays."""
         self.consecutive_successes[category] += 1
         
-        # Reduce delay after consecutive successes
-        if self.consecutive_successes[category] >= 5:
-            self.dynamic_delays[category] *= 0.9
+        # Reduce delay after consecutive successes (more aggressive reduction)
+        if self.consecutive_successes[category] >= 3:  # Reduced from 5 to 3
+            self.dynamic_delays[category] *= 0.8  # More aggressive reduction (0.8 vs 0.9)
             self.dynamic_delays[category] = max(0, self.dynamic_delays[category])
             self.consecutive_successes[category] = 0
     
     def record_rate_limit_hit(self, category: str = 'market_data'):
         """Record rate limit hit to increase delays."""
         self.consecutive_successes[category] = 0
-        self.dynamic_delays[category] += 0.1  # Add 100ms delay
-        self.dynamic_delays[category] = min(1.0, self.dynamic_delays[category])  # Max 1s
+        self.dynamic_delays[category] += 0.05  # Reduced penalty: Add 50ms delay (was 100ms)
+        self.dynamic_delays[category] = min(0.5, self.dynamic_delays[category])  # Max 500ms (was 1s)
         
         logger.warning(f"Rate limit hit for {category}, increased delay to {self.dynamic_delays[category]:.2f}s")
     
