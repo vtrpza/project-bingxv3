@@ -76,7 +76,7 @@ class BingXClient:
                 'apiKey': Settings.BINGX_API_KEY,
                 'secret': Settings.BINGX_SECRET_KEY,
                 'enableRateLimit': True,
-                'rateLimit': 100,  # 100ms between requests (10 req/s baseline)
+                'rateLimit': 1000,  # 1000ms between requests (1 req/s muito conservativo)
                 'timeout': Settings.REQUEST_TIMEOUT * 1000,  # Convert to ms
                 'options': {
                     'defaultType': 'swap',  # Perpetual futures trading
