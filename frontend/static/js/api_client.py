@@ -453,8 +453,8 @@ class APIClient:
         """Stop auto trading mode"""
         return await self.post("/trading/auto-trading/stop")
     
-    async def get_positions(self):
-        """Get current open positions"""
+    async def get_trading_positions(self):
+        """Get current open positions from trading API"""
         return await self.get("/trading/positions")
     
     async def get_trades_history(self, limit=20):
