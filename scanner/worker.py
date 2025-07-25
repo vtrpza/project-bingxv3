@@ -40,6 +40,8 @@ class ScannerWorker:
         self.signal_repo = SignalRepository()
         self.rate_limiter = get_rate_limiter()
         self.cache = get_smart_cache()
+        self.coordinator = get_coordinator()
+        self.worker_id = f"scanner_worker_{id(self)}"
         
     async def initialize(self):
         """Initialize the scanner worker."""
