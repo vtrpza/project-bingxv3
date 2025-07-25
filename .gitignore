@@ -3,3 +3,11 @@
 /.env.dev
 /.mcp.json
 /venv
+/.env.backup
+/.env.prod
+/.env.test
+/.env.local
+/.env.local.backup
+/.env.local.prod
+/.env.local.test
+/.env.local.dev

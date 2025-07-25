@@ -2092,6 +2092,14 @@
                         updateTradingTable(liveData.trading_data);
                         hasData = true;
                     }
+                } else if (liveDataResponse && liveDataResponse.status === 424) {
+                    // Handle 424 Failed Dependency - scan required
+                    const errorData = await liveDataResponse.json();
+                    console.warn('Trading data requires initial scan:', errorData);
+                    
+                    // Show user-friendly message
+                    updateTradingTableWithScanRequired(errorData.detail);
+                    return; // Don't proceed with other data
                 }
                 
                 // Process trading summary
@@ -2166,6 +2174,41 @@
                 
             } catch (error) {
                 console.error('Error updating trading table:', error);
+            }
+        }
+        
+        function updateTradingTableWithScanRequired(errorDetail) {
+            try {
+                const tbody = document.getElementById('trading-data-tbody');
+                if (!tbody) return;
+                
+                // Show scan required message
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="22" style="text-align: center; padding: 30px;">
+                            <div class="scan-required-message" style="max-width: 600px; margin: 0 auto;">
+                                <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
+                                <h3 style="color: #f85149; margin-bottom: 10px;">Scan Inicial Necessário</h3>
+                                <p style="color: #8b949e; margin-bottom: 20px;">
+                                    ${errorDetail.message || 'Execute o scan inicial para descobrir ativos válidos.'}
+                                </p>
+                                <p style="color: #6e7681; font-size: 14px; margin-bottom: 20px;">
+                                    ${errorDetail.suggestion || 'Vá para a aba Scanner e clique em "Executar Scan Inicial".'}
+                                </p>
+                                <button 
+                                    onclick="switchToScannerTab()" 
+                                    style="background: #238636; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px;">
+                                    Ir para Scanner
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                addActivityLog('⚠️', 'Dados de trading indisponíveis - Scan inicial necessário');
+                
+            } catch (error) {
+                console.error('Error showing scan required message:', error);
             }
         }
         
