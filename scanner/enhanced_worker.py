@@ -25,6 +25,8 @@ from config.trading_config import TradingConfig
 from utils.logger import get_logger
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
+from trading.symbol_selector import get_symbol_selector
+from trading.trading_cache import get_trading_cache
 
 logger = get_logger(__name__)
 

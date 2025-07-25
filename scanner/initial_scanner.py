@@ -10,12 +10,14 @@ from api.market_data import get_market_data_api, MarketDataError
 from api.client import get_client
 from database.connection import get_session
 from database.repository import AssetRepository
+from database.models import Asset
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
 from api.web_api import manager as connection_manager
+from scanner.symbol_cache import get_symbol_cache, SymbolData
 
 # Imports for progress reporting
 from scanner.scanner_config import get_scanner_config, ScannerConfig
@@ -106,6 +108,7 @@ class InitialScanner:
         self.client = get_client()
         self.rate_limiter = get_rate_limiter()
         self.cache = get_smart_cache()
+        self.symbol_cache = get_symbol_cache(ttl_seconds=600)  # 10 minutes TTL
         
         # Configuration
         self.config = config or get_scanner_config()
@@ -187,6 +190,13 @@ class InitialScanner:
         await self.progress_reporter.report_step_progress(
             "Descobrindo mercados disponíveis...", 1, self.config.broadcast_progress_steps
         )
+        
+        # Check cache first if not forcing refresh
+        if not force_refresh:
+            cached_symbols = await self.symbol_cache.get_all_symbols()
+            if cached_symbols:
+                logger.info(f"Found {len(cached_symbols)} symbols in cache")
+                # For now, still fetch fresh market data but this provides a quick count
         
         try:
             self._scan_stats['api_calls'] += 1
@@ -334,6 +344,15 @@ class InitialScanner:
                     'validation_data': basic_data
                 })
                 
+                # Cache the symbol data
+                symbol_data = SymbolData(
+                    symbol=symbol,
+                    is_valid=None,  # Not validated yet
+                    market_data=market_data,
+                    validation_data=basic_data
+                )
+                await self.symbol_cache.set(symbol, symbol_data)
+                
             except Exception as e:
                 logger.warning(f"Error preparing basic data for {symbol}: {e}")
                 continue
@@ -346,8 +365,8 @@ class InitialScanner:
                 try:
                     # Check existing symbols to avoid duplicates
                     symbols_to_check = [item['symbol'] for item in bulk_insert_data]
-                    existing_assets = session.query(self.asset_repo.model.symbol).filter(
-                        self.asset_repo.model.symbol.in_(symbols_to_check)
+                    existing_assets = session.query(Asset.symbol).filter(
+                        Asset.symbol.in_(symbols_to_check)
                     ).all()
                     existing_symbols = {asset.symbol for asset in existing_assets}
                     
