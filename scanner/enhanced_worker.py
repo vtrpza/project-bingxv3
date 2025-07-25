@@ -77,8 +77,8 @@ class EnhancedScannerWorker:
             if not await initialize_client():
                 raise RuntimeError("Failed to initialize API client")
             
-            # Perform initial asset validation if needed
-            await self._ensure_valid_assets()
+            # Ensure trading symbols are selected
+            await self._ensure_trading_symbols()
             
             logger.info("✅ Enhanced Scanner Worker initialized successfully")
             return True
@@ -110,6 +110,27 @@ class EnhancedScannerWorker:
         except Exception as e:
             logger.error(f"Error ensuring trading symbols: {e}")
     
+    async def _convert_symbols_to_assets(self, trading_symbols: List[str], session):
+        """Convert trading symbol strings to asset-like objects for compatibility."""
+        trading_assets = []
+        for symbol in trading_symbols:
+            # Try to get from database first
+            asset = self.asset_repo.get_by_symbol(session, symbol)
+            if asset:
+                trading_assets.append(asset)
+            else:
+                # Create a minimal asset-like object for symbols not in database
+                from types import SimpleNamespace
+                asset_like = SimpleNamespace(
+                    symbol=symbol,
+                    id=None,
+                    base_currency=symbol.replace('USDT', '') if symbol.endswith('USDT') else symbol,
+                    quote_currency='USDT',
+                    is_valid=True
+                )
+                trading_assets.append(asset_like)
+        return trading_assets
+    
     async def scan_cycle(self):
         """Execute one complete scan cycle with performance tracking."""
         cycle_start = time.time()
@@ -117,20 +138,27 @@ class EnhancedScannerWorker:
         try:
             logger.info(f"🔄 Starting {'parallel' if self.use_parallel else 'regular'} scan cycle...")
             
-            with get_session() as session:
-                # Get valid assets
-                valid_assets = self.asset_repo.get_valid_assets(session)
-                if not valid_assets:
-                    logger.warning("No valid assets found for scanning")
+            # Get trading symbols from cache
+            trading_symbols = await self.trading_cache.get_trading_symbols()
+            if not trading_symbols:
+                logger.warning("No trading symbols found for scanning")
+                # Try to select symbols if cache is empty
+                await self._ensure_trading_symbols()
+                trading_symbols = await self.trading_cache.get_trading_symbols()
+                if not trading_symbols:
+                    logger.error("Failed to select trading symbols")
                     return
-                
-                # Log scan details
-                logger.info(f"📊 Scanning {len(valid_assets)} valid assets...")
-                
+            
+            # Log scan details
+            logger.info(f"📊 Scanning {len(trading_symbols)} selected trading symbols...")
+            
+            # Convert trading symbols to compatible format for scanning
+            with get_session() as session:
                 # Choose scanning method
                 if self.use_parallel and self.parallel_scanner:
-                    # Use high-performance parallel scanner
-                    performance_data = await self.parallel_scanner.scan_assets_parallel(valid_assets)
+                    # Use high-performance parallel scanner - convert symbols to asset-like objects
+                    trading_assets = await self._convert_symbols_to_assets(trading_symbols, session)
+                    performance_data = await self.parallel_scanner.scan_assets_parallel(trading_assets)
                     
                     # Update metrics
                     self.scan_metrics['signals_generated'] += performance_data['signals_generated']
@@ -145,8 +173,8 @@ class EnhancedScannerWorker:
                               f"API utilization: {performance_data['api_utilization']:.1f}%")
                     
                 else:
-                    # Use regular optimized scanner
-                    signals_generated = await self._regular_scan(valid_assets, session)
+                    # Use regular optimized scanner for trading symbols
+                    signals_generated = await self._regular_scan_trading_symbols(trading_symbols, session)
                     self.scan_metrics['signals_generated'] += signals_generated
                 
                 # Update scan metrics
