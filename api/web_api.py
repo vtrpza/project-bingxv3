@@ -1148,11 +1148,17 @@ async def get_bot_status():
     }
 
 @app.get("/api/scanner/status")
-async def get_scanner_status():
-    """Get current scanner status"""
+async def get_scanner_status(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo)
+):
+    """Get current scanner status with real asset count"""
     try:
         # Check if scanning should be considered active based on recent activity
         current_time = utc_now()
+        
+        # Get real count of valid assets from database
+        valid_assets_count = asset_repo.get_valid_assets_count(db)
         
         # If we have a last scan start time and no end time, scanning is active
         if (scanner_status["last_scan_start"] and 
@@ -1167,13 +1173,11 @@ async def get_scanner_status():
             else:
                 scanner_status["scanning_active"] = False
         
-        # For demo purposes, simulate scanning when bot is running
-        # In real implementation, this would check actual scanner worker status
+        # Set scanner status based on bot running state
         if bot_status["running"]:
             scanner_status["scanning_active"] = True
-            # Simulate some assets being scanned
-            if scanner_status["assets_being_scanned"] == 0:
-                scanner_status["assets_being_scanned"] = 150  # Mock value
+            # Use real asset count instead of mock value
+            scanner_status["assets_being_scanned"] = valid_assets_count
         else:
             scanner_status["scanning_active"] = False
             scanner_status["assets_being_scanned"] = 0
@@ -1181,6 +1185,7 @@ async def get_scanner_status():
         return {
             "scanning_active": scanner_status["scanning_active"],
             "assets_being_scanned": scanner_status["assets_being_scanned"],
+            "monitored_assets": valid_assets_count,  # Add explicit monitored assets count
             "last_scan_start": scanner_status["last_scan_start"],
             "last_scan_end": scanner_status["last_scan_end"],
             "scan_interval": scanner_status["scan_interval"],

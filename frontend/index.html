@@ -2634,12 +2634,8 @@
         updateRobotStatus('active', 'Sistema Iniciando', 25);
         addActivityLog('🤖', 'Dashboard inicializado - Sistema de trading carregado');
         
-        // Initialize scanner activity
-        updateScannerActivity({ 
-            active: true, 
-            monitored_assets: 1, 
-            signals_detected: 0 
-        });
+        // Initialize scanner activity with real data
+        await refreshScannerStatus();
         
         // Initialize positions
         updatePositionsInfo({ 
