@@ -200,17 +200,65 @@
                     case 'pong':
                         console.log('Pong received');
                         break;
+                    case 'scanner_started':
+                        console.log('🚀 Scanner iniciado:', data.payload);
+                        this.updateScanProgress('started', data.payload);
+                        break;
                     case 'scanner_progress':
+                        console.log('📊 Progresso do scanner:', data.payload);
+                        this.updateScanProgress('progress', data.payload);
+                        break;
                     case 'scanner_completion':
-                    case 'scanner_error':
-                        if (window.handleScannerMessage) {
-                            window.handleScannerMessage(data);
-                        } else {
-                            console.warn('window.handleScannerMessage not available yet');
+                    case 'scanner_completed':
+                        console.log('✅ Scanner concluído:', data.payload);
+                        this.updateScanProgress('completed', data.payload);
+                        // Refresh validation table
+                        if (window.refreshValidationTable) {
+                            setTimeout(() => window.refreshValidationTable(), 1000);
                         }
+                        break;
+                    case 'scanner_error':
+                        console.error('❌ Erro no scanner:', data.payload);
+                        this.updateScanProgress('error', data.payload);
                         break;
                     default:
                         console.log('Unknown message type:', data.type);
+                }
+            }
+            
+            updateScanProgress(status, payload) {
+                const btn = document.querySelector('[onclick="startInitialScan()"]');
+                
+                if (status === 'started') {
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.innerHTML = '⏳ Escaneando...';
+                    }
+                    this.showMessage('Scan inicial iniciado! Aguarde...', 'info');
+                } else if (status === 'progress') {
+                    if (btn && payload.progress_percent) {
+                        btn.innerHTML = `⏳ ${payload.progress_percent.toFixed(1)}% (${payload.processed_count}/${payload.total_assets})`;
+                    }
+                } else if (status === 'completed') {
+                    if (btn) {
+                        btn.innerHTML = '✅ Concluído!';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '🚀 Scan Completo';
+                        }, 3000);
+                    }
+                    const valid = payload.valid_assets || payload.valid_assets_count || 0;
+                    const total = payload.total_assets || 0;
+                    this.showMessage(`Scan concluído! ${valid}/${total} ativos válidos`, 'success');
+                } else if (status === 'error') {
+                    if (btn) {
+                        btn.innerHTML = '❌ Erro';
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerHTML = '🚀 Scan Completo';
+                        }, 3000);
+                    }
+                    this.showMessage(`Erro no scan: ${payload.message || 'Erro desconhecido'}`, 'error');
                 }
             }
             
@@ -476,6 +524,7 @@
                         </div>
                         <div class="action-container">
                             <button onclick="refreshValidationTable()" class="refresh-btn">🔄 Atualizar</button>
+                            <button onclick="startInitialScan()" class="initial-scan-btn">🚀 Scan Completo</button>
                             <button onclick="forceRevalidation()" class="revalidate-btn">🔄 Revalidar</button>
                             <button onclick="exportTableData()" class="export-btn">📊 Exportar</button>
                         </div>
@@ -1149,6 +1198,57 @@
                 console.warn("⏰ Loading timeout reached - forcing hide");
             }
         };
+
+        // Função para Scan Inicial Completo - TODOS os ativos
+        async function startInitialScan() {
+            try {
+                const btn = document.querySelector('[onclick="startInitialScan()"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '⏳ Iniciando...';
+                }
+
+                console.log('🚀 Starting complete initial scan...');
+                
+                // Chamar o novo endpoint para scan inicial completo
+                const response = await fetch('/api/scanner/initial-scan', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Initial scan started:', result);
+                    
+                    // Aguardar progresso via WebSocket
+                    // O WebSocket já está configurado para receber mensagens do tipo:
+                    // - scanner_started
+                    // - scanner_progress  
+                    // - scanner_completed
+                    // - scanner_error
+                    
+                } else {
+                    console.error('❌ Failed to start initial scan');
+                    alert('Erro ao iniciar scan inicial');
+                }
+
+            } catch (error) {
+                console.error('Error starting initial scan:', error);
+                alert('Erro ao iniciar scan inicial: ' + error.message);
+            } finally {
+                // Reset button after 5 seconds
+                setTimeout(() => {
+                    const btn = document.querySelector('[onclick="startInitialScan()"]');
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '🚀 Scan Completo';
+                    }
+                }, 5000);
+            }
+        }
+
+        // Tornar função global
+        window.startInitialScan = startInitialScan;
 
         // Force Revalidation Function - Using Optimized Scanner
         async function forceRevalidation() {
