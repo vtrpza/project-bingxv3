@@ -340,15 +340,61 @@ class ScannerWorker:
                 logger.error(f"❌ Error in scanner worker: {e}")
                 await asyncio.sleep(5)  # Wait before retry
     
-    def stop(self):
+    async def stop(self):
         """Stop the scanner worker."""
         self.running = False
         logger.info("🛑 Scanner worker stop requested")
+        
+        # Unregister from coordinator
+        try:
+            await self.coordinator.unregister_worker(self.worker_id)
+            logger.info(f"Unregistered scanner worker from coordinator: {self.worker_id}")
+        except Exception as e:
+            logger.error(f"Error unregistering from coordinator: {e}")
+    
+    async def get_status(self):
+        """Get scanner worker status including coordinator statistics."""
+        try:
+            # Get coordinator stats
+            coordinator_stats = await self.coordinator.get_coordinator_stats()
+            
+            # Get cache and rate limiter stats
+            cache_stats = self.cache.get_stats()
+            rate_stats = self.rate_limiter.get_stats()
+            
+            return {
+                'is_running': self.running,
+                'worker_id': self.worker_id,
+                'worker_type': 'scanner',
+                'performance': {
+                    'cache_hit_rate_percent': cache_stats.get('hit_rate_percent', 0),
+                    'rate_limit_utilization_percent': rate_stats.get('market_data', {}).get('utilization_percent', 0),
+                },
+                'configuration': {
+                    'scan_interval': self.config.SCAN_INTERVAL,
+                    'max_concurrent_batches': 30,
+                },
+                'coordination': {
+                    'coordinator_stats': coordinator_stats,
+                    'worker_registration': coordinator_stats.get('workers', {}).get(self.worker_id, 'Not registered'),
+                    'api_request_coordination': 'Enabled',
+                    'resource_allocation': '40% of rate limit budget',
+                    'priority': 'MEDIUM'
+                }
+            }
+        except Exception as e:
+            logger.error(f"Error getting scanner status: {e}")
+            return {
+                'is_running': self.running,
+                'worker_id': self.worker_id,
+                'error': str(e)
+            }
 
 def signal_handler(signum, frame):
     """Handle shutdown signals."""
     logger.info(f"Received signal {signum}, shutting down...")
-    worker.stop()
+    # Set running to False to stop the main loop, cleanup will happen in main()
+    worker.running = False
 
 async def main():
     """Main function."""
@@ -373,6 +419,8 @@ async def main():
         logger.error(f"Fatal error in scanner worker: {e}")
         sys.exit(1)
     finally:
+        # Proper cleanup
+        await worker.stop()
         logger.info("👋 Scanner worker shutdown complete")
 
 if __name__ == "__main__":
