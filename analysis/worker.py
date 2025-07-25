@@ -15,6 +15,7 @@ from analysis.volume import get_volume_analyzer
 from analysis.signals import get_signal_generator, SignalType
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger, performance_logger
+from utils.worker_coordinator import get_coordinator
 from api.web_api import manager as connection_manager
 
 logger = get_logger(__name__)
@@ -37,10 +38,12 @@ class AnalysisWorker:
         self.indicator_repo = IndicatorRepository()
         self.signal_repo = SignalRepository()
         self.config = TradingConfig()
+        self.coordinator = get_coordinator()
         
         self.is_running = False
         self.analysis_tasks = {}
         self.executor = ThreadPoolExecutor(max_workers=self.config.MAX_WORKERS)
+        self.worker_id = "analysis_worker"
         
         # Performance tracking
         self.analysis_stats = {
