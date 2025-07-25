@@ -318,14 +318,31 @@ class APIClient:
                 except:
                     pass
             
+            # Handle ping requests (server asking for pong)
+            elif message_type == "ping":
+                server_time = data.get("timestamp")
+                console.log("Ping received from server - sending pong response")
+                # Send pong response
+                pong_message = {
+                    "type": "pong",
+                    "timestamp": datetime.now().isoformat(),
+                    "server_timestamp": server_time
+                }
+                self.send_websocket_message(pong_message)
+                
             # Handle pong responses
             elif message_type == "pong":
                 server_time = data.get("timestamp")
                 if server_time:
                     # Calculate latency if we have a ping timestamp
-                    if hasattr(self, 'last_ping_time'):
-                        latency = (datetime.now() - self.last_ping_time).total_seconds() * 1000
-                        console.log(f"WebSocket latency: {latency:.2f}ms")
+                    if hasattr(self, 'last_ping_time') and self.last_ping_time is not None:
+                        try:
+                            latency = (datetime.now() - self.last_ping_time).total_seconds() * 1000
+                            console.log(f"WebSocket latency: {latency:.2f}ms")
+                        except (TypeError, AttributeError) as e:
+                            console.warn(f"Latency calculation failed: {e}")
+                            # Reset ping time on error
+                            self.last_ping_time = None
                         
             # Handle custom callbacks
             elif message_type in self.callbacks:
@@ -368,18 +385,27 @@ class APIClient:
             self.stop_polling_fallback()
             console.log("Stopped polling fallback - WebSocket connected")
         
+        # Stop health check polling if it was active
+        if hasattr(self, 'health_check_active') and self.health_check_active:
+            self.stop_health_check_polling()
+            console.log("Stopped health check polling - WebSocket connected")
+        
         # Subscribe to channels that PyScript needs
         self.subscribe_to_channel('general')
         self.subscribe_to_channel('trading_data')
         
         # Send ping to keep connection alive
         if self.websocket:
-            ping_message = json.dumps({
-                "type": "ping",
-                "source": "pyscript_websocket",
-                "timestamp": datetime.now().isoformat()
-            })
-            self.websocket.send(ping_message)
+            try:
+                ping_message = json.dumps({
+                    "type": "ping",
+                    "source": "pyscript_websocket",
+                    "timestamp": datetime.now().isoformat()
+                })
+                self.websocket.send(ping_message)
+                console.log("Initial ping sent successfully")
+            except Exception as e:
+                console.error(f"Failed to send initial ping: {e}")
     
     def on_websocket_close(self, event):
         """Handle WebSocket connection close"""
@@ -429,16 +455,28 @@ class APIClient:
         """Connect to WebSocket server with enhanced error handling and connection state management"""
         # Prevent multiple connection attempts
         if self.websocket and self.is_connected:
-            console.log("WebSocket already connected - skipping connection attempt")
+            console.log("PyScript WebSocket already connected - skipping connection attempt")
             return
             
-        # Check if JavaScript WebSocket is already active
-        if hasattr(document.defaultView, 'tradingWebSocket') and document.defaultView.tradingWebSocket:
-            js_ws = document.defaultView.tradingWebSocket
-            if js_ws.isConnected:
-                console.log("JavaScript WebSocket active - using polling fallback for PyScript")
-                self.handle_websocket_unavailable()
-                return
+        # Check if JavaScript WebSocket is already active and working
+        try:
+            if hasattr(document.defaultView, 'tradingWebSocket') and document.defaultView.tradingWebSocket:
+                js_ws = document.defaultView.tradingWebSocket
+                if hasattr(js_ws, 'isConnected') and js_ws.isConnected:
+                    console.log("JavaScript WebSocket is active and connected - using polling fallback for PyScript")
+                    self.handle_websocket_unavailable()
+                    return
+                elif hasattr(js_ws, 'isConnecting') and js_ws.isConnecting:
+                    console.log("JavaScript WebSocket is connecting - waiting before attempting PyScript connection")
+                    # Wait a bit for JS WebSocket to finish connecting
+                    setTimeout = document.defaultView.setTimeout
+                    def retry_after_js_attempt():
+                        self.connect_websocket()
+                    setTimeout(create_proxy(retry_after_js_attempt), 2000)
+                    return
+        except Exception as e:
+            console.warn(f"Error checking JavaScript WebSocket status: {e}")
+            # Continue with PyScript connection attempt
         
         try:
             # Clean up any existing connection
@@ -467,17 +505,40 @@ class APIClient:
             self.is_connected = False
     
     def update_connection_status(self, connected):
-        """Update connection status indicator in UI"""
-        status_indicator = document.querySelector(".status-indicator")
-        status_text = document.querySelector(".connection-status span:last-child")
+        """Update connection status indicator in UI - coordinated with JavaScript WebSocket"""
+        # Check if JavaScript WebSocket is handling the connection
+        try:
+            if hasattr(document.defaultView, 'tradingWebSocket') and document.defaultView.tradingWebSocket:
+                js_ws = document.defaultView.tradingWebSocket
+                if hasattr(js_ws, 'isConnected') and js_ws.isConnected:
+                    console.log("JavaScript WebSocket is connected - not updating status from PyScript")
+                    return  # Don't override JavaScript WebSocket status
+        except Exception as e:
+            console.warn(f"Error checking JavaScript WebSocket for status update: {e}")
+        
+        # Use the same selector as JavaScript WebSocket to avoid conflicts
+        status_indicator = document.querySelector("#connection-status .status-indicator")
+        status_text = document.querySelector("#connection-status span:last-child")
         
         if status_indicator and status_text:
             if connected:
                 status_indicator.className = "status-indicator online"
                 status_text.textContent = "Conectado"
+                console.log("PyScript WebSocket status: Connected")
             else:
+                # Only set to disconnected if JavaScript WebSocket is also not connected
+                try:
+                    if hasattr(document.defaultView, 'tradingWebSocket') and document.defaultView.tradingWebSocket:
+                        js_ws = document.defaultView.tradingWebSocket
+                        if hasattr(js_ws, 'isConnected') and js_ws.isConnected:
+                            console.log("JavaScript WebSocket still connected - not showing disconnected")
+                            return
+                except:
+                    pass
+                    
                 status_indicator.className = "status-indicator offline"
                 status_text.textContent = "Desconectado"
+                console.log("PyScript WebSocket status: Disconnected")
     
     def send_websocket_message(self, message):
         """Enhanced WebSocket message sending with validation and queuing."""
@@ -550,35 +611,44 @@ class APIClient:
     
     def send_ping(self):
         """Send ping to server and measure latency."""
-        self.last_ping_time = datetime.now()
-        message = {
-            "type": "ping",
-            "timestamp": self.last_ping_time.isoformat()
-        }
-        return self.send_websocket_message(message)
+        try:
+            self.last_ping_time = datetime.now()
+            message = {
+                "type": "ping",
+                "timestamp": self.last_ping_time.isoformat()
+            }
+            return self.send_websocket_message(message)
+        except Exception as e:
+            console.error(f"Failed to send ping: {e}")
+            self.last_ping_time = None
+            return False
     
     def handle_websocket_unavailable(self):
-        """Handle case where WebSocket is not available"""
-        console.warn("WebSocket unavailable - starting polling fallback")
+        """Handle case where WebSocket is not available - use efficient polling fallback"""
+        console.log("WebSocket unavailable - JavaScript WebSocket will handle real-time updates")
         
-        # Update UI to show WebSocket is unavailable
+        # Update UI to show we're using polling mode
         self.update_connection_status(False)
         
-        # Show user notification about degraded functionality
+        # Show user notification about using JS WebSocket instead
         try:
             # Try to show notification if UI components are available
             from components import ui_components
             ui_components.show_notification(
                 "Conexão", 
-                "Atualizações em tempo real indisponíveis. Usando modo de atualização automática.", 
-                "warning"
+                "Usando conexão JavaScript para atualizações em tempo real.", 
+                "info"
             )
         except:
             # Fallback if UI components not available
-            console.warn("Real-time updates unavailable - using polling mode")
+            console.log("PyScript using JavaScript WebSocket coordination mode")
         
-        # Start polling fallback
-        self.start_polling_fallback()
+        # Don't start aggressive polling - just mark as unavailable
+        # The JavaScript WebSocket will handle real-time updates
+        self.polling_active = False
+        
+        # Set up minimal health check polling (much less frequent)
+        self.start_health_check_polling()
     
     def start_polling_fallback(self):
         """Start polling for updates when WebSocket is unavailable"""
@@ -611,7 +681,7 @@ class APIClient:
                                 "dashboard": dashboard_data,
                                 "positions": positions,
                                 "signals": signals,
-                                "timestamp": datetime.utcnow().isoformat()
+                                "timestamp": datetime.now().isoformat()
                             }
                         })
                     })())
@@ -630,6 +700,45 @@ class APIClient:
         """Stop polling fallback"""
         self.polling_active = False
         console.log("Polling fallback stopped")
+    
+    def start_health_check_polling(self):
+        """Start minimal health check polling (much less frequent than full polling)"""
+        console.log("Starting minimal health check polling")
+        
+        # Set health check interval (60 seconds - much less frequent)
+        self.health_check_interval = 60000  # milliseconds
+        self.health_check_active = True
+        
+        # Use JavaScript setTimeout for health checks
+        setTimeout = document.defaultView.setTimeout
+        
+        async def health_check():
+            """Perform minimal health check"""
+            if not self.health_check_active:
+                return
+            
+            try:
+                # Just check if API is responsive
+                health_data = await self.health_check()
+                if health_data:
+                    console.log("API health check: OK")
+                else:
+                    console.warn("API health check: Failed")
+                
+            except Exception as e:
+                console.error(f"Health check error: {str(e)}")
+            
+            # Schedule next health check
+            if self.health_check_active:
+                setTimeout(create_proxy(health_check), self.health_check_interval)
+        
+        # Start initial health check after 5 seconds
+        setTimeout(create_proxy(health_check), 5000)
+    
+    def stop_health_check_polling(self):
+        """Stop health check polling"""
+        self.health_check_active = False
+        console.log("Health check polling stopped")
     
     # Trading API Methods
     async def get_trading_live_data(self, limit=50):
