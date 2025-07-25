@@ -65,6 +65,13 @@ class AnalysisWorker:
         logger.info("Starting analysis worker...")
         
         try:
+            # Initialize the global client first
+            from api.client import initialize_client
+            logger.info("Initializing BingX client for analysis worker...")
+            if not await initialize_client():
+                raise RuntimeError("Failed to initialize BingX client")
+            logger.info("BingX client initialized successfully for analysis worker")
+            
             # Register with coordinator
             await self.coordinator.register_worker(self.worker_id, 'analysis')
             logger.info(f"Registered analysis worker with coordinator: {self.worker_id}")
