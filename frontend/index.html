@@ -553,6 +553,20 @@
                 }
             }
             
+            // Add method to check and correct status if needed
+            ensureCorrectStatus() {
+                if (this.isConnected) {
+                    // Check if status display is incorrect
+                    const statusElement = document.getElementById('connection-status');
+                    const textElement = statusElement ? statusElement.querySelector('span:last-child') : null;
+                    
+                    if (textElement && textElement.textContent !== 'Conectado') {
+                        console.log('🔧 Correcting connection status display');
+                        this.updateConnectionStatus('Conectado', 'online');
+                    }
+                }
+            }
+            
             updateSummaryIndicators(summary) {
                 // Update P&L indicator
                 const pnlElement = document.querySelector('.total-pnl');
@@ -749,14 +763,21 @@
             tradingWS = new TradingWebSocket();
             window.tradingWebSocket = tradingWS;  // Make globally accessible
             
-            // Send ping every 30 seconds to keep connection alive
+            // Send ping every 30 seconds to keep connection alive and ensure correct status
             setInterval(() => {
                 if (tradingWS && tradingWS.isConnected) {
                     tradingWS.ping();
-                    // Also refresh status to prevent it being overridden
-                    tradingWS.updateConnectionStatus('Conectado', 'online');
+                    // Ensure status display is correct
+                    tradingWS.ensureCorrectStatus();
                 }
             }, 30000);
+            
+            // Also check status every 5 seconds to catch any incorrect changes quickly
+            setInterval(() => {
+                if (tradingWS && tradingWS.isConnected) {
+                    tradingWS.ensureCorrectStatus();
+                }
+            }, 5000);
         });
         
         // Cleanup on page unload/reload
