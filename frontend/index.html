@@ -1363,28 +1363,68 @@
             }
         }
         
+        // ====== COMPREHENSIVE TRADING DATA INTEGRATION ======
+        
         async function refreshTradingData() {
             try {
-                const response = await fetch('/api/trading/live-data?limit=50');
-                const data = await response.json();
+                showLoadingIndicator('Atualizando dados de trading...');
                 
-                if (response.ok) {
-                    // Update trading data via PyScript
-                    if (typeof document.updateTradingDataTable === 'function') {
-                        document.updateTradingDataTable(data);
+                // Fetch multiple data sources concurrently for comprehensive update
+                const [liveDataResponse, summaryResponse, positionsResponse] = await Promise.all([
+                    fetch('/api/trading/live-data?limit=50'),
+                    fetch('/api/trading/summary'),
+                    fetch('/api/trading/positions')
+                ]).catch(error => {
+                    console.error('Error fetching trading data:', error);
+                    return [null, null, null];
+                });
+                
+                let hasData = false;
+                
+                // Process live trading data
+                if (liveDataResponse && liveDataResponse.ok) {
+                    const liveData = await liveDataResponse.json();
+                    if (liveData.success && liveData.trading_data) {
+                        updateTradingTable(liveData.trading_data);
+                        hasData = true;
                     }
-                    
-                    // Update last update timestamp
-                    const now = new Date();
-                    document.getElementById('trading-last-update').textContent = 
-                        `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
-                        
+                }
+                
+                // Process trading summary
+                if (summaryResponse && summaryResponse.ok) {
+                    const summaryData = await summaryResponse.json();
+                    if (summaryData.success) {
+                        updateTradingSummary(summaryData.summary);
+                        hasData = true;
+                    }
+                }
+                
+                // Process positions data
+                if (positionsResponse && positionsResponse.ok) {
+                    const positionsData = await positionsResponse.json();
+                    if (positionsData.success) {
+                        updatePositionsDisplay(positionsData.positions);
+                        hasData = true;
+                    }
+                }
+                
+                // Update timestamp and show success message
+                const now = new Date();
+                document.getElementById('trading-last-update').textContent = 
+                    `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
+                
+                if (hasData) {
                     showNotificationSafe('Sucesso', 'Dados de trading atualizados!', 'success');
                 } else {
-                    showNotificationSafe('Erro', 'Erro ao carregar dados: ' + data.detail, 'error');
+                    showNotificationSafe('Aviso', 'Nenhum dado de trading disponível', 'warning');
                 }
+                
+                hideLoadingIndicator();
+                
             } catch (error) {
+                console.error('Error refreshing trading data:', error);
                 showNotificationSafe('Erro de Conexão', error.message, 'error');
+                hideLoadingIndicator();
             }
         }
         
