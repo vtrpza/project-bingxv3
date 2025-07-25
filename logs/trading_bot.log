@@ -572,3 +572,78 @@
 2025-07-25 14:18:23,622 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
 2025-07-25 14:18:23,623 - database.connection - INFO - Database tables created successfully
 2025-07-25 14:18:23,623 - api.web_api - INFO - Database initialization completed successfully
+2025-07-25 14:18:24,396 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-25 14:18:24,396 - api.web_api - INFO - Starting automated risk management task
+2025-07-25 14:18:24,396 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-25 14:18:24,396 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 14:18:24,943 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:24,943 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:24,945 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:27,233 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:27,233 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 1
+2025-07-25 14:18:27,233 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:27,239 - api.web_api - INFO - Subscription confirmed for 127.0.0.1: trading_data
+2025-07-25 14:18:27,240 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:27,241 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 2
+2025-07-25 14:18:27,241 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:28,416 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:28,416 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:28,417 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:30,346 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:18:30,441 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:30,442 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:30,443 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:30,446 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:34,514 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:34,514 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:34,515 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:40,173 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:18:40,173 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:40,173 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:40,174 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:40,178 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:40,241 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:40,241 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:40,242 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:41,510 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:41,510 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 1
+2025-07-25 14:18:41,511 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:18:41,511 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 0
+2025-07-25 14:18:41,787 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:41,788 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 1
+2025-07-25 14:18:41,788 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:41,800 - api.web_api - INFO - Subscription confirmed for 127.0.0.1: trading_data
+2025-07-25 14:18:45,597 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 14:18:45,597 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 2
+2025-07-25 14:18:45,597 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-25 14:18:45,649 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:45,649 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:45,650 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:45,667 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 14:18:45,667 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:45,668 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:45,669 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:45,672 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 14:18:45,793 - api.web_api - INFO - Trading live data requested - symbols: None, limit: 50
+2025-07-25 14:18:45,793 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 14:18:45,793 - database.connection - INFO - Using SQLite database
+2025-07-25 14:18:45,794 - database.connection - INFO - Database connection established successfully
+2025-07-25 14:18:52,203 - api.client - INFO - BingX API connection test successful - found 2250 markets
+2025-07-25 14:18:52,206 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-25 14:18:52,206 - api.web_api - INFO - Using default major trading pairs: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT', 'DOT/USDT', 'MATIC/USDT', 'AVAX/USDT', 'ATOM/USDT', 'NEAR/USDT']
+2025-07-25 14:19:13,442 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 6.09s
+2025-07-25 14:19:23,874 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.76s
+2025-07-25 14:19:29,097 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.53s
+2025-07-25 14:19:33,089 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.78s
+2025-07-25 14:19:39,242 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.49s
+2025-07-25 14:19:41,210 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 7.76s
+2025-07-25 14:19:43,221 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:19:43,222 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 1
+2025-07-25 14:19:43,222 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-25 14:19:43,222 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 0
+2025-07-25 14:19:53,304 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.77s
+2025-07-25 14:19:58,572 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.50s
+2025-07-25 14:20:02,575 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.76s
+2025-07-25 14:20:08,714 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.46s
+2025-07-25 14:20:10,708 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 7.73s
+2025-07-25 14:20:22,806 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.73s

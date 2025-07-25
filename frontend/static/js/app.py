@@ -6,7 +6,18 @@ Coordinates all frontend functionality and real-time updates
 import asyncio
 import json
 from datetime import datetime, timedelta
-from js import document, console, setInterval, clearInterval, setTimeout, window
+try:
+    from js import document, console, setInterval, clearInterval, setTimeout, window
+    import js
+except ImportError:
+    # Fallback for testing or other environments
+    js = None
+    document = None
+    console = None
+    setInterval = None
+    clearInterval = None
+    setTimeout = None
+    window = None
 from pyodide.ffi import create_proxy
 
 # Import our modules
@@ -66,10 +77,12 @@ class TradingBotApp:
         # Set maximum loading time of 15 seconds
         loading_timeout = None
         try:
-            loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
+            if js:
+                loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
         except:
             # Fallback if setTimeout not available
-            console.warn("setTimeout not available, using manual timeout")
+            if console:
+                console.warn("setTimeout not available, using manual timeout")
         
         try:
             # Load data with individual error handling (non-blocking)
@@ -125,7 +138,7 @@ class TradingBotApp:
             )
         finally:
             # Clear timeout and hide loading
-            if loading_timeout:
+            if loading_timeout and js:
                 try:
                     js.clearTimeout(loading_timeout)
                 except:
@@ -787,7 +800,13 @@ class TradingBotApp:
     async def refresh_current_tab(self):
         """Refresh data for current active tab with debounce"""
         # Prevent recursive calls with timestamp-based debounce
-        current_time = js.Date.now()
+        try:
+            current_time = js.Date.now()
+        except NameError:
+            # Fallback if js is not available
+            import time
+            current_time = int(time.time() * 1000)
+        
         if hasattr(self, '_last_refresh_time') and (current_time - self._last_refresh_time) < 1000:
             console.log("Refresh called too soon, debouncing...")
             return
