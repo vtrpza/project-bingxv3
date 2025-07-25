@@ -13960,3 +13960,387 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 23:21:50,337 - api.web_api - INFO - FastAPI server shutting down
 2025-07-24 23:21:50,337 - api.web_api - INFO - Scanner status broadcast task cancelled
 2025-07-24 23:21:50,337 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-24 23:36:05,534 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 23:36:05,536 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 23:36:05,947 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 23:36:05,967 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-24 23:36:05,967 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-24 23:36:05,967 - api.web_api - INFO - Database initialization starting with 0.50s delay...
+2025-07-24 23:36:06,467 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-24 23:36:06,467 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:36:06,468 - database.connection - INFO - Using SQLite database
+2025-07-24 23:36:06,538 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:36:06,538 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-24 23:36:06,540 - database.connection - INFO - Database tables created successfully
+2025-07-24 23:36:06,540 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 23:36:06,969 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-24 23:36:06,970 - api.web_api - INFO - Starting automated risk management task
+2025-07-24 23:36:06,970 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-24 23:36:06,970 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-24 23:38:09,490 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 23:38:09,491 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-24 23:38:09,491 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-24 23:38:10,281 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 23:38:10,282 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-24 23:38:10,492 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 23:38:10,512 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-24 23:38:10,512 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-24 23:38:10,512 - api.web_api - INFO - Database initialization starting with 0.45s delay...
+2025-07-24 23:38:10,967 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-24 23:38:10,967 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:10,967 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:11,020 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:11,020 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-24 23:38:11,021 - database.connection - INFO - Database tables created successfully
+2025-07-24 23:38:11,021 - api.web_api - INFO - Database initialization completed successfully
+2025-07-24 23:38:11,514 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-24 23:38:11,514 - api.web_api - INFO - Starting automated risk management task
+2025-07-24 23:38:11,514 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-24 23:38:11,515 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-24 23:38:15,561 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 23:38:15,561 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 1
+2025-07-24 23:38:15,562 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 23:38:15,614 - api.web_api - INFO - Subscription confirmed for 127.0.0.1: trading_data
+2025-07-24 23:38:18,130 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-24 23:38:18,131 - api.web_api - INFO - WebSocket connected from 127.0.0.1. Total: 2
+2025-07-24 23:38:18,131 - api.web_api - INFO - WebSocket connected from 127.0.0.1
+2025-07-24 23:38:18,147 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:38:18,293 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:18,293 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:18,294 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:18,300 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:38:18,981 - api.web_api - INFO - Trading live data requested - symbols: None, limit: 50
+2025-07-24 23:38:18,981 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:18,981 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:18,982 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:25,240 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 23:38:25,244 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 23:38:25,244 - api.web_api - INFO - Using default major trading pairs: ['BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT', 'DOT/USDT', 'MATIC/USDT', 'AVAX/USDT', 'ATOM/USDT', 'NEAR/USDT']
+2025-07-24 23:38:45,367 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 6.13s
+2025-07-24 23:38:45,368 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:38:45,369 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:45,369 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:45,370 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:45,373 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:38:49,701 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:38:49,701 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:49,701 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:49,702 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:49,705 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:38:55,684 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.91s
+2025-07-24 23:38:59,673 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:38:59,673 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:38:59,673 - database.connection - INFO - Using SQLite database
+2025-07-24 23:38:59,675 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:38:59,679 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:01,930 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.01s
+2025-07-24 23:39:06,276 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.42s
+2025-07-24 23:39:09,099 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:39:09,099 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:39:09,100 - database.connection - INFO - Using SQLite database
+2025-07-24 23:39:09,100 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:39:09,108 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:12,022 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.01s
+2025-07-24 23:39:14,354 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 7.45s
+2025-07-24 23:39:20,711 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:39:20,711 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:39:20,712 - database.connection - INFO - Using SQLite database
+2025-07-24 23:39:20,712 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:39:20,716 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:25,957 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.95s
+2025-07-24 23:39:30,984 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:39:30,985 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:39:30,985 - database.connection - INFO - Using SQLite database
+2025-07-24 23:39:30,986 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:39:30,988 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:32,256 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.96s
+2025-07-24 23:39:36,542 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.46s
+2025-07-24 23:39:41,171 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:39:41,172 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:39:41,172 - database.connection - INFO - Using SQLite database
+2025-07-24 23:39:41,173 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:39:41,176 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:42,337 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.98s
+2025-07-24 23:39:44,644 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 7.46s
+2025-07-24 23:39:51,663 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:39:51,663 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:39:51,664 - database.connection - INFO - Using SQLite database
+2025-07-24 23:39:51,664 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:39:51,668 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:39:56,274 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.93s
+2025-07-24 23:40:01,704 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:01,704 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:01,704 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:01,705 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:01,708 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:02,536 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.01s
+2025-07-24 23:40:06,873 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.43s
+2025-07-24 23:40:11,983 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:11,983 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:11,983 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:11,984 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:11,987 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:12,899 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.74s
+2025-07-24 23:40:18,878 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.53s
+2025-07-24 23:40:22,374 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:22,374 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:22,374 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:22,375 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:22,378 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:28,873 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.64s
+2025-07-24 23:40:32,377 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:32,378 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:32,378 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:32,378 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:32,383 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:32,858 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.09s
+2025-07-24 23:40:39,270 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 3.34s
+2025-07-24 23:40:42,587 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:42,587 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:42,587 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:42,588 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:42,592 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:43,011 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.04s
+2025-07-24 23:40:48,189 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.52s
+2025-07-24 23:40:54,896 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.26s
+2025-07-24 23:40:54,896 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:40:54,896 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:40:54,897 - database.connection - INFO - Using SQLite database
+2025-07-24 23:40:54,897 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:40:54,900 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:40:57,487 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 5.33s
+2025-07-24 23:41:03,169 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 4.09s
+2025-07-24 23:41:03,169 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:03,170 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:03,170 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:03,170 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:03,174 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:41:07,586 - api.web_api - INFO - Trading live data prepared for 10 symbols using direct CCXT
+2025-07-24 23:41:11,075 - api.web_api - INFO - Trading trades requested - symbol: None, status: None, limit: 20
+2025-07-24 23:41:13,144 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:13,144 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:13,144 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:13,145 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:13,148 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:41:23,463 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:23,464 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:23,464 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:23,464 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:23,467 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:41:33,358 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:33,358 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:33,358 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:33,359 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:33,362 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:41:42,465 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:42,465 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:42,465 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:42,466 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:42,473 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:41:52,598 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:41:52,598 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:41:52,598 - database.connection - INFO - Using SQLite database
+2025-07-24 23:41:52,599 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:41:52,603 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:04,061 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:04,061 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:04,061 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:04,062 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:04,065 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:14,330 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:14,330 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:14,330 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:14,331 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:14,446 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:24,626 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:24,626 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:24,626 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:24,627 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:24,630 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:34,677 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:34,677 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:34,677 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:34,678 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:34,682 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:44,915 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:44,916 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:44,916 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:44,917 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:44,921 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:42:54,970 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:42:54,971 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:42:54,971 - database.connection - INFO - Using SQLite database
+2025-07-24 23:42:54,972 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:42:54,976 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:05,037 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:05,037 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:05,037 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:05,038 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:05,041 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:15,252 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:15,252 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:15,252 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:15,253 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:15,257 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:25,326 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:25,327 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:25,327 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:25,327 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:25,330 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:35,374 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:35,375 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:35,375 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:35,376 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:35,378 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:45,661 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:45,661 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:45,662 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:45,662 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:45,666 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:43:55,787 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:43:55,788 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:43:55,788 - database.connection - INFO - Using SQLite database
+2025-07-24 23:43:55,788 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:43:55,791 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:05,878 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:05,878 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:05,878 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:05,879 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:05,882 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:16,095 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:16,096 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:16,096 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:16,097 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:16,100 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:26,074 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:26,074 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:26,074 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:26,075 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:26,078 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:36,183 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:36,184 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:36,184 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:36,184 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:36,187 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:46,472 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:46,472 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:46,472 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:46,473 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:46,478 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:44:56,520 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:44:56,520 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:44:56,520 - database.connection - INFO - Using SQLite database
+2025-07-24 23:44:56,521 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:44:56,525 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:06,600 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:06,600 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:06,600 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:06,601 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:06,604 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:16,847 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:16,847 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:16,847 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:16,848 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:16,851 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:26,966 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:26,966 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:26,966 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:26,967 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:26,970 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:37,143 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:37,143 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:37,143 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:37,144 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:37,147 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:47,581 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:47,581 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:47,581 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:47,582 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:47,586 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:45:57,533 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:45:57,533 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:45:57,533 - database.connection - INFO - Using SQLite database
+2025-07-24 23:45:57,534 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:45:57,537 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:07,723 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:07,723 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:07,723 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:07,724 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:07,727 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:18,014 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:18,014 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:18,014 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:18,015 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:18,018 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:28,119 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:28,119 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:28,120 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:28,120 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:28,124 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:38,339 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:38,339 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:38,339 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:38,340 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:38,343 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:48,725 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:48,725 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:48,725 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:48,726 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:48,729 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:46:58,901 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:46:58,901 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:46:58,901 - database.connection - INFO - Using SQLite database
+2025-07-24 23:46:58,902 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:46:59,021 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:09,189 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:09,189 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:09,189 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:09,190 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:09,193 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:19,450 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:19,450 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:19,450 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:19,451 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:19,454 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:29,362 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:29,363 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:29,363 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:29,364 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:29,367 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:39,545 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:39,545 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:39,545 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:39,546 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:39,549 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:49,833 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:49,833 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:49,833 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:49,834 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:49,837 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:47:59,734 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:47:59,734 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:47:59,734 - database.connection - INFO - Using SQLite database
+2025-07-24 23:47:59,735 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:47:59,739 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:48:09,891 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:48:09,892 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:48:09,892 - database.connection - INFO - Using SQLite database
+2025-07-24 23:48:09,893 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:48:09,899 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:48:20,151 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:48:20,152 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:48:20,152 - database.connection - INFO - Using SQLite database
+2025-07-24 23:48:20,153 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:48:20,156 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:48:30,129 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-24 23:48:30,130 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 23:48:30,130 - database.connection - INFO - Using SQLite database
+2025-07-24 23:48:30,130 - database.connection - INFO - Database connection established successfully
+2025-07-24 23:48:30,133 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-24 23:48:32,202 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 23:48:32,203 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 1
+2025-07-24 23:48:32,203 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1
+2025-07-24 23:48:32,203 - api.web_api - INFO - WebSocket disconnected from 127.0.0.1. Total: 0
+2025-07-24 23:50:26,976 - api.web_api - INFO - FastAPI server shutting down
+2025-07-24 23:50:26,977 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-24 23:50:26,977 - api.web_api - INFO - WebSocket heartbeat task cancelled

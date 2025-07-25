@@ -58,14 +58,18 @@ class DatabaseManager:
                 self.engine = create_engine(
                     database_url,
                     poolclass=QueuePool,
-                    pool_size=5,      # Reduced for Render constraints
-                    max_overflow=10,  # Reduced overflow
-                    pool_timeout=60,  # Increased timeout for Render
-                    pool_recycle=3600,
+                    pool_size=10,      # Increased from 5 to handle background tasks
+                    max_overflow=20,   # Increased from 10 for peak loads
+                    pool_timeout=30,   # Reduced from 60 to fail faster
+                    pool_recycle=1800, # Reduced from 3600 to recycle connections more frequently
                     pool_pre_ping=True,  # Test connections before use
                     connect_args={
-                        "connect_timeout": 30,
-                        "application_name": "bingx_trading_bot"
+                        "connect_timeout": 10,  # Reduced from 30 for faster failure
+                        "application_name": "bingx_trading_bot",
+                        "keepalives": 1,
+                        "keepalives_idle": 30,
+                        "keepalives_interval": 10,
+                        "keepalives_count": 5
                     },
                     echo=os.getenv("DB_ECHO", "false").lower() == "true",
                     future=True
