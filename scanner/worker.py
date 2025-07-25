@@ -87,7 +87,7 @@ class ScannerWorker:
                         for asset in batch
                     ]
                     
-                    batch_results = await asyncio.gather(*[self._process_single_asset_optimized(asset, session) for asset in batch], return_exceptions=True)
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
                     
                     # Process results
                     for j, result in enumerate(batch_results):
@@ -150,16 +150,9 @@ class ScannerWorker:
             if not ohlcv_2h or not ohlcv_4h:
                 return None
             
-            # Calculate indicators with caching
-            indicators_2h = await self.cache.get_or_fetch(
-                'indicators', f"{asset.symbol}_2h",
-                lambda: self.indicator_calc.calculate_all(ohlcv_2h)
-            )
-            
-            indicators_4h = await self.cache.get_or_fetch(
-                'indicators', f"{asset.symbol}_4h",
-                lambda: self.indicator_calc.calculate_all(ohlcv_4h)
-            )
+            # Calculate indicators (synchronous operation)
+            indicators_2h = self.indicator_calc.calculate_all(ohlcv_2h)
+            indicators_4h = self.indicator_calc.calculate_all(ohlcv_4h)
             
             # Store indicators
             await self._store_indicators(session, asset, indicators_2h, '2h')
