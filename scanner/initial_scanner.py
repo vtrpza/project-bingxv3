@@ -10,23 +10,18 @@ from api.market_data import get_market_data_api, MarketDataError
 from api.client import get_client
 from database.connection import get_session
 from database.repository import AssetRepository
-from scanner.validator import get_asset_validator
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger
-from utils.formatters import DataFormatter
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
 from api.web_api import manager as connection_manager
 
-# New imports for improved patterns
+# Imports for progress reporting
 from scanner.scanner_config import get_scanner_config, ScannerConfig
 from scanner.progress_observers import (
     ProgressReporter, CompositeProgressObserver, WebSocketProgressObserver, 
     LoggingProgressObserver, ProgressEvent
-)
-from scanner.validation_strategy import (
-    ValidationStrategyFactory, ValidationStrategy, ValidationResult
 )
 
 logger = get_logger(__name__)
@@ -93,29 +88,27 @@ class InitialScanResult:
 
 
 class InitialScanner:
-    """Performs initial discovery and validation of all available trading assets.
+    """Performs initial discovery of all available trading assets and populates database.
     
-    Improved implementation using:
-    - Configuration management for all settings
-    - Observer pattern for progress reporting
-    - Strategy pattern for validation approaches
-    - Better error handling and resource management
+    Simplified implementation focusing on:
+    - Fast discovery of all market symbols
+    - Basic market data collection
+    - Database population with discovered assets
+    - Progress reporting via WebSocket
+    - Leaves validation to the trading scanner
     """
     
     def __init__(self, config: Optional[ScannerConfig] = None, 
-                 validation_strategy: Optional[ValidationStrategy] = None,
                  progress_reporter: Optional[ProgressReporter] = None):
-        # Core dependencies (unchanged)
+        # Core dependencies for market discovery
         self.market_api = get_market_data_api()
-        self.validator = get_asset_validator()
         self.asset_repo = AssetRepository()
         self.client = get_client()
         self.rate_limiter = get_rate_limiter()
         self.cache = get_smart_cache()
         
-        # New pattern-based components
+        # Configuration
         self.config = config or get_scanner_config()
-        self.validation_strategy = validation_strategy or ValidationStrategyFactory.get_default_strategy()
         
         # Setup progress reporting with multiple observers
         if progress_reporter is None:
@@ -126,25 +119,23 @@ class InitialScanner:
         else:
             self.progress_reporter = progress_reporter
         
-        # Performance tracking
+        # Performance tracking (simplified)
         self._scan_stats = {
             'total_processed': 0,
-            'successful_validations': 0,
-            'failed_validations': 0,
+            'successful_discoveries': 0,
+            'failed_discoveries': 0,
             'cache_hits': 0,
             'api_calls': 0,
             'errors': []
         }
         
     async def scan_all_assets(self, force_refresh: bool = False, 
-                            max_assets: Optional[int] = None,
-                            validation_strategy_name: Optional[str] = None) -> InitialScanResult:
-        """Perform complete initial scan of all available assets.
+                            max_assets: Optional[int] = None) -> InitialScanResult:
+        """Perform complete initial scan of all available assets - simplified to only fetch and populate.
         
         Args:
             force_refresh: Force refresh of cached market data
             max_assets: Maximum number of assets to process (None for all)
-            validation_strategy_name: Name of validation strategy to use
             
         Returns:
             InitialScanResult containing scan results and statistics
@@ -153,26 +144,17 @@ class InitialScanner:
         result = InitialScanResult()
         result.scan_timestamp = scan_start.isoformat()
         
-        # Override validation strategy if specified
-        if validation_strategy_name:
-            try:
-                self.validation_strategy = ValidationStrategyFactory.create_strategy(validation_strategy_name)
-                logger.info(f"Using validation strategy: {validation_strategy_name}")
-            except ValueError as e:
-                logger.warning(f"Invalid strategy name '{validation_strategy_name}': {e}")
-        
         try:
             await self.progress_reporter.report_started(
-                "Iniciando scan inicial de ativos...",
+                "Iniciando descoberta e população de ativos...",
                 metadata={
                     'force_refresh': force_refresh,
                     'max_assets': max_assets,
-                    'strategy': self.validation_strategy.get_strategy_name(),
-                    'config': self.config.to_dict()
+                    'mode': 'fetch_and_populate'
                 }
             )
             
-            # Template method pattern: define the scan process steps
+            # Simplified process: discover -> extract -> save basic data
             markets = await self._discover_markets_step(force_refresh)
             if not markets:
                 await self.progress_reporter.report_error("Nenhum mercado descoberto")
@@ -181,9 +163,9 @@ class InitialScanner:
             symbols = await self._extract_symbols_step(markets, max_assets)
             result.total_discovered = len(symbols)
             
-            validation_results = await self._validate_assets_step(symbols)
-            await self._save_results_step(validation_results)
-            await self._process_results_step(validation_results, result)
+            # Save basic market data (no validation)
+            await self._save_basic_assets_step(symbols, markets)
+            await self._process_basic_results_step(symbols, result)
             
             # Finalize scan
             scan_end = utc_now()
@@ -255,213 +237,121 @@ class InitialScanner:
         logger.info(f"Found {len(symbols)} active USDT pairs ({invalid_markets} invalid markets skipped)")
         self._scan_stats['api_calls'] += 1
 
-        # Sort to prioritize important assets using configuration
-        if self.config.enable_priority_processing:
-            return self._prioritize_symbols(symbols)
-        else:
-            return sorted(symbols)
+        # Simple alphabetical sort for consistent processing
+        return sorted(symbols)
     
-    def _prioritize_symbols(self, symbols: List[str]) -> List[str]:
-        """Prioritize symbols based on validator criteria."""
-        priority_symbols = []
-        other_symbols = []
-        
-        priority_list = getattr(self.validator.criteria, 'PRIORITY_SYMBOLS', [])
-        
-        for symbol in symbols:
-            if symbol in priority_list:
-                priority_symbols.append(symbol)
-            else:
-                other_symbols.append(symbol)
-        
-        logger.info(f"Prioritized {len(priority_symbols)} priority symbols, {len(other_symbols)} regular symbols")
-        
-        # Return priority symbols first, then others
-        return priority_symbols + sorted(other_symbols)
-    
-    async def _validate_assets_step(self, symbols: List[str]) -> List[ValidationResult]:
-        """Step 3: Validate all discovered assets using selected strategy."""
+    async def _save_basic_assets_step(self, symbols: List[str], markets: List[Dict[str, Any]]) -> None:
+        """Step 3: Save basic asset data to database (no validation)."""
         await self.progress_reporter.report_step_progress(
-            f"Validando {len(symbols)} ativos usando estratégia {self.validation_strategy.get_strategy_name()}...",
+            f"Salvando {len(symbols)} ativos no banco de dados...",
             3, self.config.broadcast_progress_steps
         )
         
         try:
-            # Use the selected validation strategy
-            validation_results = await self.validation_strategy.validate_symbols(
-                symbols, self.validator, progress_reporter=self.progress_reporter
-            )
-            
-            # Update statistics
-            self._scan_stats['total_processed'] = len(validation_results)
-            self._scan_stats['successful_validations'] = sum(1 for r in validation_results if r.is_valid)
-            self._scan_stats['failed_validations'] = sum(1 for r in validation_results if not r.is_valid)
-            
-            logger.info(f"Validation completed: {self._scan_stats['successful_validations']} valid, "
-                       f"{self._scan_stats['failed_validations']} invalid")
-            
-            return validation_results
-            
-        except Exception as e:
-            logger.error(f"Critical error during asset validation: {e}")
-            self._scan_stats['errors'].append(f"Validation failed: {str(e)}")
-            raise
-    
-    # Legacy method removed - now using ValidationStrategy pattern
-    # This method has been replaced by _validate_assets_step() and the Strategy pattern
-    
-    async def _save_results_step(self, validation_results: List[ValidationResult]) -> None:
-        """Step 4: Save validation results to database efficiently."""
-        await self.progress_reporter.report_step_progress(
-            "Salvando resultados no banco de dados...", 4, self.config.broadcast_progress_steps
-        )
-        
-        if not validation_results:
-            logger.warning("No validation results to save")
-            return
-            
-        try:
-            from utils.converters import convert_decimals
+            # Create a mapping of symbols to market data for faster lookup
+            market_by_symbol = {market.get('symbol', ''): market for market in markets}
             
             # Process in batches for better memory usage
             batch_size = self.config.db_batch_size
             total_saved = 0
             
-            for i in range(0, len(validation_results), batch_size):
-                batch = validation_results[i:i + batch_size]
-                await self._save_validation_batch(batch)
-                total_saved += len(batch)
+            for i in range(0, len(symbols), batch_size):
+                batch_symbols = symbols[i:i + batch_size]
+                await self._save_basic_assets_batch(batch_symbols, market_by_symbol)
+                total_saved += len(batch_symbols)
                 
                 # Report progress for large datasets
-                if len(validation_results) > 100 and total_saved % self.config.progress_report_interval == 0:
+                if len(symbols) > 100 and total_saved % self.config.progress_report_interval == 0:
                     await self.progress_reporter.report_item_progress(
-                        f"Salvando resultados... {total_saved}/{len(validation_results)}",
-                        total_saved, len(validation_results)
+                        f"Salvando ativos... {total_saved}/{len(symbols)}",
+                        total_saved, len(symbols)
                     )
             
-            logger.info(f"Successfully saved {total_saved} validation results to database")
+            self._scan_stats['total_processed'] = total_saved
+            logger.info(f"Successfully saved {total_saved} basic assets to database")
             
         except Exception as e:
-            logger.error(f"Critical error saving validation results: {e}")
+            logger.error(f"Critical error saving basic assets: {e}")
             self._scan_stats['errors'].append(f"Database save failed: {str(e)}")
             raise
     
-    async def _save_validation_batch(self, batch: List[ValidationResult]) -> None:
-        """Optimized batch save with better database performance and memory management."""
-        from utils.converters import convert_decimals
-        import gc
-        
-        if not batch:
+    async def _save_basic_assets_batch(self, symbols: List[str], market_by_symbol: Dict[str, Dict[str, Any]]) -> None:
+        """Save a batch of basic assets to database."""
+        if not symbols:
             return
             
-        bulk_update_data = []
         bulk_insert_data = []
-        priority_list = getattr(self.validator.criteria, 'PRIORITY_SYMBOLS', [])
+        current_time = utc_now()
         
-        # Pre-allocate lists for better memory efficiency
-        batch_size = len(batch)
-        bulk_update_data.reserve = batch_size if hasattr(list, 'reserve') else None
-        bulk_insert_data.reserve = batch_size if hasattr(list, 'reserve') else None
-        
-        # Process batch with memory-efficient iteration
-        for result in batch:
+        for symbol in symbols:
             try:
-                is_valid = result.is_valid
-                validation_data = convert_decimals(result.validation_data or {})
+                # Get market data for this symbol
+                market_data = market_by_symbol.get(symbol, {})
                 
-                # Optimized validation data structure
-                db_validation_data = {
-                    'validation_timestamp': result.validation_timestamp.isoformat(),
-                    'validation_duration': result.validation_duration_seconds,
-                    'validation_checks': validation_data.get('validation_checks', {}),
-                    'market_summary': validation_data.get('market_summary', {}),
-                    'volume_analysis': validation_data.get('volume_analysis', {}),
-                    'priority': result.symbol in priority_list,
-                    'is_valid': is_valid,
-                    'reason': result.reason if not is_valid else None,
-                    'retry_count': result.retry_count,
-                    'strategy_used': self.validation_strategy.get_strategy_name()
+                # Extract basic information
+                if '/' in symbol:
+                    base_currency, quote_currency = symbol.split('/', 1)
+                else:
+                    # Handle symbols like BTCUSDT
+                    if symbol.endswith('USDT'):
+                        base_currency = symbol[:-4]
+                        quote_currency = 'USDT'
+                    else:
+                        logger.warning(f"Could not parse symbol: {symbol}")
+                        continue
+                
+                # Get basic market info if available
+                min_order_size = market_data.get('limits', {}).get('amount', {}).get('min', TradingConfig.MIN_ORDER_SIZE_USDT)
+                if not isinstance(min_order_size, (int, float)):
+                    min_order_size = float(TradingConfig.MIN_ORDER_SIZE_USDT)
+                
+                # Basic validation data - just mark as discovered, not validated
+                basic_data = {
+                    'discovered_timestamp': current_time.isoformat(),
+                    'market_info': {
+                        'active': market_data.get('active', True),
+                        'type': market_data.get('type', 'swap'),
+                        'spot': market_data.get('spot', False),
+                        'margin': market_data.get('margin', False),
+                        'future': market_data.get('future', False),
+                        'option': market_data.get('option', False),
+                        'swap': market_data.get('swap', True),
+                        'contract': market_data.get('contract', True)
+                    },
+                    'limits': market_data.get('limits', {}),
+                    'precision': market_data.get('precision', {}),
+                    'needs_validation': True,  # Flag to indicate this needs to be validated by trading scanner
+                    'scan_source': 'initial_discovery'
                 }
                 
-                bulk_update_data.append({
-                    'symbol': result.symbol,
-                    'is_valid': is_valid,
-                    'validation_data': db_validation_data
+                bulk_insert_data.append({
+                    'symbol': symbol,
+                    'base_currency': base_currency,
+                    'quote_currency': quote_currency,
+                    'is_valid': None,  # Not validated yet
+                    'min_order_size': min_order_size,
+                    'last_validation': None,  # No validation performed
+                    'validation_data': basic_data
                 })
                 
-                # Prepare asset creation data if needed (optimized parsing)
-                if '/' in result.symbol:
-                    try:
-                        symbol_parts = result.symbol.split('/', 1)  # Limit split for performance
-                        if len(symbol_parts) == 2:
-                            base_currency, quote_currency = symbol_parts
-                            
-                            market_summary = validation_data.get('market_summary', {})
-                            min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
-                            
-                            # Optimized number conversion
-                            if isinstance(min_order_size, (int, float)):
-                                min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
-                            elif isinstance(min_order_size, str):
-                                try:
-                                    min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
-                                except ValueError:
-                                    min_order_size = float(TradingConfig.MIN_ORDER_SIZE_USDT)
-                            else:
-                                min_order_size = float(TradingConfig.MIN_ORDER_SIZE_USDT)
-                            
-                            bulk_insert_data.append({
-                                'symbol': result.symbol,
-                                'base_currency': base_currency,
-                                'quote_currency': quote_currency,
-                                'is_valid': is_valid,
-                                'min_order_size': min_order_size,
-                                'last_validation': utc_now(),
-                                'validation_data': db_validation_data
-                            })
-                    except Exception as prep_error:
-                        logger.warning(f"Could not prepare asset data for {result.symbol}: {prep_error}")
-                        
-                # Clear reference to help with memory management
-                validation_data = None
-                db_validation_data = None
-                
-            except Exception as process_error:
-                logger.error(f"Error processing validation result for {result.symbol}: {process_error}")
+            except Exception as e:
+                logger.warning(f"Error preparing basic data for {symbol}: {e}")
                 continue
         
-        # Optimized database operations with transaction management
+        # Save to database
         try:
             with get_session() as session:
-                # Begin transaction explicitly for better control
                 session.begin()
                 
                 try:
-                    # Batch update existing records (more efficient)
-                    update_count = 0
-                    for update_data in bulk_update_data:
-                        try:
-                            success = self.asset_repo.update_validation_status(
-                                session,
-                                symbol=update_data['symbol'],
-                                is_valid=update_data['is_valid'],
-                                validation_data=update_data['validation_data']
-                            )
-                            if success:
-                                update_count += 1
-                        except Exception as update_error:
-                            logger.warning(f"Could not update validation for {update_data['symbol']}: {update_error}")
+                    # Check existing symbols to avoid duplicates
+                    symbols_to_check = [item['symbol'] for item in bulk_insert_data]
+                    existing_assets = session.query(self.asset_repo.model.symbol).filter(
+                        self.asset_repo.model.symbol.in_(symbols_to_check)
+                    ).all()
+                    existing_symbols = {asset.symbol for asset in existing_assets}
                     
-                    # Batch create new records (check existence first for efficiency)
-                    existing_symbols = set()
-                    if bulk_insert_data:
-                        # Query existing symbols in batch
-                        symbols_to_check = [item['symbol'] for item in bulk_insert_data]
-                        existing_assets = session.query(self.asset_repo.model.symbol).filter(
-                            self.asset_repo.model.symbol.in_(symbols_to_check)
-                        ).all()
-                        existing_symbols = {asset.symbol for asset in existing_assets}
-                    
+                    # Insert only new symbols
                     insert_count = 0
                     for insert_data in bulk_insert_data:
                         if insert_data['symbol'] not in existing_symbols:
@@ -470,10 +360,21 @@ class InitialScanner:
                                 insert_count += 1
                             except Exception as insert_error:
                                 logger.warning(f"Could not create asset {insert_data['symbol']}: {insert_error}")
+                        else:
+                            # Update existing asset with new discovery data
+                            try:
+                                self.asset_repo.update_validation_status(
+                                    session,
+                                    symbol=insert_data['symbol'],
+                                    is_valid=None,  # Reset validation status
+                                    validation_data=insert_data['validation_data']
+                                )
+                                insert_count += 1
+                            except Exception as update_error:
+                                logger.warning(f"Could not update asset {insert_data['symbol']}: {update_error}")
                     
-                    # Commit transaction
                     session.commit()
-                    logger.debug(f"Batch database operation completed: {update_count} updates, {insert_count} inserts")
+                    logger.debug(f"Batch basic asset save completed: {insert_count} assets processed")
                     
                 except Exception as transaction_error:
                     session.rollback()
@@ -482,198 +383,25 @@ class InitialScanner:
                     
         except Exception as db_error:
             logger.error(f"Database batch operation failed: {db_error}")
-            # Don't raise - allow scan to continue with other batches
-        
-        finally:
-            # Explicit memory cleanup for large batches
-            if batch_size > 100:
-                bulk_update_data.clear()
-                bulk_insert_data.clear()
-                gc.collect()
-
-    # Legacy method removed - now handled by ValidationStrategy implementations
-    # Caching and optimization logic moved to individual strategy classes
+            raise
     
-    async def _bulk_save_validation_results(self, validation_data_list: List[Tuple[str, Dict[str, Any]]]):
-        """Save multiple validation results in a single database transaction."""
-        if not validation_data_list:
-            return
-            
-        try:
-            from utils.converters import convert_decimals
-            
-            # Prepare all data for bulk insert/update
-            bulk_update_data = []
-            bulk_insert_data = []
-            
-            for symbol, validation_result in validation_data_list:
-                is_valid = validation_result.get('is_valid', False)
-                validation_data = convert_decimals(validation_result.get('data', {}))
-                
-                # Enhanced validation data with metadata
-                db_validation_data = {
-                    'validation_timestamp': validation_result.get('validation_timestamp'),
-                    'validation_duration': validation_result.get('validation_duration_seconds', 0),
-                    'validation_checks': validation_data.get('validation_checks', {}),
-                    'market_summary': validation_data.get('market_summary', {}),
-                    'volume_analysis': validation_data.get('volume_analysis', {}),
-                    'priority': symbol in self.validator.criteria.PRIORITY_SYMBOLS,
-                    'is_valid': is_valid,
-                    'reason': validation_result.get('reason') if not is_valid else None
-                }
-                
-                # Prepare for bulk operations
-                bulk_update_data.append({
-                    'symbol': symbol,
-                    'is_valid': is_valid,
-                    'validation_data': db_validation_data
-                })
-                
-                # Prepare asset creation data if needed
-                if '/' in symbol:
-                    try:
-                        base_currency, quote_currency = symbol.split('/')
-                        market_summary = validation_data.get('market_summary', {})
-                        min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
-                        if isinstance(min_order_size, (int, float, str)):
-                            min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
-                        
-                        bulk_insert_data.append({
-                            'symbol': symbol,
-                            'base_currency': base_currency,
-                            'quote_currency': quote_currency,
-                            'is_valid': is_valid,
-                            'min_order_size': min_order_size,
-                            'last_validation': utc_now(),
-                            'validation_data': db_validation_data
-                        })
-                    except Exception as prep_error:
-                        logger.warning(f"Could not prepare asset data for {symbol}: {prep_error}")
-            
-            # Execute bulk operations in a single transaction
-            with get_session() as session:
-                # Bulk update validation statuses
-                for update_data in bulk_update_data:
-                    try:
-                        self.asset_repo.update_validation_status(
-                            session,
-                            symbol=update_data['symbol'],
-                            is_valid=update_data['is_valid'],
-                            validation_data=update_data['validation_data']
-                        )
-                    except Exception as update_error:
-                        logger.warning(f"Could not update validation for {update_data['symbol']}: {update_error}")
-                
-                # Bulk create assets that don't exist
-                for insert_data in bulk_insert_data:
-                    try:
-                        existing = self.asset_repo.get_by_symbol(session, insert_data['symbol'])
-                        if not existing:
-                            self.asset_repo.create(session, **insert_data)
-                    except Exception as insert_error:
-                        logger.warning(f"Could not create asset {insert_data['symbol']}: {insert_error}")
-                
-                # Commit all changes in one transaction
-                session.commit()
-                
-            logger.debug(f"Bulk saved {len(validation_data_list)} validation results")
-            
-        except Exception as e:
-            logger.error(f"Failed to bulk save validation results: {e}")
-            # Fallback to individual saves if bulk fails
-            for symbol, validation_result in validation_data_list:
-                try:
-                    await self._save_validation_result_to_db(symbol, validation_result)
-                except Exception as fallback_error:
-                    logger.error(f"Fallback save failed for {symbol}: {fallback_error}")
-    
-    async def _save_validation_result_to_db(self, symbol: str, validation_result: Dict[str, Any]):
-        """Save a single validation result to database (fallback method)."""
-        try:
-            # Import convert_decimals utility function
-            from utils.converters import convert_decimals
-            
-            # Prepare validation data for database
-            is_valid = validation_result.get('is_valid', False)
-            validation_data = convert_decimals(validation_result.get('data', {}))
-            
-            # Enhanced validation data with metadata
-            db_validation_data = {
-                'validation_timestamp': validation_result.get('validation_timestamp'),
-                'validation_duration': validation_result.get('validation_duration_seconds', 0),
-                'validation_checks': validation_data.get('validation_checks', {}),
-                'market_summary': validation_data.get('market_summary', {}),
-                'volume_analysis': validation_data.get('volume_analysis', {}),
-                'priority': symbol in self.validator.criteria.PRIORITY_SYMBOLS,
-                'is_valid': is_valid,
-                'reason': validation_result.get('reason') if not is_valid else None
-            }
-            
-            # Save to database in its own transaction
-            with get_session() as session:
-                # Update or create asset with validation status
-                asset = self.asset_repo.update_validation_status(
-                    session,
-                    symbol=symbol,
-                    is_valid=is_valid,
-                    validation_data=db_validation_data
-                )
-                
-                # If asset was created/updated successfully and doesn't exist, create the base record
-                if asset and not self.asset_repo.get_by_symbol(session, symbol):
-                    try:
-                        base_currency, quote_currency = symbol.split('/')
-                        
-                        # Get minimum order size from market data if available
-                        market_summary = validation_data.get('market_summary', {})
-                        min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
-                        if isinstance(min_order_size, (int, float, str)):
-                            min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
-                        
-                        self.asset_repo.create(
-                            session,
-                            symbol=symbol,
-                            base_currency=base_currency,
-                            quote_currency=quote_currency,
-                            is_valid=is_valid,
-                            min_order_size=min_order_size,
-                            last_validation=utc_now(),
-                            validation_data=db_validation_data
-                        )
-                        
-                    except Exception as create_error:
-                        logger.warning(f"Could not create asset record for {symbol}: {create_error}")
-                        # Continue anyway as the validation status was saved
-                
-                # Commit the transaction
-                session.commit()
-                
-                logger.debug(f"Saved {'valid' if is_valid else 'invalid'} asset {symbol} to database")
-                
-        except Exception as e:
-            logger.error(f"Failed to save validation result for {symbol}: {e}")
-            # Don't raise the exception - let the scan continue with other assets
-            pass
-    
-    async def _process_results_step(self, validation_results: List[ValidationResult], 
-                                  result: InitialScanResult) -> None:
-        """Step 5: Process validation results and populate scan result."""
+    async def _process_basic_results_step(self, symbols: List[str], result: InitialScanResult) -> None:
+        """Step 4: Process basic results and populate scan result."""
         await self.progress_reporter.report_step_progress(
-            "Processando resultados finais...", 5, self.config.broadcast_progress_steps
+            "Processando resultados da descoberta...", 4, self.config.broadcast_progress_steps
         )
         
-        for validation_result in validation_results:
+        # Since we're not validating, all discovered symbols are considered "valid" for discovery
+        for symbol in symbols:
             try:
-                if validation_result.is_valid:
-                    result.add_valid_asset(validation_result.symbol, validation_result.validation_data or {})
-                else:
-                    reason = validation_result.reason or 'Unknown validation failure'
-                    result.add_invalid_asset(validation_result.symbol, reason, validation_result.validation_data or {})
-                    
+                result.add_valid_asset(symbol, {
+                    'discovery_mode': True,
+                    'validation_pending': True,
+                    'discovered_timestamp': utc_now().isoformat()
+                })
             except Exception as e:
-                logger.error(f"Error processing validation result for {validation_result.symbol}: {e}")
-                result.add_error(validation_result.symbol, str(e))
-                self._scan_stats['errors'].append(f"Result processing failed for {validation_result.symbol}: {str(e)}")
+                logger.error(f"Error processing discovery result for {symbol}: {e}")
+                result.add_error(symbol, str(e))
     
     
     
@@ -711,47 +439,30 @@ class InitialScanner:
             logger.error(f"Error getting last scan summary: {e}")
             return None
     
-    async def quick_validation_check(self, symbols: List[str]) -> Dict[str, bool]:
-        """Perform quick validation check on specific symbols."""
-        logger.info(f"Performing quick validation check on {len(symbols)} symbols")
-        
-        results = {}
-        
-        try:
-            validation_results = await self.validator.validate_multiple_assets(symbols, max_concurrent=5)
-            
-            for symbol, validation_data in validation_results.items():
-                results[symbol] = validation_data.get('is_valid', False)
-            
-            valid_count = sum(results.values())
-            logger.info(f"Quick validation complete: {valid_count}/{len(symbols)} symbols valid")
-            
-            return results
-            
-        except Exception as e:
-            logger.error(f"Error during quick validation check: {e}")
-            return {symbol: False for symbol in symbols}
     
     def format_scan_report(self, result: InitialScanResult) -> str:
-        """Format scan results into a readable report."""
+        """Format discovery results into a readable report."""
         summary = result.get_summary()
         
         report_lines = [
-            "=== INITIAL ASSET SCAN REPORT ===",
-            f"Scan Date: {summary['scan_timestamp']}",
-            f"Scan Duration: {summary['scan_duration_seconds']:.1f} seconds",
+            "=== ASSET DISCOVERY REPORT ===",
+            f"Discovery Date: {summary['scan_timestamp']}",
+            f"Discovery Duration: {summary['scan_duration_seconds']:.1f} seconds",
             "",
             "=== SUMMARY ===",
             f"Total Assets Discovered: {summary['total_discovered']}",
-            f"Valid Assets: {summary['valid_assets_count']} ({summary['success_rate']:.1f}%)",
-            f"Invalid Assets: {summary['invalid_assets_count']}",
-            f"Errors: {summary['errors_count']}",
+            f"Assets Saved to Database: {summary['valid_assets_count']}",
+            f"Processing Errors: {summary['errors_count']}",
+            "",
+            "=== NOTE ===",
+            "Assets discovered need to be validated by the trading scanner.",
+            "This scan only populates the database with available symbols.",
             "",
         ]
         
         if summary['valid_assets']:
             report_lines.extend([
-                "=== VALID ASSETS ===",
+                "=== DISCOVERED ASSETS ===",
                 f"Count: {len(summary['valid_assets'])}",
                 "Symbols: " + ", ".join(summary['valid_assets'][:20]),
             ])
@@ -761,19 +472,9 @@ class InitialScanner:
             
             report_lines.append("")
         
-        if summary['top_invalid_reasons']:
-            report_lines.extend([
-                "=== TOP REJECTION REASONS ===",
-            ])
-            
-            for reason, count in summary['top_invalid_reasons']:
-                report_lines.append(f"{reason}: {count} assets")
-            
-            report_lines.append("")
-        
         if result.errors:
             report_lines.extend([
-                "=== ERRORS ===",
+                "=== PROCESSING ERRORS ===",
                 f"Count: {len(result.errors)}",
             ])
             
@@ -792,30 +493,29 @@ class InitialScanner:
         
         # Calculate performance metrics
         throughput = result.total_discovered / scan_duration if scan_duration > 0 else 0
-        avg_validation_time = scan_duration / max(result.total_discovered, 1)
+        avg_processing_time = scan_duration / max(result.total_discovered, 1)
         cache_hit_rate = (self._scan_stats['cache_hits'] / max(self._scan_stats['api_calls'], 1)) * 100
         
         # Enhanced completion metadata with performance insights
         completion_metadata = {
-            'strategy_used': self.validation_strategy.get_strategy_name(),
+            'mode': 'fetch_and_populate',
             'config_used': self.config.to_dict(),
             'scan_stats': self._scan_stats,
-            'valid_assets_count': len(result.valid_assets),
-            'invalid_assets_count': len(result.invalid_assets),
+            'discovered_assets_count': len(result.valid_assets),
             'total_assets': result.total_discovered,
             'scan_duration_seconds': scan_duration,
             'success_rate_percent': summary['success_rate'],
             'throughput_assets_per_second': round(throughput, 2),
-            'avg_validation_time_ms': round(avg_validation_time * 1000, 2),
+            'avg_processing_time_ms': round(avg_processing_time * 1000, 2),
             'cache_hit_rate_percent': round(cache_hit_rate, 2),
             'memory_efficiency': self._calculate_memory_efficiency(),
             'error_rate_percent': (len(self._scan_stats['errors']) / max(result.total_discovered, 1)) * 100
         }
         
         await self.progress_reporter.report_completed(
-            f"⚡ Scan otimizado concluído! {summary['valid_assets_count']}/{summary['total_discovered']} "
-            f"ativos válidos ({summary['success_rate']:.1f}% sucesso) em {scan_duration:.1f}s "
-            f"({throughput:.1f} ativos/s)",
+            f"🔍 Descoberta de ativos concluída! {summary['valid_assets_count']} "
+            f"ativos descobertos em {scan_duration:.1f}s "
+            f"({throughput:.1f} ativos/s) - prontos para validação pelo trading scanner",
             processed=summary['valid_assets_count'],
             total=summary['total_discovered'],
             **completion_metadata
@@ -823,11 +523,11 @@ class InitialScanner:
         
         # Comprehensive performance logging
         logger.info(
-            f"🚀 High-performance initial scan completed:\n"
-            f"  ├─ Assets: {summary['valid_assets_count']}/{summary['total_discovered']} valid ({summary['success_rate']:.1f}% success)\n"
+            f"🚀 Asset discovery completed:\n"
+            f"  ├─ Assets discovered: {summary['valid_assets_count']}/{summary['total_discovered']}\n"
             f"  ├─ Duration: {summary['scan_duration_seconds']:.1f}s ({throughput:.1f} assets/s)\n"
-            f"  ├─ Strategy: {self.validation_strategy.get_strategy_name()}\n"
-            f"  ├─ Performance: {avg_validation_time*1000:.1f}ms avg/asset, {cache_hit_rate:.1f}% cache hit rate\n"
+            f"  ├─ Mode: Discovery only (validation by trading scanner)\n"
+            f"  ├─ Performance: {avg_processing_time*1000:.1f}ms avg/asset, {cache_hit_rate:.1f}% cache hit rate\n"
             f"  └─ Memory: {completion_metadata['memory_efficiency']:.1f}% efficiency"
         )
         
@@ -836,16 +536,16 @@ class InitialScanner:
             error_count = len(self._scan_stats['errors'])
             error_rate = (error_count / max(result.total_discovered, 1)) * 100
             logger.warning(
-                f"⚠️  Scan completed with {error_count} errors ({error_rate:.1f}% error rate):\n"
+                f"⚠️  Discovery completed with {error_count} errors ({error_rate:.1f}% error rate):\n"
                 f"  └─ Sample errors: {self._scan_stats['errors'][:3]}"
             )
         
         # Performance recommendations
         if cache_hit_rate < 50:
             logger.info("💡 Performance tip: Consider increasing cache TTL for better hit rates")
-        if throughput < 5:
-            logger.info("💡 Performance tip: Consider using high_performance validation strategy")
-        if avg_validation_time > 2.0:
+        if throughput < 10:
+            logger.info("💡 Performance tip: Discovery is running slower than expected")
+        if avg_processing_time > 1.0:
             logger.info("💡 Performance tip: API response times are high, check network/rate limits")
     
     def _calculate_memory_efficiency(self) -> float:
@@ -880,7 +580,7 @@ class InitialScanner:
         error_metadata = {
             'error_type': type(error).__name__,
             'scan_stats': self._scan_stats,
-            'strategy_used': self.validation_strategy.get_strategy_name()
+            'mode': 'discovery_only'
         }
         
         await self.progress_reporter.report_error(
@@ -902,18 +602,14 @@ class InitialScanner:
             if hasattr(self.rate_limiter, 'cleanup'):
                 await self.rate_limiter.cleanup()
             
-            # Clear validation strategy resources
-            if hasattr(self.validation_strategy, 'cleanup'):
-                await self.validation_strategy.cleanup()
-            
             # Force garbage collection of large objects
             collected = gc.collect()
             
-            # Reset statistics for next scan (keep some for monitoring)
+            # Reset statistics for next scan
             self._scan_stats = {
                 'total_processed': 0,
-                'successful_validations': 0,
-                'failed_validations': 0,
+                'successful_discoveries': 0,
+                'failed_discoveries': 0,
                 'cache_hits': 0,
                 'api_calls': 0,
                 'errors': []
@@ -976,31 +672,31 @@ async def main():
         print("✅ Banco de dados inicializado")
         
         # Executar scan inicial
-        print("🔍 Executando scan inicial de todos os ativos...")
+        print("🔍 Executando descoberta inicial de todos os ativos...")
         result = await perform_initial_scan(force_refresh=True)
         
         # Exibir resultados
         summary = result.get_summary()
-        print(f"\n📊 RESULTADOS DO SCAN:")
+        print(f"\n📊 RESULTADOS DA DESCOBERTA:")
         print(f"   • Total descobertos: {summary['total_discovered']}")
-        print(f"   • Ativos válidos: {summary['valid_assets_count']}")
-        print(f"   • Ativos inválidos: {summary['invalid_assets_count']}")
-        print(f"   • Taxa de sucesso: {summary['success_rate']:.1f}%")
+        print(f"   • Ativos salvos no banco: {summary['valid_assets_count']}")
+        print(f"   • Erros de processamento: {summary['errors_count']}")
         print(f"   • Duração: {summary['scan_duration_seconds']:.1f}s")
         
         if summary['valid_assets']:
-            print(f"\n✅ ATIVOS VÁLIDOS ({len(summary['valid_assets'])}):")
+            print(f"\n✅ ATIVOS DESCOBERTOS ({len(summary['valid_assets'])}):")
             for symbol in summary['valid_assets'][:10]:  # Primeiros 10
                 print(f"   • {symbol}")
             if len(summary['valid_assets']) > 10:
                 print(f"   • ... e mais {len(summary['valid_assets']) - 10} ativos")
         
         if result.errors:
-            print(f"\n⚠️ ERROS ({len(result.errors)}):")
+            print(f"\n⚠️ ERROS DE PROCESSAMENTO ({len(result.errors)}):")
             for error in result.errors[:5]:  # Primeiros 5 erros
                 print(f"   • {error['symbol']}: {error['error']}")
         
-        print(f"\n🎉 Scan concluído! {summary['valid_assets_count']} ativos prontos para trading.")
+        print(f"\n🎉 Descoberta concluída! {summary['valid_assets_count']} ativos salvos no banco.")
+        print("💡 Use o trading scanner para validar e monitorar os ativos.")
         
     except Exception as e:
         print(f"❌ ERRO CRÍTICO: {e}")
