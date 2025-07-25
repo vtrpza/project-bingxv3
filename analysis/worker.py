@@ -417,10 +417,14 @@ class AnalysisWorker:
             except Exception as e:
                 logger.warning(f"Error persisting signal for {symbol}: {e}")
     
-    def get_worker_status(self) -> Dict[str, Any]:
+    async def get_worker_status(self) -> Dict[str, Any]:
         """Get current worker status and statistics."""
+        # Get coordinator stats
+        coordinator_stats = await self.coordinator.get_coordinator_stats()
+        
         return {
             'is_running': self.is_running,
+            'worker_id': self.worker_id,
             'statistics': self.analysis_stats.copy(),
             'configuration': {
                 'scan_interval_seconds': self.config.SCAN_INTERVAL_SECONDS,
@@ -438,6 +442,12 @@ class AnalysisWorker:
                     self.analysis_stats['signals_generated'] / 
                     max((datetime.utcnow() - (self.analysis_stats['last_analysis_time'] or datetime.utcnow())).total_seconds() / 3600, 1)
                 ) if self.analysis_stats['last_analysis_time'] else 0,
+            },
+            'coordination': {
+                'coordinator_stats': coordinator_stats,
+                'worker_registration': coordinator_stats.get('workers', {}).get(self.worker_id, 'Not registered'),
+                'api_request_coordination': 'Enabled',
+                'resource_allocation': '20% of rate limit budget'
             }
         }
     
@@ -500,7 +510,7 @@ async def stop_analysis_worker():
 async def get_worker_status() -> Dict[str, Any]:
     """Get status of the analysis worker."""
     worker = get_analysis_worker()
-    return worker.get_worker_status()
+    return await worker.get_worker_status()
 
 
 async def analyze_symbol_on_demand(symbol: str) -> Dict[str, Any]:
