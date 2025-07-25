@@ -3089,6 +3089,26 @@ async def broadcast_scanner_status():
             # Continue running even if there's an error
             continue
 
+async def websocket_heartbeat_task():
+    """Background task to maintain WebSocket connections with heartbeat."""
+    logger.info("Starting WebSocket heartbeat task")
+    
+    while True:
+        try:
+            await asyncio.sleep(30)  # Check connections every 30 seconds
+            
+            if manager.active_connections:
+                await manager.heartbeat_check()
+                logger.debug(f"WebSocket heartbeat check completed for {len(manager.active_connections)} connections")
+            
+        except asyncio.CancelledError:
+            logger.info("WebSocket heartbeat task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in WebSocket heartbeat task: {e}")
+            # Continue running even if there's an error
+            continue
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
     """Start background tasks"""
