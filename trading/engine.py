@@ -189,12 +189,22 @@ class TradingEngine:
             return None
     
     async def _check_trading_limits(self, signal: Dict[str, Any]) -> bool:
-        """Check if trading limits allow for new position."""
+        """Check if trading limits allow for new position (with test mode adjustments)."""
         try:
-            # Check concurrent trades limit
+            # Check concurrent trades limit (with test mode override)
             open_trades_count = len(self._open_trades)
-            if open_trades_count >= self._max_concurrent_trades:
-                logger.warning(f"Max concurrent trades reached: {open_trades_count}/{self._max_concurrent_trades}")
+            max_trades = self._max_concurrent_trades
+            
+            # In test mode, temporarily increase the concurrent trades limit
+            if is_test_mode_active():
+                test_config = get_test_mode_config()
+                test_max_trades = test_config.get('max_test_trades', 5)
+                # Use the higher of current config or test config
+                max_trades = max(max_trades, test_max_trades)
+                logger.warning(f"🧪 TEST MODE: Using increased concurrent trades limit: {max_trades}")
+            
+            if open_trades_count >= max_trades:
+                logger.warning(f"Max concurrent trades reached: {open_trades_count}/{max_trades}")
                 return False
             
             # Check if already have position in this symbol
