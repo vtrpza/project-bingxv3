@@ -1321,6 +1321,94 @@
         // Make the function globally available
         window.forceRevalidation = forceRevalidation;
         
+        // ====== UTILITY FUNCTIONS FOR TRADING INTERFACE ======
+        
+        // Loading indicator functions
+        function showLoadingIndicator(message = 'Carregando...') {
+            let indicator = document.getElementById('global-loading-indicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'global-loading-indicator';
+                indicator.className = 'loading-indicator';
+                indicator.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-message">${message}</div>
+                    </div>
+                `;
+                document.body.appendChild(indicator);
+            } else {
+                indicator.querySelector('.loading-message').textContent = message;
+                indicator.style.display = 'flex';
+            }
+        }
+        
+        function hideLoadingIndicator() {
+            const indicator = document.getElementById('global-loading-indicator');
+            if (indicator) {
+                indicator.style.display = 'none';
+            }
+        }
+        
+        // Activity log function
+        function addActivityLog(icon, message, type = 'info') {
+            try {
+                const logContainer = document.getElementById('activities-log');
+                if (!logContainer) return;
+                
+                // Remove the initial placeholder if it exists
+                const placeholder = logContainer.querySelector('.log-entry.system');
+                if (placeholder && placeholder.textContent.includes('Aguardando inicialização')) {
+                    placeholder.remove();
+                }
+                
+                // Create new log entry
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                
+                const now = new Date();
+                logEntry.innerHTML = `
+                    <div class="log-time">${now.toLocaleTimeString('pt-BR')}</div>
+                    <div class="log-icon">${icon}</div>
+                    <div class="log-message">${message}</div>
+                `;
+                
+                // Add to top of log
+                logContainer.insertBefore(logEntry, logContainer.firstChild);
+                
+                // Keep only last 50 entries
+                const entries = logContainer.querySelectorAll('.log-entry');
+                if (entries.length > 50) {
+                    entries[entries.length - 1].remove();
+                }
+                
+            } catch (error) {
+                console.error('Error adding activity log:', error);
+            }
+        }
+        
+        // Clear activity log function
+        function clearActivityLog() {
+            try {
+                const logContainer = document.getElementById('activities-log');
+                if (logContainer) {
+                    logContainer.innerHTML = `
+                        <div class="log-entry system">
+                            <div class="log-time">${new Date().toLocaleTimeString('pt-BR')}</div>
+                            <div class="log-icon">🧹</div>
+                            <div class="log-message">Log de atividades limpo</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error clearing activity log:', error);
+            }
+        }
+        
+        // Make functions globally available
+        window.clearActivityLog = clearActivityLog;
+        window.addActivityLog = addActivityLog;
+        
         // Trading Tab Functions
         async function toggleAutoTradingJS() {
             const btn = document.getElementById('auto-trade-btn');
