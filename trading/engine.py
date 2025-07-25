@@ -16,6 +16,15 @@ from api.client import BingXClient, TradingAPIError
 from utils.logger import get_logger
 from utils.validators import Validator, ValidationError
 
+# Import test mode functions for aggressive testing
+try:
+    from api.web_api import is_test_mode_active, get_test_mode_config, increment_test_mode_stat
+except ImportError:
+    # Fallback functions if import fails
+    def is_test_mode_active(): return False
+    def get_test_mode_config(): return {}
+    def increment_test_mode_stat(stat_name, increment=1): pass
+
 logger = get_logger(__name__)
 
 
