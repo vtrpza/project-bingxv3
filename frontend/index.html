@@ -2414,6 +2414,45 @@
         }
     }
     
+    // Optimized dashboard initialization function
+    async function initializeDashboard() {
+        try {
+            console.log('🚀 Initializing dashboard with optimized data loading...');
+            const response = await fetch('/api/dashboard/init');
+            
+            if (!response.ok) {
+                console.error('Failed to fetch dashboard init data:', response.status);
+                // Fallback to old method
+                await refreshScannerStatus();
+                return;
+            }
+            
+            const data = await response.json();
+            console.log('✅ Dashboard data loaded:', data);
+            
+            // Update scanner activity with the loaded data
+            updateScannerActivity({
+                active: data.scanner_status.scanning_active,
+                monitored_assets: data.scanner_status.monitored_assets,
+                signals_detected: data.scanner_status.signals_count,
+                next_scan: formatNextScanTime(data.scanner_status.scan_interval)
+            });
+            
+            // Update system status
+            if (data.system_status.initialized) {
+                updateRobotStatus('active', 'Sistema Operacional', 100);
+                addActivityLog('✅', 'Sistema inicializado com sucesso - Todos os componentes ativos');
+            }
+            
+            console.log('🎯 Dashboard initialization completed successfully');
+            
+        } catch (error) {
+            console.error('Error initializing dashboard:', error);
+            // Fallback to old method
+            await refreshScannerStatus();
+        }
+    }
+
     async function refreshScannerStatus() {
         try {
             const response = await fetch('/api/scanner/status');
@@ -2738,8 +2777,8 @@
         updateRobotStatus('active', 'Sistema Iniciando', 25);
         addActivityLog('🤖', 'Dashboard inicializado - Sistema de trading carregado');
         
-        // Initialize scanner activity with real data and start auto-refresh
-        await refreshScannerStatus();
+        // Initialize dashboard with optimized single API call
+        await initializeDashboard();
         startScannerStatusAutoRefresh(); // Auto-refresh scanner status every 15 seconds
         
         // Initialize positions

@@ -16,7 +16,7 @@ from decimal import Decimal
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from pathlib import Path
 
-from database.connection import get_db, init_database, create_tables
+from database.connection import get_db, get_session, init_database, create_tables
 from database.repository import (
     AssetRepository, IndicatorRepository, 
     SignalRepository, TradeRepository, OrderRepository
@@ -908,27 +908,26 @@ async def get_signals(
 
 @app.get("/api/signals/active")
 async def get_active_signals(
+    db: Session = Depends(get_db),
     repo: SignalRepository = Depends(get_signal_repo)
 ):
     """Get unprocessed signals"""
     try:
-        signals = await repo.get_unprocessed_signals()
-        return {
-            "active_signals": [
-                {
-                    "id": str(signal.id),
-                    "symbol": signal.symbol,
-                    "signal_type": signal.signal_type,
-                    "side": signal.side,
-                    "strength": float(signal.strength) if signal.strength else None,
-                    "confidence": float(signal.confidence) if signal.confidence else None,
-                    "price": float(signal.price) if signal.price else None,
-                    "created_at": signal.created_at
-                }
-                for signal in signals
-            ],
-            "total": len(signals)
-        }
+        # Get pending signals (recent signals that may be unprocessed)
+        signals = repo.get_pending_signals(db, limit=50)
+        return [
+            {
+                "id": str(signal.id),
+                "symbol": signal.asset.symbol if signal.asset else "UNKNOWN",
+                "signal_type": signal.signal_type,
+                "strength": float(signal.strength) if signal.strength else None,
+                "timestamp": signal.timestamp.isoformat() if signal.timestamp else None,
+                "is_processed": getattr(signal, 'is_processed', False),
+                "rules_triggered": signal.rules_triggered or [],
+                "created_at": signal.created_at.isoformat() if signal.created_at else None
+            }
+            for signal in signals
+        ]
     except Exception as e:
         logger.error(f"Error fetching active signals: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1292,6 +1291,77 @@ async def get_dashboard_summary(
     except Exception as e:
         logger.error(f"Error fetching dashboard summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Fast dashboard initialization endpoint
+@app.get("/api/dashboard/init")
+async def get_dashboard_init_data(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo),
+    signal_repo: SignalRepository = Depends(get_signal_repo)
+):
+    """Get all data needed for dashboard initialization in one call - optimized for speed"""
+    try:
+        # Get scanner status data with minimal database queries
+        current_time = utc_now()
+        valid_assets_count = asset_repo.get_valid_assets_count(db)
+        
+        # Check if scanning is active
+        scanning_active = False
+        if (scanner_status["last_scan_start"] and not scanner_status["last_scan_end"]):
+            scanning_active = True
+        elif scanner_status["last_scan_end"]:
+            time_since_last_scan = (current_time - scanner_status["last_scan_end"]).total_seconds()
+            if time_since_last_scan < (scanner_status.get("scan_interval", 60) * 2):
+                scanning_active = True
+
+        # Get signals count (using optimized method)
+        signals_count = signal_repo.get_active_signals_count(db)
+        
+        return {
+            "scanner_status": {
+                "scanning_active": scanning_active,
+                "monitored_assets": valid_assets_count,
+                "signals_count": signals_count,
+                "last_scan_start": scanner_status.get("last_scan_start"),
+                "last_scan_end": scanner_status.get("last_scan_end"),
+                "scan_interval": scanner_status.get("scan_interval", 60),
+                "timestamp": current_time.isoformat()
+            },
+            "trading_status": {
+                "enabled": True,
+                "paper_mode": False,
+                "auto_trading_active": False
+            },
+            "system_status": {
+                "database_connected": True,
+                "api_connected": bingx_client is not None,
+                "initialized": True
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard init data: {e}")
+        # Return safe defaults on error to prevent UI blocking
+        return {
+            "scanner_status": {
+                "scanning_active": False,
+                "monitored_assets": 0,
+                "signals_count": 0,
+                "last_scan_start": None,
+                "last_scan_end": None,
+                "scan_interval": 60,
+                "timestamp": utc_now().isoformat()
+            },
+            "trading_status": {
+                "enabled": True,
+                "paper_mode": False,
+                "auto_trading_active": False
+            },
+            "system_status": {
+                "database_connected": False,
+                "api_connected": False,
+                "initialized": False
+            }
+        }
 
 # Trading live data endpoint - REFACTORED for direct CCXT calls
 @app.get("/api/trading/live-data")

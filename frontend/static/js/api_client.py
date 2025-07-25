@@ -174,7 +174,7 @@ class APIClient:
     async def get_positions(self, active_only=True):
         """Get current positions"""
         params = f"?active_only={str(active_only).lower()}"
-        return await self.get(f"/positions{params}")
+        return await self.get(f"/api/positions{params}")
     
     # Dashboard endpoint
     async def get_dashboard_summary(self):
@@ -453,8 +453,8 @@ class APIClient:
         """Stop auto trading mode"""
         return await self.post("/trading/auto-trading/stop")
     
-    async def get_positions(self):
-        """Get current open positions"""
+    async def get_trading_positions(self):
+        """Get current open positions from trading API"""
         return await self.get("/trading/positions")
     
     async def get_trades_history(self, limit=20):
