@@ -109,35 +109,182 @@ project-bingxv3/
 
 ## 🛠️ Stack Tecnológica
 
-- **Backend**: Python 3.11+
-- **Frontend**: PyScript
-- **Banco de Dados**: PostgreSQL
+### Backend
+- **Python**: 3.11+
+- **Framework**: FastAPI com WebSocket
 - **API Exchange**: CCXT (BingX)
-- **Deploy**: Render
-- **Containerização**: Docker
+- **Banco de Dados**: PostgreSQL (prod) / SQLite (dev)
+- **Deploy**: Render (multi-service)
 
-## 📝 Configuração
+### Frontend
+- **Framework**: PyScript
+- **API Client**: Fetch com fallback
+- **Real-time**: WebSocket + polling fallback
+- **UI**: Responsive CSS Grid
 
-Ver `config/CLAUDE.md` para detalhes de configuração.
+### Infraestrutura
+- **Deploy**: Render.com
+- **Monitoring**: Health checks
+- **Logs**: Structured logging
+- **Caching**: Redis (planned)
 
-## 🔒 Segurança
+## 🚀 Deploy no Render
 
-- Credenciais em variáveis de ambiente
-- Validação de todas as operações
-- Logs detalhados de auditoria
+### URL de Produção
+**https://bingx-trading-bot-3i13.onrender.com/**
 
-## 📊 Monitoramento
+### Configuração Render
+- **Main Service**: Web server (FastAPI)
+- **Workers**: Scanner, Analysis, Maintenance
+- **Database**: PostgreSQL
+- **Redis**: Para cache (opcional)
 
-- Logs estruturados
-- Métricas de performance
-- Alertas de erro
-
-## 🧪 Testes
-
+### Variáveis de Ambiente Obrigatórias
 ```bash
+# BingX API
+BINGX_API_KEY=your_api_key
+BINGX_SECRET_KEY=your_secret_key
+
+# Database (auto-configurado pelo Render)
+DATABASE_URL=postgresql://...
+
+# Server (auto-configurado pelo Render)
+PORT=10000
+HOST=0.0.0.0
+```
+
+### Entry Points
+```yaml
+# render.yaml
+services:
+  - type: web
+    name: bingx-trading-bot
+    startCommand: python -m api  # Usa api/__main__.py
+    healthCheckPath: /health
+    
+  - type: worker
+    name: bingx-scanner-worker
+    startCommand: python -m scanner.enhanced_worker
+```
+
+## 🔧 Desenvolvimento Local
+
+### Configuração Inicial
+```bash
+# Clone e instale dependências
+git clone <repo>
+cd project-bingxv3
+pip install -r requirements.txt
+
+# Configure variáveis de ambiente
+cp .env.example .env
+# Edite .env com suas credenciais
+
+# Rode localmente
+python -m api  # API server apenas
+# ou
+python main.py  # Bot completo
+```
+
+### Testes e Diagnóstico
+```bash
+# Teste de inicialização
+python startup_test.py
+
+# Health check local
+python render_health_check.py
+
+# Debug completo
+python render_debug.py
+
+# Testes unitários
 python -m pytest tests/
 ```
 
-## 🚀 Deploy
+## 📊 Monitoramento e Logs
 
-Ver `docs/deploy.md` para instruções de deploy no Render.
+### Health Check
+- **Endpoint**: `/health`
+- **Status**: Verifica DB, API, componentes
+- **Response**: JSON com status detalhado
+
+### Logs Estruturados
+- **Format**: JSON + timestamp
+- **Levels**: DEBUG, INFO, WARNING, ERROR
+- **Locations**: `/var/log/` (Render)
+
+### Performance Metrics
+- **API Response Time**: < 200ms
+- **WebSocket Latency**: < 50ms  
+- **Database Queries**: < 100ms
+- **Scanner Speed**: ~10s para 1000+ ativos
+
+## 🚨 Troubleshooting
+
+### Problemas Comuns
+
+#### 502 Bad Gateway (Render)
+```bash
+# Verificar logs de build e runtime no Render
+# Testar localmente:
+python render_health_check.py
+python -m api
+```
+
+#### WebSocket não conecta
+- Fallback automático para polling
+- Verifica CORS e protocolo (ws/wss)
+- Logs no browser console
+
+#### Scanner lento/travado
+- Progress bar com atualizações em tempo real
+- Logs detalhados no backend
+- Rate limiting automático
+
+#### Database connection issues
+```bash
+# Verificar DATABASE_URL
+echo $DATABASE_URL
+
+# Testar conexão
+python -c "from database.connection import init_database; print(init_database())"
+```
+
+### Scripts de Diagnóstico
+- `render_health_check.py`: Teste rápido de componentes
+- `render_debug.py`: Diagnóstico completo do ambiente
+- `startup_test.py`: Teste de inicialização
+
+## 🔒 Segurança
+
+### Credenciais
+- **Nunca** commitar API keys
+- Usar variáveis de ambiente sempre
+- Render dashboard para configuração segura
+
+### Validação
+- Inputs sanitizados
+- Rate limiting nas APIs
+- Logs de auditoria detalhados
+
+### CORS
+- Configurado para domínio específico
+- WebSocket com origem validada
+- Headers de segurança
+
+## 📈 Performance
+
+### Otimizações Aplicadas
+- **Dashboard init**: Endpoint consolidado (`/api/dashboard/init`)
+- **API calls**: Batch requests quando possível
+- **WebSocket**: Real-time com fallback inteligente
+- **Database**: Connection pooling
+- **Scanner**: Progress em tempo real
+- **Frontend**: Loading states otimizados
+
+### Métricas Target
+- **Page Load**: < 3s
+- **API Response**: < 200ms
+- **WebSocket Reconnect**: < 5s
+- **Scanner Progress**: Updates em 1s
+- **Database Queries**: < 100ms
