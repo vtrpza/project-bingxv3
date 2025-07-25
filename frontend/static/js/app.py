@@ -540,8 +540,8 @@ class TradingBotApp:
         except Exception as e:
             console.error(f"Error updating scanner data: {str(e)}")
     
-    async def update_trading_data(self):
-        """Update trading tab data"""
+    async def update_trading_tab_data(self):
+        """Update trading tab positions and trades data"""
         try:
             # Get active positions
             positions_data = await api_client.get_positions(active_only=True)
@@ -554,7 +554,7 @@ class TradingBotApp:
                 ui_components.update_trades_table(trades_data["trades"])
                 
         except Exception as e:
-            console.error(f"Error updating trading data: {str(e)}")
+            console.error(f"Error updating trading tab data: {str(e)}")
     
     async def update_trading_data(self):
         """Update trading data table with real-time information"""
@@ -791,6 +791,7 @@ class TradingBotApp:
                 await self.update_scanner_data()
             elif self.current_tab == "trading":
                 await self.update_trading_data()
+                await self.update_trading_tab_data()
             
             # Always update summary (but only if validation isn't updating)
             if not self.update_in_progress:
