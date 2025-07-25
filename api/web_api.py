@@ -438,6 +438,35 @@ async def health_check():
         "render_service": os.getenv("RENDER_SERVICE_NAME", "unknown")
     }
 
+# WebSocket connection monitoring endpoint
+@app.get("/ws/stats")
+async def websocket_stats():
+    """Get WebSocket connection statistics for monitoring."""
+    try:
+        stats = manager.get_connection_stats()
+        
+        # Add additional metadata
+        stats.update({
+            "timestamp": utc_now().isoformat(),
+            "heartbeat_interval": manager.heartbeat_interval,
+            "connection_metadata_count": len(manager.connection_metadata)
+        })
+        
+        return {
+            "success": True,
+            "data": stats
+        }
+    except Exception as e:
+        logger.error(f"Error getting WebSocket stats: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "data": {
+                "total_connections": 0,
+                "timestamp": utc_now().isoformat()
+            }
+        }
+
 # Readiness check (for internal use)
 @app.get("/ready")
 async def readiness_check():
