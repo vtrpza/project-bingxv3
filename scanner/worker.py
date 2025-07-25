@@ -340,10 +340,17 @@ class ScannerWorker:
                 logger.error(f"❌ Error in scanner worker: {e}")
                 await asyncio.sleep(5)  # Wait before retry
     
-    def stop(self):
+    async def stop(self):
         """Stop the scanner worker."""
         self.running = False
         logger.info("🛑 Scanner worker stop requested")
+        
+        # Unregister from coordinator
+        try:
+            await self.coordinator.unregister_worker(self.worker_id)
+            logger.info(f"Unregistered scanner worker from coordinator: {self.worker_id}")
+        except Exception as e:
+            logger.error(f"Error unregistering from coordinator: {e}")
 
 def signal_handler(signum, frame):
     """Handle shutdown signals."""
