@@ -4789,3 +4789,29 @@
 2025-07-25 15:39:36,777 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
 2025-07-25 15:39:36,778 - database.connection - INFO - Database tables created successfully
 2025-07-25 15:39:36,778 - api.web_api - INFO - Database initialization completed successfully
+2025-07-25 15:39:37,534 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-25 15:39:37,535 - api.web_api - INFO - Starting automated risk management task
+2025-07-25 15:39:37,535 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-25 15:39:37,535 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 15:39:39,016 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:39:39,016 - database.connection - INFO - Using SQLite database
+2025-07-25 15:39:39,017 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:39:41,105 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 15:39:41,105 - api.web_api - INFO - WebSocket connected: conn_1_1753468781 from 127.0.0.1. Total: 1
+2025-07-25 15:39:41,106 - api.web_api - INFO - WebSocket connected: conn_1_1753468781 from 127.0.0.1
+2025-07-25 15:39:42,132 - api.web_api - INFO - Subscription confirmed for conn_1_1753468781: trading_data
+2025-07-25 15:39:42,133 - api.web_api - INFO - Subscription confirmed for conn_1_1753468781: scanner_status
+2025-07-25 15:39:42,133 - api.web_api - INFO - Subscription confirmed for conn_1_1753468781: general
+2025-07-25 15:39:45,243 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:39:45,338 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:39:45,338 - database.connection - INFO - Using SQLite database
+2025-07-25 15:39:45,339 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:39:45,344 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:39:49,431 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:39:49,431 - database.connection - INFO - Using SQLite database
+2025-07-25 15:39:49,433 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:39:49,481 - api.web_api - ERROR - Error receiving message from conn_1_1753468781: (1012, None)
+2025-07-25 15:39:49,482 - api.web_api - INFO - WebSocket disconnected: conn_1_1753468781 | Host: 127.0.0.1 | Reason: final_cleanup* | Duration: 8.4s | Messages: 4 | Failures: 0 | Bytes sent: 838 | Remaining: 0
+2025-07-25 15:39:49,582 - api.web_api - INFO - FastAPI server shutting down
+2025-07-25 15:39:49,583 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 15:39:49,583 - api.web_api - INFO - Scanner status broadcast task cancelled
