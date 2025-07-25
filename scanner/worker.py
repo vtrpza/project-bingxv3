@@ -23,6 +23,7 @@ from config.trading_config import TradingConfig
 from utils.logger import get_logger
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
+from utils.worker_coordinator import get_coordinator
 
 logger = get_logger(__name__)
 
@@ -39,6 +40,8 @@ class ScannerWorker:
         self.signal_repo = SignalRepository()
         self.rate_limiter = get_rate_limiter()
         self.cache = get_smart_cache()
+        self.coordinator = get_coordinator()
+        self.worker_id = f"scanner_worker_{id(self)}"
         
     async def initialize(self):
         """Initialize the scanner worker."""
@@ -48,6 +51,9 @@ class ScannerWorker:
             # Initialize database
             if not init_database():
                 raise RuntimeError("Failed to initialize database")
+            
+            # Register with coordinator
+            await self.coordinator.register_worker(self.worker_id, 'scanner')
             
             # Initialize API client
             if not await initialize_client():
@@ -167,12 +173,14 @@ class ScannerWorker:
             return None
     
     async def _fetch_ticker_with_rate_limit(self, client, symbol):
-        """Fetch ticker with rate limiting."""
+        """Fetch ticker with rate limiting and coordination."""
+        await self.coordinator.request_api_permission(self.worker_id, 'market_data')
         await self.rate_limiter.acquire('market_data')
         return await client.fetch_ticker(symbol)
     
     async def _fetch_ohlcv_with_rate_limit(self, client, symbol, timeframe, limit):
-        """Fetch OHLCV data with rate limiting."""
+        """Fetch OHLCV data with rate limiting and coordination."""
+        await self.coordinator.request_api_permission(self.worker_id, 'market_data')
         await self.rate_limiter.acquire('market_data')
         return await client.fetch_ohlcv(symbol, timeframe, limit)
     
