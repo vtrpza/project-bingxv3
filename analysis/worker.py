@@ -479,6 +479,13 @@ class AnalysisWorker:
                 }
                 await connection_manager.broadcast(signal_to_broadcast)
                 logger.info(f"Broadcasted new signal for {symbol}: {signal_data['signal_type']}")
+                
+                # Update test mode statistics if active
+                if is_test_mode:
+                    increment_test_mode_stat('signals_generated')
+                    if signal_data.get('test_mode_forced', False):
+                        increment_test_mode_stat('signals_forced')
+                        logger.warning(f"🧪 TEST MODE: Forced signal statistics updated for {symbol}")
 
             except Exception as e:
                 logger.warning(f"Error persisting signal for {symbol}: {e}")
