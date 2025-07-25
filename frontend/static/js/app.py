@@ -766,9 +766,17 @@ class TradingBotApp:
 
     def setup_auto_refresh(self):
         """Set up automatic data refresh"""
+        # Clear any existing interval first
+        if hasattr(self, 'update_interval') and self.update_interval:
+            clearInterval(self.update_interval)
+            
         def refresh_task():
-            if self.auto_refresh_enabled:
-                asyncio.create_task(self.refresh_current_tab())
+            if self.auto_refresh_enabled and not getattr(self, 'update_in_progress', False):
+                # Add safety check to prevent recursive calls
+                try:
+                    asyncio.create_task(self.refresh_current_tab())
+                except Exception as e:
+                    console.error(f"Error in refresh task: {e}")
         
         # Create interval for auto refresh
         self.update_interval = setInterval(
@@ -778,11 +786,20 @@ class TradingBotApp:
     
     async def refresh_current_tab(self):
         """Refresh data for current active tab with debounce"""
+        # Prevent recursive calls with timestamp-based debounce
+        current_time = js.Date.now()
+        if hasattr(self, '_last_refresh_time') and (current_time - self._last_refresh_time) < 1000:
+            console.log("Refresh called too soon, debouncing...")
+            return
+        
         # Evita refresh se há atualização em progresso
         if self.update_in_progress:
             console.log("Update in progress, skipping scheduled refresh")
             return
-            
+        
+        # Set refresh timestamp to prevent recursion
+        self._last_refresh_time = current_time
+        
         try:
             console.log(f"Refreshing {self.current_tab} tab...")
             
@@ -831,6 +848,8 @@ class TradingBotApp:
             def on_tab_click(event):
                 # Extract tab name from onclick attribute or data
                 tab_name = event.target.textContent.strip()
+                previous_tab = self.current_tab
+                
                 if "Scanner" in tab_name:
                     self.current_tab = "scanner"
                 elif "Trading" in tab_name:
@@ -838,8 +857,12 @@ class TradingBotApp:
                 elif "Analytics" in tab_name:
                     self.current_tab = "analytics"
                 
-                # Refresh data for new tab
-                asyncio.create_task(self.refresh_current_tab())
+                # Only refresh if tab actually changed and not in progress
+                if self.current_tab != previous_tab and not getattr(self, 'update_in_progress', False):
+                    try:
+                        asyncio.create_task(self.refresh_current_tab())
+                    except Exception as e:
+                        console.error(f"Error refreshing tab: {e}")
             
             button.addEventListener("click", create_proxy(on_tab_click))
         
@@ -1086,8 +1109,12 @@ def executeSignalTrade(symbol, signal_type, signal_data):
 
 # Removed toggleAutoTrading function to avoid conflicts with JavaScript version
 
-# Initialize the application first
-app = TradingBotApp()
+# Initialize the application first (with singleton protection)
+if 'app' not in globals() or app is None:
+    app = TradingBotApp()
+    console.log("Trading bot app instance created")
+else:
+    console.log("Trading bot app already exists, reusing instance")
 
 # Make functions globally available
 document.refreshData = create_proxy(refreshData)
