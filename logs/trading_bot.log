@@ -13527,3 +13527,9 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 22:56:03,767 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
 2025-07-24 22:56:03,768 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
 2025-07-24 22:56:03,973 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 22:57:04,208 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:57:04,208 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:57:04,400 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 22:57:13,537 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:57:13,537 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:57:13,725 - api.web_api - INFO - BingX client initialized successfully
