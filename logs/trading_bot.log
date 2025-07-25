@@ -13498,3 +13498,12 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 21:59:14,505 - api.client - INFO - BingX API connection test successful - found 2247 markets
 2025-07-24 21:59:14,507 - api.client - INFO - BingX client initialized successfully (Testnet: True)
 2025-07-24 21:59:14,507 - api.market_data - INFO - BingX client initialized successfully
+2025-07-24 22:36:21,250 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:36:21,251 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:36:21,442 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 22:37:24,161 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 22:37:24,161 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 22:37:24,358 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 22:37:24,421 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 22:37:24,421 - database.connection - INFO - Using SQLite database
+2025-07-24 22:37:24,429 - database.connection - INFO - Database connection established successfully
