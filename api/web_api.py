@@ -401,16 +401,41 @@ def get_position_repo():
 # Health check
 @app.get("/health")
 async def health_check():
-    """Fast health check that responds immediately during startup."""
+    """Enhanced health check for Render deployment with detailed status."""
     global startup_complete, database_ready
     
+    # Always return 200 OK for basic health check to prevent 502 errors
+    status_code = 200
+    
+    # Determine overall health status
+    if startup_complete and database_ready:
+        status = "healthy"
+        message = "All systems operational"
+    elif startup_complete:
+        status = "degraded" 
+        message = "Server running, database initializing"
+    else:
+        status = "starting"
+        message = "Server starting up"
+    
+    # Get connection stats if available
+    connection_stats = {}
+    try:
+        connection_stats = manager.get_connection_stats()
+    except Exception as e:
+        logger.debug(f"Error getting WebSocket stats: {e}")
+    
     return {
-        "status": "healthy",
-        "timestamp": utc_now(),
+        "status": status,
+        "http_status": status_code,
+        "timestamp": utc_now().isoformat(),
         "version": "1.0.0",
+        "environment": "production" if os.getenv("RENDER") else "development",
         "startup_complete": startup_complete,
         "database_ready": database_ready,
-        "message": "Server is running"
+        "websocket_connections": connection_stats.get("total_connections", 0),
+        "message": message,
+        "render_service": os.getenv("RENDER_SERVICE_NAME", "unknown")
     }
 
 # Readiness check (for internal use)
