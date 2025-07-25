@@ -722,6 +722,17 @@ class InitialScanner:
         try:
             progress_percentage = int((current_step / total_steps) * 100)
             
+            # Update global revalidation status if available
+            try:
+                # Import here to avoid circular import
+                from api.web_api import revalidation_status
+                if revalidation_status["running"]:
+                    revalidation_status["progress"] = current_step
+                    revalidation_status["total"] = total_steps
+            except ImportError:
+                # web_api not available, continue without updating
+                pass
+            
             progress_message = {
                 "type": "scanner_progress",
                 "payload": {

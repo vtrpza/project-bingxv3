@@ -732,12 +732,21 @@ async def force_revalidation():
 async def get_revalidation_status():
     """Get the current status of the revalidation process"""
     status_copy = revalidation_status.copy()
+    
+    # Calculate progress percentage
+    if status_copy["total"] > 0:
+        status_copy["progress_percentage"] = int((status_copy["progress"] / status_copy["total"]) * 100)
+    else:
+        status_copy["progress_percentage"] = 0
+    
     if not status_copy["running"] and status_copy["total"] == 0:
         status_copy["message"] = "No revalidation in progress or no assets found."
     elif not status_copy["running"] and status_copy["completed"]:
         status_copy["message"] = "Revalidation completed."
+        status_copy["progress_percentage"] = 100
     elif status_copy["running"]:
         status_copy["message"] = "Revalidation in progress."
+    
     return {"status": status_copy}
 
 # Asset endpoints
