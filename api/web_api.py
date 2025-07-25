@@ -16,7 +16,7 @@ from decimal import Decimal
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from pathlib import Path
 
-from database.connection import get_db, init_database, create_tables
+from database.connection import get_db, get_session, init_database, create_tables
 from database.repository import (
     AssetRepository, IndicatorRepository, 
     SignalRepository, TradeRepository, OrderRepository
