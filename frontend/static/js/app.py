@@ -1407,52 +1407,19 @@ def handleScannerWebSocketMessage(data):
         console.log(f"Handling scanner WebSocket message: {type(data)}")
         console.log(f"Data content: {data}")
         
-        # Handle different data types from JavaScript
-        if isinstance(data, str):
-            import json
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError as json_err:
-                console.error(f"Failed to parse JSON data: {json_err}")
-                return
-        elif hasattr(data, 'to_py'):
-            console.log("Converting JsProxy to Python dict in global handler")
-            data = data.to_py()
-        elif str(type(data)) == "<class 'pyodide.ffi.JsProxy'>":
-            console.log("Converting JsProxy using JSON.stringify in global handler")
-            try:
-                import json
-                data = json.loads(js.JSON.stringify(data))
-            except Exception as conv_err:
-                console.error(f"Failed to convert JsProxy: {conv_err}")
-                # Manual conversion as fallback
-                try:
-                    converted_data = {}
-                    for key in js.Object.keys(data):
-                        value = data[key]
-                        # Handle nested JsProxy objects
-                        if hasattr(value, 'to_py'):
-                            value = value.to_py()
-                        elif str(type(value)) == "<class 'pyodide.ffi.JsProxy'>":
-                            # Convert nested object
-                            if hasattr(js.Object, 'keys') and js.Object.keys(value).length > 0:
-                                nested_obj = {}
-                                for nested_key in js.Object.keys(value):
-                                    nested_obj[nested_key] = value[nested_key]
-                                value = nested_obj
-                        converted_data[key] = value
-                    data = converted_data
-                    console.log("Manual JsProxy conversion successful")
-                except Exception as manual_err:
-                    console.error(f"Manual conversion also failed: {manual_err}")
-                    return
+        # Convert data using utility function
+        converted_data = convert_jsproxy_to_dict(data)
+        
+        if converted_data is None:
+            console.error(f"Failed to convert scanner WebSocket message data: {type(data)}")
+            return
         
         # Final validation
-        if not isinstance(data, dict):
-            console.error(f"Data is not a dict after all conversions: {type(data)}")
+        if not isinstance(converted_data, dict):
+            console.error(f"Data is not a dict after conversion: {type(converted_data)}")
             return
             
-        app.handle_scanner_message(data)
+        app.handle_scanner_message(converted_data)
     except Exception as e:
         console.error(f"Error handling scanner WebSocket message: {e}")
         console.error(f"Error type: {type(e)}")
