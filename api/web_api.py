@@ -1292,6 +1292,77 @@ async def get_dashboard_summary(
         logger.error(f"Error fetching dashboard summary: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Fast dashboard initialization endpoint
+@app.get("/api/dashboard/init")
+async def get_dashboard_init_data(
+    db: Session = Depends(get_db),
+    asset_repo: AssetRepository = Depends(get_asset_repo),
+    signal_repo: SignalRepository = Depends(get_signal_repo)
+):
+    """Get all data needed for dashboard initialization in one call - optimized for speed"""
+    try:
+        # Get scanner status data with minimal database queries
+        current_time = utc_now()
+        valid_assets_count = asset_repo.get_valid_assets_count(db)
+        
+        # Check if scanning is active
+        scanning_active = False
+        if (scanner_status["last_scan_start"] and not scanner_status["last_scan_end"]):
+            scanning_active = True
+        elif scanner_status["last_scan_end"]:
+            time_since_last_scan = (current_time - scanner_status["last_scan_end"]).total_seconds()
+            if time_since_last_scan < (scanner_status.get("scan_interval", 60) * 2):
+                scanning_active = True
+
+        # Get signals count (using optimized method)
+        signals_count = signal_repo.get_active_signals_count(db)
+        
+        return {
+            "scanner_status": {
+                "scanning_active": scanning_active,
+                "monitored_assets": valid_assets_count,
+                "signals_count": signals_count,
+                "last_scan_start": scanner_status.get("last_scan_start"),
+                "last_scan_end": scanner_status.get("last_scan_end"),
+                "scan_interval": scanner_status.get("scan_interval", 60),
+                "timestamp": current_time.isoformat()
+            },
+            "trading_status": {
+                "enabled": True,
+                "paper_mode": False,
+                "auto_trading_active": False
+            },
+            "system_status": {
+                "database_connected": True,
+                "api_connected": bingx_client is not None,
+                "initialized": True
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting dashboard init data: {e}")
+        # Return safe defaults on error to prevent UI blocking
+        return {
+            "scanner_status": {
+                "scanning_active": False,
+                "monitored_assets": 0,
+                "signals_count": 0,
+                "last_scan_start": None,
+                "last_scan_end": None,
+                "scan_interval": 60,
+                "timestamp": utc_now().isoformat()
+            },
+            "trading_status": {
+                "enabled": True,
+                "paper_mode": False,
+                "auto_trading_active": False
+            },
+            "system_status": {
+                "database_connected": False,
+                "api_connected": False,
+                "initialized": False
+            }
+        }
+
 # Trading live data endpoint - REFACTORED for direct CCXT calls
 @app.get("/api/trading/live-data")
 async def get_trading_live_data(
