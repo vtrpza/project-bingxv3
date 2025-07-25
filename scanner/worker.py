@@ -23,6 +23,7 @@ from config.trading_config import TradingConfig
 from utils.logger import get_logger
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
+from utils.worker_coordinator import get_coordinator
 
 logger = get_logger(__name__)
 
