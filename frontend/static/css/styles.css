@@ -37,6 +37,476 @@
     --transition: all 0.3s ease;
 }
 
+/* ========== ROBOT DASHBOARD STYLES ========== */
+
+.robot-dashboard {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--border-color);
+}
+
+.robot-dashboard h2 {
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-lg) 0;
+    font-size: 24px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+/* Main Status Section */
+.main-status-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.robot-status-card {
+    background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.robot-status-card:hover {
+    border-color: var(--accent-info);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.robot-avatar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.robot-face {
+    font-size: 48px;
+    animation: pulse 2s infinite;
+}
+
+.robot-activity {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+}
+
+.activity-pulse {
+    width: 16px;
+    height: 16px;
+    background: var(--status-online);
+    border-radius: 50%;
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+.robot-info {
+    flex: 1;
+}
+
+.robot-info h3 {
+    color: var(--text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.robot-state {
+    margin-bottom: var(--spacing-sm);
+}
+
+.state-text {
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.state-progress {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    margin-top: var(--spacing-xs);
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-info), var(--accent-buy));
+    border-radius: 2px;
+    width: 0%;
+    animation: progress-fill 3s infinite;
+}
+
+@keyframes progress-fill {
+    0% { width: 0%; }
+    50% { width: 70%; }
+    100% { width: 0%; }
+}
+
+.last-action {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-style: italic;
+}
+
+/* Performance Metrics */
+.performance-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+.metric-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: var(--spacing-md);
+    transition: var(--transition);
+}
+
+.metric-card:hover {
+    border-color: var(--border-active);
+    transform: translateY(-1px);
+}
+
+.metric-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+}
+
+.metric-icon {
+    font-size: 20px;
+}
+
+.metric-title {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.metric-value {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.total-pnl {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.total-pnl.profit { color: var(--accent-buy); }
+.total-pnl.loss { color: var(--accent-sell); }
+.total-pnl.neutral { color: var(--text-muted); }
+
+.pnl-percentage {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.trades-count {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.win-rate-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.win-rate {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent-buy);
+}
+
+.win-rate-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.metric-detail {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Realtime Activity Section */
+.realtime-activity {
+    margin-bottom: var(--spacing-xl);
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.activity-header h3 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.scanning-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.scanning-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--status-warning);
+    animation: blink 1.5s infinite;
+}
+
+.scanning-indicator.active {
+    background: var(--status-online);
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.3; }
+}
+
+/* Activity Grid */
+.activity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-md);
+}
+
+.activity-card {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.activity-card:hover {
+    border-color: var(--border-active);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-icon {
+    font-size: 16px;
+}
+
+.card-title {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-left: var(--spacing-sm);
+    flex: 1;
+}
+
+.card-status {
+    background: var(--accent-warning);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.card-status.active {
+    background: var(--status-online);
+}
+
+.card-content {
+    padding: var(--spacing-md);
+}
+
+.scanner-progress,
+.positions-summary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.progress-item,
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-label,
+.summary-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.progress-value,
+.summary-value {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.alerts-list {
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+.no-alerts {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+    text-align: center;
+    padding: var(--spacing-sm);
+}
+
+/* Recent Activities */
+.recent-activities {
+    margin-bottom: var(--spacing-lg);
+}
+
+.activities-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
+}
+
+.activities-header h3 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.clear-log-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.clear-log-btn:hover {
+    background: var(--accent-warning);
+    color: white;
+    border-color: var(--accent-warning);
+}
+
+.activities-log {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+}
+
+.log-entry {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: monospace;
+    min-width: 60px;
+}
+
+.log-icon {
+    font-size: 14px;
+}
+
+.log-message {
+    color: var(--text-primary);
+    font-size: 13px;
+    flex: 1;
+}
+
+.log-entry.system .log-icon { color: var(--accent-info); }
+.log-entry.trade .log-icon { color: var(--accent-buy); }
+.log-entry.warning .log-icon { color: var(--accent-warning); }
+.log-entry.error .log-icon { color: var(--accent-sell); }
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .main-status-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .performance-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .activity-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .robot-dashboard {
+        padding: var(--spacing-md);
+    }
+    
+    .robot-status-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .robot-face {
+        font-size: 32px;
+    }
+}
+
 /* Table Mode Indicator */
 .table-mode-indicator {
     background: linear-gradient(135deg, #1f6feb, #0969da);

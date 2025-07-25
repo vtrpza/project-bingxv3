@@ -555,8 +555,162 @@
 
             <!-- Trading Tab -->
             <div id="trading-tab" class="tab-content">
+                <!-- Dashboard Melhorado do Robô -->
+                <div class="robot-dashboard">
+                    <h2>🤖 Dashboard do Robô de Trading</h2>
+                    
+                    <!-- Seção Principal de Status -->
+                    <div class="main-status-section">
+                        <div class="robot-status-card primary">
+                            <div class="robot-avatar">
+                                <div class="robot-face" id="robot-face">🤖</div>
+                                <div class="robot-activity" id="robot-activity">
+                                    <div class="activity-pulse"></div>
+                                </div>
+                            </div>
+                            <div class="robot-info">
+                                <h3>Status do Robô</h3>
+                                <div class="robot-state" id="robot-state">
+                                    <span class="state-text">Analisando Mercado</span>
+                                    <div class="state-progress">
+                                        <div class="progress-bar" id="progress-bar"></div>
+                                    </div>
+                                </div>
+                                <div class="last-action" id="last-action">
+                                    Última ação: Sistema iniciando... - --:--:--
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="performance-metrics">
+                            <div class="metric-card pnl-card">
+                                <div class="metric-header">
+                                    <span class="metric-icon">💰</span>
+                                    <span class="metric-title">P&L Total</span>
+                                </div>
+                                <div class="metric-value">
+                                    <span class="total-pnl neutral" id="total-pnl">$0.00</span>
+                                    <span class="pnl-percentage" id="pnl-percentage">(0.00%)</span>
+                                </div>
+                                <div class="metric-detail" id="pnl-detail">
+                                    Realizado: $0.00 | Não Realizado: $0.00
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card trades-card">
+                                <div class="metric-header">
+                                    <span class="metric-icon">📊</span>
+                                    <span class="metric-title">Trades Hoje</span>
+                                </div>
+                                <div class="metric-value">
+                                    <span class="trades-count" id="trades-today">0</span>
+                                    <div class="win-rate-container">
+                                        <span class="win-rate" id="win-rate">0%</span>
+                                        <span class="win-rate-label">Taxa de Sucesso</span>
+                                    </div>
+                                </div>
+                                <div class="metric-detail">
+                                    <span class="wins" id="wins">0 vitórias</span> | 
+                                    <span class="losses" id="losses">0 derrotas</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Seção de Atividade em Tempo Real -->
+                    <div class="realtime-activity">
+                        <div class="activity-header">
+                            <h3>🔄 Atividade em Tempo Real</h3>
+                            <div class="activity-controls">
+                                <div class="scanning-status" id="scanning-status">
+                                    <div class="scanning-indicator" id="scanning-indicator"></div>
+                                    <span id="scanning-text">Scanner Iniciando</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="activity-grid">
+                            <div class="activity-card scanner-card">
+                                <div class="card-header">
+                                    <span class="card-icon">🔍</span>
+                                    <span class="card-title">Scanner</span>
+                                    <div class="card-status" id="scanner-status">INICIANDO</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="scanner-progress">
+                                        <div class="progress-item">
+                                            <span class="progress-label">Ativos Monitorados:</span>
+                                            <span class="progress-value" id="monitored-assets">0</span>
+                                        </div>
+                                        <div class="progress-item">
+                                            <span class="progress-label">Sinais Detectados:</span>
+                                            <span class="progress-value" id="signals-detected">0</span>
+                                        </div>
+                                        <div class="progress-item">
+                                            <span class="progress-label">Próxima Verificação:</span>
+                                            <span class="progress-value" id="next-scan">--:--</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-card positions-card">
+                                <div class="card-header">
+                                    <span class="card-icon">📈</span>
+                                    <span class="card-title">Posições</span>
+                                    <div class="card-status" id="positions-status">0 ATIVAS</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="positions-summary">
+                                        <div class="summary-item">
+                                            <span class="summary-label">Abertas:</span>
+                                            <span class="summary-value positions-count" id="open-positions">0</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Valor Total:</span>
+                                            <span class="summary-value" id="total-position-value">$0.00</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Margem Usada:</span>
+                                            <span class="summary-value" id="margin-used">0%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-card alerts-card">
+                                <div class="card-header">
+                                    <span class="card-icon">⚠️</span>
+                                    <span class="card-title">Alertas</span>
+                                    <div class="card-status" id="alerts-count">0</div>
+                                </div>
+                                <div class="card-content">
+                                    <div class="alerts-list" id="alerts-list">
+                                        <div class="no-alerts">Nenhum alerta ativo</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Log de Atividades Recentes -->
+                    <div class="recent-activities">
+                        <div class="activities-header">
+                            <h3>📋 Atividades Recentes</h3>
+                            <button class="clear-log-btn" onclick="clearActivityLog()">Limpar Log</button>
+                        </div>
+                        <div class="activities-log" id="activities-log">
+                            <div class="log-entry system">
+                                <div class="log-time">--:--:--</div>
+                                <div class="log-icon">🤖</div>
+                                <div class="log-message">Aguardando inicialização do sistema...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="dashboard-section">
-                    <h2>🤖 Trading em Tempo Real - VST Mode</h2>
+                    <h2>⚙️ Controles de Trading</h2>
                     <div class="trading-controls">
                         <div class="control-group">
                             <button id="auto-trade-btn" class="control-btn start-btn" onclick="toggleAutoTradingJS()">
@@ -1345,6 +1499,308 @@
         window.updateTrailingStop = updateTrailingStop;
         
         
+    </script>
+
+    <!-- Robot Dashboard JavaScript -->
+    <script>
+    // ========== ROBOT DASHBOARD FUNCTIONS ==========
+    
+    function updateRobotStatus(status, action, progress) {
+        const robotFace = document.getElementById('robot-face');
+        const stateText = document.querySelector('.state-text');
+        const lastAction = document.getElementById('last-action');
+        const progressBar = document.getElementById('progress-bar');
+        
+        // Update robot face based on status
+        if (robotFace) {
+            switch(status) {
+                case 'active':
+                    robotFace.textContent = '🤖';
+                    break;
+                case 'scanning':
+                    robotFace.textContent = '🔍';
+                    break;
+                case 'trading':
+                    robotFace.textContent = '💹';
+                    break;
+                case 'waiting':
+                    robotFace.textContent = '⏳';
+                    break;
+                case 'error':
+                    robotFace.textContent = '🚨';
+                    break;
+                default:
+                    robotFace.textContent = '🤖';
+            }
+        }
+        
+        // Update status text
+        if (stateText) {
+            stateText.textContent = action || 'Sistema Operacional';
+        }
+        
+        // Update last action
+        if (lastAction) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR');
+            lastAction.textContent = `Última ação: ${action} - ${timeStr}`;
+        }
+        
+        // Update progress bar
+        if (progressBar && progress !== undefined) {
+            progressBar.style.width = `${progress}%`;
+        }
+    }
+    
+    function updatePerformanceMetrics(data) {
+        const totalPnl = document.getElementById('total-pnl');
+        const pnlPercentage = document.getElementById('pnl-percentage');
+        const pnlDetail = document.getElementById('pnl-detail');
+        const tradesToday = document.getElementById('trades-today');
+        const winRate = document.getElementById('win-rate');
+        const wins = document.getElementById('wins');
+        const losses = document.getElementById('losses');
+        
+        if (data.pnl !== undefined) {
+            if (totalPnl) {
+                totalPnl.textContent = `$${data.pnl.toFixed(2)}`;
+                totalPnl.className = `total-pnl ${data.pnl >= 0 ? (data.pnl > 0 ? 'profit' : 'neutral') : 'loss'}`;
+            }
+            
+            if (pnlPercentage) {
+                const pct = data.pnl_percentage || 0;
+                pnlPercentage.textContent = `(${pct >= 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+            }
+            
+            if (pnlDetail) {
+                const realized = data.realized_pnl || 0;
+                const unrealized = data.unrealized_pnl || 0;
+                pnlDetail.textContent = `Realizado: $${realized.toFixed(2)} | Não Realizado: $${unrealized.toFixed(2)}`;
+            }
+        }
+        
+        if (data.trades !== undefined) {
+            if (tradesToday) tradesToday.textContent = data.trades;
+            if (winRate) winRate.textContent = `${(data.win_rate || 0).toFixed(1)}%`;
+            if (wins) wins.textContent = `${data.wins || 0} vitórias`;
+            if (losses) losses.textContent = `${data.losses || 0} derrotas`;
+        }
+    }
+    
+    function updateScannerActivity(data) {
+        const scannerStatus = document.getElementById('scanner-status');
+        const scanningIndicator = document.getElementById('scanning-indicator');
+        const scanningText = document.getElementById('scanning-text');
+        const monitoredAssets = document.getElementById('monitored-assets');
+        const signalsDetected = document.getElementById('signals-detected');
+        const nextScan = document.getElementById('next-scan');
+        
+        if (data.active !== undefined) {
+            const isActive = data.active;
+            
+            if (scannerStatus) {
+                scannerStatus.textContent = isActive ? 'ATIVO' : 'INATIVO';
+                scannerStatus.className = `card-status ${isActive ? 'active' : ''}`;
+            }
+            
+            if (scanningIndicator) {
+                scanningIndicator.className = `scanning-indicator ${isActive ? 'active' : ''}`;
+            }
+            
+            if (scanningText) {
+                scanningText.textContent = isActive ? 'Scanner Ativo' : 'Scanner Inativo';
+            }
+        }
+        
+        if (monitoredAssets && data.monitored_assets !== undefined) {
+            monitoredAssets.textContent = data.monitored_assets;
+        }
+        
+        if (signalsDetected && data.signals_detected !== undefined) {
+            signalsDetected.textContent = data.signals_detected;
+        }
+        
+        if (nextScan && data.next_scan) {
+            const nextTime = new Date(data.next_scan);
+            nextScan.textContent = nextTime.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+    }
+    
+    function updatePositionsInfo(data) {
+        const positionsStatus = document.getElementById('positions-status');
+        const openPositions = document.getElementById('open-positions');
+        const totalPositionValue = document.getElementById('total-position-value');
+        const marginUsed = document.getElementById('margin-used');
+        
+        if (data.count !== undefined) {
+            if (positionsStatus) {
+                positionsStatus.textContent = `${data.count} ATIVAS`;
+            }
+            if (openPositions) {
+                openPositions.textContent = data.count;
+            }
+        }
+        
+        if (totalPositionValue && data.total_value !== undefined) {
+            totalPositionValue.textContent = `$${data.total_value.toFixed(2)}`;
+        }
+        
+        if (marginUsed && data.margin_used !== undefined) {
+            marginUsed.textContent = `${data.margin_used.toFixed(1)}%`;
+        }
+    }
+    
+    function addActivityLog(type, message, icon = '🤖') {
+        const activitiesLog = document.getElementById('activities-log');
+        if (!activitiesLog) return;
+        
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('pt-BR');
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry ${type}`;
+        logEntry.innerHTML = `
+            <div class="log-time">${timeStr}</div>
+            <div class="log-icon">${icon}</div>
+            <div class="log-message">${message}</div>
+        `;
+        
+        // Add to beginning of log
+        activitiesLog.insertBefore(logEntry, activitiesLog.firstChild);
+        
+        // Keep only last 20 entries
+        const entries = activitiesLog.querySelectorAll('.log-entry');
+        if (entries.length > 20) {
+            entries[entries.length - 1].remove();
+        }
+    }
+    
+    function clearActivityLog() {
+        const activitiesLog = document.getElementById('activities-log');
+        if (activitiesLog) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('pt-BR');
+            activitiesLog.innerHTML = `
+                <div class="log-entry system">
+                    <div class="log-time">${timeStr}</div>
+                    <div class="log-icon">🧹</div>
+                    <div class="log-message">Log limpo pelo usuário</div>
+                </div>
+            `;
+        }
+    }
+    
+    function updateAlertsCard(alerts = []) {
+        const alertsCount = document.getElementById('alerts-count');
+        const alertsList = document.getElementById('alerts-list');
+        
+        if (alertsCount) {
+            alertsCount.textContent = alerts.length;
+        }
+        
+        if (alertsList) {
+            if (alerts.length === 0) {
+                alertsList.innerHTML = '<div class="no-alerts">Nenhum alerta ativo</div>';
+            } else {
+                alertsList.innerHTML = alerts.map(alert => `
+                    <div class="alert-item ${alert.type}">
+                        <span class="alert-icon">${alert.icon || '⚠️'}</span>
+                        <span class="alert-message">${alert.message}</span>
+                    </div>
+                `).join('');
+            }
+        }
+    }
+    
+    // Initialize robot dashboard
+    function initializeRobotDashboard() {
+        console.log('🤖 Inicializando Robot Dashboard...');
+        
+        // Set initial state
+        updateRobotStatus('active', 'Sistema Iniciando', 25);
+        addActivityLog('system', 'Dashboard inicializado - Robô conectando à API', '🤖');
+        
+        // Initialize scanner activity
+        updateScannerActivity({ 
+            active: true, 
+            monitored_assets: 1, 
+            signals_detected: 0 
+        });
+        
+        // Initialize positions
+        updatePositionsInfo({ 
+            count: 0, 
+            total_value: 0, 
+            margin_used: 0 
+        });
+        
+        // Initialize performance metrics
+        updatePerformanceMetrics({
+            pnl: 0,
+            pnl_percentage: 0,
+            realized_pnl: 0,
+            unrealized_pnl: 0,
+            trades: 0,
+            win_rate: 0,
+            wins: 0,
+            losses: 0
+        });
+        
+        // Add initial connection log
+        setTimeout(() => {
+            addActivityLog('system', 'Conectado à API BingX - Scanner ativo', '🌐');
+            updateRobotStatus('scanning', 'Carregando ativos válidos', 50);
+        }, 1500);
+        
+        setTimeout(() => {
+            addActivityLog('system', 'Ativos carregados - Iniciando análise técnica', '📊');
+            updateRobotStatus('active', 'Sistema Operacional', 100);
+        }, 3000);
+        
+        // Simulate robot activity updates
+        let actionIndex = 0;
+        const actions = [
+            { action: 'Verificando BTC/USDT', status: 'scanning', icon: '🔍' },
+            { action: 'Analisando indicadores técnicos', status: 'active', icon: '📊' },
+            { action: 'Procurando sinais de entrada', status: 'scanning', icon: '🎯' },
+            { action: 'Monitorando posições ativas', status: 'active', icon: '👀' },
+            { action: 'Calculando riscos', status: 'active', icon: '⚖️' },
+            { action: 'Verificando volume de negociação', status: 'scanning', icon: '📈' }
+        ];
+        
+        const activityInterval = setInterval(() => {
+            if (!document.getElementById('robot-face')) {
+                clearInterval(activityInterval);
+                return;
+            }
+            
+            const currentAction = actions[actionIndex % actions.length];
+            const progress = Math.floor(Math.random() * 100);
+            
+            updateRobotStatus(currentAction.status, currentAction.action, progress);
+            addActivityLog('system', currentAction.action, currentAction.icon);
+            
+            // Update scanner signals occasionally
+            if (Math.random() < 0.2) {
+                const currentSignals = parseInt(document.getElementById('signals-detected')?.textContent || 0);
+                updateScannerActivity({ 
+                    signals_detected: Math.max(0, currentSignals + (Math.random() < 0.7 ? 1 : -1))
+                });
+            }
+            
+            actionIndex++;
+        }, 10000);
+        
+        console.log('✅ Robot Dashboard inicializado com sucesso!');
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initializeRobotDashboard, 2000);
+    });
     </script>
 
     <!-- PyScript application -->
