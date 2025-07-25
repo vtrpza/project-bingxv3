@@ -173,7 +173,8 @@ class ScannerWorker:
             return None
     
     async def _fetch_ticker_with_rate_limit(self, client, symbol):
-        """Fetch ticker with rate limiting."""
+        """Fetch ticker with rate limiting and coordination."""
+        await self.coordinator.request_api_permission(self.worker_id, 'market_data')
         await self.rate_limiter.acquire('market_data')
         return await client.fetch_ticker(symbol)
     
