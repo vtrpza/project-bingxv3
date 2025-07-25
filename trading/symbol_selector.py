@@ -54,7 +54,6 @@ class SymbolSelector:
     """
     
     def __init__(self):
-        self.client = get_client()
         self.market_api = get_market_data_api()
         self.rate_limiter = get_rate_limiter()
         
@@ -219,7 +218,7 @@ class SymbolSelector:
         """Fetch ticker with rate limiting and error handling."""
         try:
             await self.rate_limiter.acquire('market_data', weight=1)
-            client = await self.client.get_client()
+            client = get_client()
             return await client.fetch_ticker(symbol)
         except Exception as e:
             logger.debug(f"Error fetching ticker for {symbol}: {e}")

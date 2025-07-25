@@ -3034,7 +3034,134 @@ def increment_test_mode_stat(stat_name: str, increment: int = 1):
     if test_mode_state.get("active", False):
         test_mode_state["statistics"][stat_name] = test_mode_state["statistics"].get(stat_name, 0) + increment
 
-# WebSocket endpoint
+# WebSocket endpoint helper functions
+async def _get_comprehensive_trading_snapshot():
+    """Get comprehensive trading data snapshot for WebSocket."""
+    try:
+        from database.connection import get_session
+        from trading.trading_cache import get_trading_cache
+        import asyncio
+        
+        with get_session() as db:
+            trade_repo = TradeRepository()
+            signal_repo = SignalRepository()
+            
+            # Get active trades
+            open_trades = trade_repo.get_open_trades(db)
+            
+            # Get recent signals (last 24 hours)
+            recent_signals = signal_repo.get_recent_signals(db, hours=24, limit=20)
+            
+            # Get trading cache data
+            trading_cache = get_trading_cache()
+            cache_stats = await trading_cache.get_cache_stats()
+            
+            # Calculate summary metrics
+            total_unrealized_pnl = 0.0
+            positions_data = []
+                
+            for trade in open_trades:
+                try:
+                    current_price = 42000.0  # TODO: Get real current price via trading cache
+                    unrealized_pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
+                    if trade.side == 'SELL':
+                        unrealized_pnl = -unrealized_pnl
+                    
+                    total_unrealized_pnl += unrealized_pnl
+                    
+                    positions_data.append({
+                        "id": str(trade.id),
+                        "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
+                        "side": trade.side,
+                        "entry_price": float(trade.entry_price),
+                        "current_price": current_price,
+                        "quantity": float(trade.quantity),
+                        "unrealized_pnl": round(unrealized_pnl, 2),
+                        "pnl_percentage": round((unrealized_pnl / (float(trade.entry_price) * float(trade.quantity))) * 100, 2),
+                        "entry_time": trade.entry_time.isoformat() if trade.entry_time else None,
+                        "stop_loss": float(trade.stop_loss) if trade.stop_loss else None,
+                        "take_profit": float(trade.take_profit) if trade.take_profit else None
+                    })
+                except Exception as trade_error:
+                    logger.debug(f"Error processing trade {trade.id}: {trade_error}")
+                    continue
+                
+            return {
+                "type": "trading_data_snapshot",
+                "timestamp": utc_now().isoformat(),
+                "data": {
+                    "summary": {
+                        "open_positions": len(open_trades),
+                        "total_unrealized_pnl": round(total_unrealized_pnl, 2),
+                        "trading_enabled": bot_status.get("trading_enabled", False),
+                        "selected_symbols": cache_stats.get('total_symbols', 0),
+                        "symbols_with_signals": cache_stats.get('symbols_with_signals', 0),
+                        "last_selection_time": cache_stats.get('last_selection_time'),
+                        "selection_age_minutes": cache_stats.get('selection_age_minutes', 0)
+                    },
+                    "positions": positions_data,
+                    "recent_signals": [
+                        {
+                            "id": str(signal.id),
+                            "symbol": signal.asset.symbol if signal.asset else "UNKNOWN",
+                            "signal_type": signal.signal_type,
+                            "strength": float(signal.strength) if signal.strength else 0.0,
+                            "timestamp": signal.timestamp.isoformat() if signal.timestamp else None,
+                            "rules_triggered": signal.rules_triggered or [],
+                            "indicators_snapshot": signal.indicators_snapshot or {}
+                        }
+                        for signal in recent_signals
+                    ],
+                    "cache_stats": cache_stats
+                }
+            }
+    except Exception as e:
+        logger.error(f"Error creating comprehensive trading snapshot: {e}")
+        return {
+            "type": "trading_data_snapshot",
+            "timestamp": utc_now().isoformat(),
+            "data": {
+                "error": "Failed to load trading data",
+                "summary": {"open_positions": 0, "total_unrealized_pnl": 0.0}
+            }
+        }
+    
+async def _get_current_signals_snapshot():
+    """Get current signals for WebSocket."""
+    try:
+        from trading.trading_cache import get_trading_cache
+        
+        trading_cache = get_trading_cache()
+        signals_with_symbols = await trading_cache.get_symbols_with_signals()
+        
+        signals_data = []
+        for symbol, signal in signals_with_symbols:
+            signals_data.append({
+                "symbol": symbol,
+                "signal_type": signal.get('type'),
+                "rule": signal.get('rule'),
+                "timeframe": signal.get('timeframe'),
+                "strength": signal.get('strength', 0.0),
+                "price": signal.get('price'),
+                "timestamp": utc_now().isoformat()
+            })
+        
+        return {
+            "type": "trading_signals_snapshot", 
+            "timestamp": utc_now().isoformat(),
+            "data": {
+                "signals": signals_data,
+                "count": len(signals_data)
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error getting signals snapshot: {e}")
+        return {
+            "type": "trading_signals_snapshot",
+            "timestamp": utc_now().isoformat(),
+            "data": {"signals": [], "count": 0, "error": str(e)}
+        }
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     """Enhanced WebSocket endpoint with improved message handling and subscription management."""
@@ -3170,36 +3297,19 @@ async def websocket_endpoint(websocket: WebSocket):
                 
                 # Send immediate data based on subscription channel
                 if channel == "trading_data":
-                    # Send current trading summary
+                    # Send comprehensive trading data snapshot
                     try:
-                        from database.connection import get_session
-                        with get_session() as db:
-                            trade_repo = TradeRepository()
-                            open_trades = trade_repo.get_open_trades(db)
-                            
-                            trading_summary = {
-                                "type": "trading_data_snapshot",
-                                "timestamp": utc_now().isoformat(),
-                                "data": {
-                                    "open_positions": len(open_trades),
-                                    "trading_enabled": bot_status.get("trading_enabled", False),
-                                    "positions": [
-                                        {
-                                            "id": str(trade.id),
-                                            "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
-                                            "side": trade.side,
-                                            "entry_price": float(trade.entry_price),
-                                            "quantity": float(trade.quantity),
-                                            "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
-                                        }
-                                        for trade in open_trades[:5]  # Limit to 5 positions
-                                    ]
-                                }
-                            }
-                            
-                            await websocket.send_text(json.dumps(trading_summary))
+                        snapshot_data = await _get_comprehensive_trading_snapshot()
+                        await websocket.send_text(json.dumps(snapshot_data))
                     except Exception as snapshot_error:
                         logger.error(f"Error sending trading snapshot: {snapshot_error}")
+                elif channel == "trading_signals":
+                    # Send current signals snapshot
+                    try:
+                        signals_data = await _get_current_signals_snapshot()
+                        await websocket.send_text(json.dumps(signals_data))
+                    except Exception as signals_error:
+                        logger.error(f"Error sending signals snapshot: {signals_error}")
                 
                 # Confirm subscription with enhanced response
                 subscription_response = {

@@ -505,6 +505,38 @@
                 }
             }
             
+            handleTradingDataSnapshot(data) {
+                console.log('Trading data snapshot received:', data);
+                
+                // Update comprehensive trading dashboard
+                if (data.data && data.data.summary) {
+                    this.updateTradingDashboard(data.data);
+                }
+                
+                // Update positions table if available
+                if (data.data && data.data.positions) {
+                    this.updatePositionsTable(data.data.positions);
+                }
+                
+                // Update recent signals display
+                if (data.data && data.data.recent_signals) {
+                    this.updateRecentSignalsDisplay(data.data.recent_signals);
+                }
+                
+                // Update trading symbols status
+                if (data.data && data.data.cache_stats) {
+                    this.updateTradingSymbolsStatus(data.data.cache_stats);
+                }
+            }
+            
+            handleTradingSignalsSnapshot(data) {
+                console.log('Trading signals snapshot received:', data);
+                
+                if (data.data && data.data.signals) {
+                    this.updateActiveSignalsDisplay(data.data.signals);
+                }
+            }
+            
             handleTradingSnapshot(data) {
                 console.log('Trading snapshot received:', data);
                 this.updatePositionsTable(data.positions);
