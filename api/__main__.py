@@ -43,7 +43,7 @@ def main():
         from api.web_api import app
         logger.info("✅ FastAPI application imported successfully")
         
-        # Run the server with production-ready settings
+        # Run the server with production-ready settings for Render
         uvicorn.run(
             "api.web_api:app",
             host=host,
@@ -51,8 +51,11 @@ def main():
             log_level="info",
             access_log=True,
             workers=1,  # Single worker to avoid database conflicts
-            timeout_keep_alive=30,
-            timeout_graceful_shutdown=10
+            timeout_keep_alive=120,  # Increased for Render
+            timeout_graceful_shutdown=30,  # Increased for proper cleanup
+            ws_ping_interval=20,  # WebSocket keepalive
+            ws_ping_timeout=10,   # WebSocket timeout
+            ws_max_size=16777216  # 16MB WebSocket message limit
         )
         
     except ImportError as e:

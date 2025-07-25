@@ -9,7 +9,7 @@ from sqlalchemy import (
     Column, String, Boolean, DateTime, JSON, Numeric, Integer,
     Text, ForeignKey, CheckConstraint, UniqueConstraint, Index
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 
