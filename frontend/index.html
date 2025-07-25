@@ -257,7 +257,7 @@
                         btn.disabled = true;
                         btn.innerHTML = '⏳ Escaneando...';
                     }
-                    this.showMessage('Scan inicial iniciado! Aguarde...', 'info');
+                    showNotificationSafe('Scan Inicial', 'Scan inicial iniciado! Aguarde...', 'info');
                 } else if (status === 'progress') {
                     if (btn && payload.progress_percent) {
                         btn.innerHTML = `⏳ ${payload.progress_percent.toFixed(1)}% (${payload.processed_count}/${payload.total_assets})`;
@@ -272,7 +272,7 @@
                     }
                     const valid = payload.valid_assets || payload.valid_assets_count || 0;
                     const total = payload.total_assets || 0;
-                    this.showMessage(`Scan concluído! ${valid}/${total} ativos válidos`, 'success');
+                    showNotificationSafe('Scan Completo', `Scan concluído! ${valid}/${total} ativos válidos`, 'success');
                 } else if (status === 'error') {
                     if (btn) {
                         btn.innerHTML = '❌ Erro';
@@ -281,7 +281,7 @@
                             btn.innerHTML = '🚀 Scan Completo';
                         }, 3000);
                     }
-                    this.showMessage(`Erro no scan: ${payload.message || 'Erro desconhecido'}`, 'error');
+                    showNotificationSafe('Erro no Scan', `Erro no scan: ${payload.message || 'Erro desconhecido'}`, 'error');
                 }
             }
             
@@ -312,7 +312,7 @@
             
             handleTakeProfitExecuted(data) {
                 console.log('Take profit executed:', data);
-                this.showNotification(
+                showNotificationSafe(
                     'Take Profit Executado',
                     `${data.symbol}: ${data.size_closed}% da posição fechada com ${data.profit_level}% de lucro`,
                     'success'
@@ -322,7 +322,7 @@
             
             handleStopLossTriggered(data) {
                 console.log('Stop loss triggered:', data);
-                this.showNotification(
+                showNotificationSafe(
                     'Stop Loss Ativado',
                     `${data.symbol}: Posição fechada por stop loss. P&L: $${data.pnl.toFixed(2)} (${data.pnl_percentage.toFixed(2)}%)`,
                     'warning'
@@ -462,7 +462,7 @@
                     }
                     
                     // Show success notification
-                    this.showNotification(
+                    showNotificationSafe(
                         'Scan Concluído', 
                         `${payload.valid_assets_count} ativos válidos encontrados de ${payload.total_assets} analisados.`, 
                         'success'
