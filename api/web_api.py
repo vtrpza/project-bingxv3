@@ -4,6 +4,7 @@ Provides REST endpoints and WebSocket connections for the frontend
 """
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Depends
+from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -73,17 +74,26 @@ async def safe_create_stop_loss_order(symbol: str, side: str, amount: float, sto
         logger.error(f"Error creating stop loss order for {symbol}: {e}")
         raise HTTPException(status_code=500, detail=f"Stop loss order creation failed: {str(e)}")
 
-app = FastAPI(
-    title="BingX Trading Bot API",
-    description="Real-time trading bot dashboard and control API",
-    version="1.0.0"
-)
-
 # Global startup state
 startup_complete = False
 database_ready = False
 
-@app.on_event("startup")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan events."""
+    # Startup
+    await startup_event()
+    yield
+    # Shutdown
+    await shutdown_event()
+
+app = FastAPI(
+    title="BingX Trading Bot API",
+    description="Real-time trading bot dashboard and control API",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
 async def startup_event():
     """Initialize database on startup with optimized performance."""
     global startup_complete, database_ready
@@ -2970,7 +2980,6 @@ async def start_background_tasks():
     asyncio.create_task(broadcast_scanner_status())
     logger.info("Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting")
 
-@app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("FastAPI server shutting down")
