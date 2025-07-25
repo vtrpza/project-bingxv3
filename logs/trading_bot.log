@@ -2671,3 +2671,67 @@
 2025-07-25 14:45:25,436 - performance.performance - INFO - Operation timing: fetch_market_summary
 2025-07-25 14:45:31,438 - performance.performance - INFO - Operation timing: fetch_ohlcv
 2025-07-25 14:45:33,435 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:35,433 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:45:37,423 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:39,462 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:45:40,571 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:40,571 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.96s
+2025-07-25 14:45:42,562 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:42,563 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 0.97s
+2025-07-25 14:45:44,635 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:50,575 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:45:50,576 - api.client - ERROR - Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-25 14:45:50,576 - api.client - ERROR - Error fetching ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-25 14:45:50,576 - api.market_data - ERROR - Error fetching market summary for AXL/USDT: Failed to fetch ticker for AXL/USDT: Exchange error: bingx does not have market symbol AXL/USDT
+2025-07-25 14:45:52,587 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:45:54,587 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:45:56,577 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 14:46:02,593 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:04,602 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:06,617 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:08,711 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:09,772 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:12,629 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:17,746 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:23,822 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:25,796 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:27,838 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:33,828 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:35,837 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:37,841 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:38,955 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:40,989 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:42,955 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:48,993 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:51,055 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:53,065 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:55,038 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:57,031 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:46:59,042 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:01,066 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:03,067 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:08,219 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:10,230 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:12,249 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:14,254 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:20,290 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:22,294 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:28,329 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:30,297 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:36,292 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:41,477 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:43,462 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:45,503 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:47,470 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:53,485 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:47:59,470 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:05,488 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:06,618 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:08,638 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:14,690 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:16,626 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:18,629 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 14:48:18,632 - scanner.initial_scanner - INFO - Progress: 200/1502 assets processed (180 valid, 20 invalid)
+2025-07-25 14:48:18,632 - scanner.initial_scanner - INFO - Progress: 200/1502 assets processed (180 valid, 20 invalid)
+2025-07-25 14:48:18,642 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 14:48:18,642 - api.web_api - INFO - Scanner status broadcast task cancelled
