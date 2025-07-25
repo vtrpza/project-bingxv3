@@ -18,6 +18,15 @@ from utils.logger import get_logger, trading_logger, performance_logger
 from utils.worker_coordinator import get_coordinator
 from api.web_api import manager as connection_manager
 
+# Import test mode functions for aggressive testing
+try:
+    from api.web_api import is_test_mode_active, get_test_mode_config, increment_test_mode_stat
+except ImportError:
+    # Fallback functions if import fails
+    def is_test_mode_active(): return False
+    def get_test_mode_config(): return {}
+    def increment_test_mode_stat(stat_name, increment=1): pass
+
 logger = get_logger(__name__)
 
 
@@ -384,10 +393,54 @@ class AnalysisWorker:
             except Exception as e:
                 logger.warning(f"Error persisting indicators for {symbol} {timeframe}: {e}")
         
-        # Persist signal if significant
+        # Persist signal if significant (with test mode adjustments)
         signal_data = result.get('signal', {})
+        
+        # Adjust persistence threshold based on test mode
+        persistence_threshold = 0.3  # Default threshold
+        is_test_mode = is_test_mode_active()
+        
+        if is_test_mode:
+            test_config = get_test_mode_config()
+            persistence_threshold = 0.1  # Much lower threshold in test mode
+            
+            # Force signals to be more aggressive in test mode
+            if signal_data.get('signal_type', SignalType.NEUTRAL.value) == SignalType.NEUTRAL.value:
+                # Sometimes force neutral signals to become actionable in test mode
+                if test_config.get('force_signals', False) and result.get('indicators', {}):
+                    indicators_spot = result.get('indicators', {}).get('spot', {})
+                    mm1 = indicators_spot.get('mm1', 0)
+                    center = indicators_spot.get('center', 0)
+                    
+                    if mm1 and center:
+                        # Force a signal based on MM1 vs Center position
+                        if mm1 > center:
+                            signal_data = {
+                                'signal_type': SignalType.BUY.value,
+                                'confidence': 0.8,  # High confidence for test
+                                'rules_triggered': ['test_mode_forced_buy'],
+                                'timestamp': datetime.utcnow().isoformat(),
+                                'test_mode_forced': True
+                            }
+                            logger.warning(f"🧪 TEST MODE: Forced BUY signal for {symbol}")
+                        else:
+                            signal_data = {
+                                'signal_type': SignalType.SELL.value,
+                                'confidence': 0.8,  # High confidence for test
+                                'rules_triggered': ['test_mode_forced_sell'],
+                                'timestamp': datetime.utcnow().isoformat(),
+                                'test_mode_forced': True
+                            }
+                            logger.warning(f"🧪 TEST MODE: Forced SELL signal for {symbol}")
+            
+            # Boost signal confidence in test mode
+            if signal_data.get('confidence', 0) > 0:
+                boosted_confidence = min(0.95, signal_data.get('confidence', 0) + 0.3)
+                signal_data['confidence'] = boosted_confidence
+                logger.info(f"🧪 TEST MODE: Boosted signal confidence for {symbol} to {boosted_confidence}")
+        
         if (signal_data.get('signal_type', SignalType.NEUTRAL.value) != SignalType.NEUTRAL.value and
-            signal_data.get('confidence', 0) >= 0.3):  # Lower threshold for persistence
+            signal_data.get('confidence', 0) >= persistence_threshold):
             
             try:
                 self.signal_repo.create_signal(
