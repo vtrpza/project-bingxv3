@@ -197,6 +197,11 @@ class UIComponents:
             rsi_strength = 1 - abs(rsi - 50) / 50  # Closer to 50 = lower strength
             strength = min(distance * rsi_strength * 10, 100)
         
+        # Safe values to avoid NoneType format errors
+        safe_rsi = rsi if rsi is not None else 50.0
+        safe_volume_ratio = volume_ratio if volume_ratio is not None else 1.0
+        safe_strength = strength if strength is not None else 0.0
+        
         card_html = f'''
         <div class="asset-card {signal_class}">
             <div class="card-header">
@@ -210,17 +215,17 @@ class UIComponents:
                     <div>Preço: {UIComponents.format_currency(price)}</div>
                     <div>MM1: {UIComponents.format_currency(mm1)}</div>
                     <div>Center: {UIComponents.format_currency(center)}</div>
-                    <div>RSI: {rsi:.1f if rsi is not None else 50.0:.1f}</div>
+                    <div>RSI: {safe_rsi:.1f}</div>
                 </div>
                 <div class="timeframe">
                     <h4>Volume</h4>
-                    <div>Ratio: {volume_ratio:.2f if volume_ratio is not None else 1.0:.2f}x</div>
-                    <div>Status: {"Alto" if (volume_ratio or 0) > 1.5 else "Normal"}</div>
+                    <div>Ratio: {safe_volume_ratio:.2f}x</div>
+                    <div>Status: {"Alto" if safe_volume_ratio > 1.5 else "Normal"}</div>
                 </div>
                 <div class="timeframe">
                     <h4>Sinal</h4>
                     <div class="signal-type {signal_class}">{signal or "NEUTRO"}</div>
-                    <div>Força: {strength:.0f if strength is not None else 0.0:.0f}%</div>
+                    <div>Força: {safe_strength:.0f}%</div>
                 </div>
             </div>
         </div>
