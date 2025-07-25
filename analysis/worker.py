@@ -15,6 +15,7 @@ from analysis.volume import get_volume_analyzer
 from analysis.signals import get_signal_generator, SignalType
 from config.trading_config import TradingConfig
 from utils.logger import get_logger, trading_logger, performance_logger
+from utils.worker_coordinator import get_coordinator
 from api.web_api import manager as connection_manager
 
 logger = get_logger(__name__)
@@ -37,10 +38,12 @@ class AnalysisWorker:
         self.indicator_repo = IndicatorRepository()
         self.signal_repo = SignalRepository()
         self.config = TradingConfig()
+        self.coordinator = get_coordinator()
         
         self.is_running = False
         self.analysis_tasks = {}
         self.executor = ThreadPoolExecutor(max_workers=self.config.MAX_WORKERS)
+        self.worker_id = "analysis_worker"
         
         # Performance tracking
         self.analysis_stats = {
@@ -62,11 +65,17 @@ class AnalysisWorker:
         logger.info("Starting analysis worker...")
         
         try:
+            # Register with coordinator
+            await self.coordinator.register_worker(self.worker_id, 'analysis')
+            logger.info(f"Registered analysis worker with coordinator: {self.worker_id}")
+            
             # Start main analysis loop
             await self._run_analysis_loop()
         except Exception as e:
             logger.error(f"Analysis worker error: {e}")
             self.is_running = False
+            # Unregister from coordinator on error
+            await self.coordinator.unregister_worker(self.worker_id)
             raise
     
     async def stop(self):
@@ -88,6 +97,10 @@ class AnalysisWorker:
         
         # Shutdown executor
         self.executor.shutdown(wait=True)
+        
+        # Unregister from coordinator
+        await self.coordinator.unregister_worker(self.worker_id)
+        logger.info(f"Unregistered analysis worker from coordinator: {self.worker_id}")
         
         logger.info("Analysis worker stopped")
     
@@ -288,6 +301,9 @@ class AnalysisWorker:
         # Fetch data for each timeframe
         for tf_name, tf_value in timeframes.items():
             try:
+                # Request permission from coordinator before making API call
+                await self.coordinator.request_api_permission(self.worker_id, 'market_data')
+                
                 # Determine limit based on indicator requirements
                 if tf_name == 'spot':
                     limit = max(100, self.config.VOLUME_SPIKE_LOOKBACK + 20)  # Increased for correlation analysis
@@ -401,10 +417,14 @@ class AnalysisWorker:
             except Exception as e:
                 logger.warning(f"Error persisting signal for {symbol}: {e}")
     
-    def get_worker_status(self) -> Dict[str, Any]:
+    async def get_worker_status(self) -> Dict[str, Any]:
         """Get current worker status and statistics."""
+        # Get coordinator stats
+        coordinator_stats = await self.coordinator.get_coordinator_stats()
+        
         return {
             'is_running': self.is_running,
+            'worker_id': self.worker_id,
             'statistics': self.analysis_stats.copy(),
             'configuration': {
                 'scan_interval_seconds': self.config.SCAN_INTERVAL_SECONDS,
@@ -422,6 +442,12 @@ class AnalysisWorker:
                     self.analysis_stats['signals_generated'] / 
                     max((datetime.utcnow() - (self.analysis_stats['last_analysis_time'] or datetime.utcnow())).total_seconds() / 3600, 1)
                 ) if self.analysis_stats['last_analysis_time'] else 0,
+            },
+            'coordination': {
+                'coordinator_stats': coordinator_stats,
+                'worker_registration': coordinator_stats.get('workers', {}).get(self.worker_id, 'Not registered'),
+                'api_request_coordination': 'Enabled',
+                'resource_allocation': '20% of rate limit budget'
             }
         }
     
@@ -484,7 +510,7 @@ async def stop_analysis_worker():
 async def get_worker_status() -> Dict[str, Any]:
     """Get status of the analysis worker."""
     worker = get_analysis_worker()
-    return worker.get_worker_status()
+    return await worker.get_worker_status()
 
 
 async def analyze_symbol_on_demand(symbol: str) -> Dict[str, Any]:
