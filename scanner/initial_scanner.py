@@ -104,6 +104,7 @@ class InitialScanner:
         try:
             # Step 1: Discover all available markets
             logger.info("Discovering available markets...")
+            await self._broadcast_progress("Descobrindo mercados disponíveis...", 0, 5)
             markets = await self._discover_markets(force_refresh)
             
             if not markets:
@@ -111,6 +112,7 @@ class InitialScanner:
                 return result
             
             # Step 2: Filter markets - PEGAR TODOS OS ATIVOS SEM LIMITAÇÃO
+            await self._broadcast_progress("Filtrando pares USDT...", 1, 5)
             usdt_symbols = self._extract_usdt_symbols(markets)
             
             # Remover limitação de max_assets - sempre processar TODOS
@@ -123,12 +125,15 @@ class InitialScanner:
             logger.info(f"Discovered {result.total_discovered} USDT pairs for validation")
             
             # Step 3: Validate all discovered assets
+            await self._broadcast_progress(f"Validando {result.total_discovered} ativos...", 2, 5)
             all_validation_results = await self._validate_discovered_assets(usdt_symbols)
             
             # Step 4: Save all collected results to database
+            await self._broadcast_progress("Salvando resultados no banco...", 3, 5)
             await self._save_all_collected_results(all_validation_results)
             
             # Step 5: Process validation results for summary
+            await self._broadcast_progress("Processando resultados finais...", 4, 5)
             await self._process_validation_results(dict(all_validation_results), result)
             
             # Calculate final metrics
@@ -711,6 +716,28 @@ class InitialScanner:
                 report_lines.append(f"... and {len(result.errors) - 5} more errors")
         
         return "\n".join(report_lines)
+    
+    async def _broadcast_progress(self, message: str, current_step: int, total_steps: int):
+        """Broadcast scan progress to connected clients."""
+        try:
+            progress_percentage = int((current_step / total_steps) * 100)
+            
+            progress_message = {
+                "type": "scanner_progress",
+                "payload": {
+                    "message": message,
+                    "current_step": current_step,
+                    "total_steps": total_steps,
+                    "progress_percentage": progress_percentage,
+                    "timestamp": utc_now().isoformat()
+                }
+            }
+            
+            await connection_manager.broadcast(progress_message)
+            logger.info(f"Scanner progress: {message} ({progress_percentage}%)")
+            
+        except Exception as e:
+            logger.warning(f"Failed to broadcast progress update: {e}")
 
 
 # Global initial scanner instance
