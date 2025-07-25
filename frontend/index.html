@@ -863,6 +863,12 @@
                             <span id="auto-trade-status" class="status-indicator">🔴 Inativo</span>
                         </div>
                         <div class="control-group">
+                            <button id="test-connection-btn" class="control-btn info-btn" onclick="testAPIConnection()">
+                                🔍 Testar Conexão API
+                            </button>
+                            <span id="connection-status" class="status-indicator">❓ Não testado</span>
+                        </div>
+                        <div class="control-group">
                             <label>Max Trades Simultâneos:</label>
                             <input type="number" id="max-concurrent-trades" value="10" min="1" max="20">
                         </div>
@@ -1560,7 +1566,20 @@
                     if (!contentType || !contentType.includes('application/json')) {
                         const textResponse = await response.text();
                         console.error('Non-JSON response:', textResponse);
-                        showNotificationSafe('Erro de Servidor', `Resposta inválida do servidor. Status: ${response.status}`, 'error');
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
                         return;
                     }
                     
@@ -1600,7 +1619,20 @@
                     if (!contentType || !contentType.includes('application/json')) {
                         const textResponse = await response.text();
                         console.error('Non-JSON response:', textResponse);
-                        showNotificationSafe('Erro de Servidor', `Resposta inválida do servidor. Status: ${response.status}`, 'error');
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
                         return;
                     }
                     
