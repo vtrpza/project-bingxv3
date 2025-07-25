@@ -2,34 +2,43 @@
 
 ## 📋 Visão Geral
 
-Sistema automatizado de trading para a corretora BingX com escaneamento de ativos, análise técnica em tempo real e gestão automatizada de risco.
+Sistema automatizado de trading para a corretora BingX com escaneamento de ativos, análise técnica em tempo real e gestão automatizada de risco. Deploy principal no Render: https://bingx-trading-bot-3i13.onrender.com/
 
 ## 🏗️ Arquitetura do Sistema
 
 ### Componentes Principais
 
-1. **Scanner de Ativos** (`scanner/`)
+1. **API Server** (`api/`)
+   - FastAPI com endpoints REST
+   - WebSocket para atualizações em tempo real
+   - Integração CCXT com BingX
+   - Health checks e monitoramento
+
+2. **Scanner de Ativos** (`scanner/`)
    - Escaneamento inicial para validação
    - Escaneamento individual contínuo
    - Análise de indicadores técnicos
+   - Progresso em tempo real via WebSocket
 
-2. **Motor de Trading** (`trading/`)
+3. **Motor de Trading** (`trading/`)
    - Execução de ordens
    - Gestão de stop loss e take profit
    - Controle de posições abertas
 
-3. **Análise Técnica** (`analysis/`)
+4. **Análise Técnica** (`analysis/`)
    - Cálculo de médias móveis (MM1, Center)
    - RSI (Índice de Força Relativa)
    - Análise de volume
 
-4. **Interface Web** (`frontend/`)
+5. **Interface Web** (`frontend/`)
    - Dashboard com 3 abas (PyScript)
    - Visualização em tempo real
    - Controles de trading
+   - Otimização de inicialização
 
-5. **Banco de Dados** (`database/`)
-   - PostgreSQL para persistência
+6. **Banco de Dados** (`database/`)
+   - PostgreSQL para produção (Render)
+   - SQLite para desenvolvimento local
    - Cache de dados de mercado
    - Histórico de trades
 
@@ -37,20 +46,31 @@ Sistema automatizado de trading para a corretora BingX com escaneamento de ativo
 
 ```
 project-bingxv3/
-├── scanner/              # Módulo de escaneamento
+├── api/                 # API Server (FastAPI)
+│   ├── __main__.py      # Entry point para Render
+│   ├── web_api.py       # Endpoints REST e WebSocket
+│   └── client.py        # Cliente BingX (CCXT)
+├── scanner/             # Módulo de escaneamento
+│   ├── initial_scanner.py # Scanner com progresso em tempo real
+│   └── enhanced_worker.py # Worker otimizado
 ├── trading/             # Motor de execução de trades
 ├── analysis/            # Análise técnica
 ├── database/            # Modelos e migrações
-├── api/                 # Integração BingX via CCXT
+│   └── connection.py    # Gestão de conexões DB
 ├── frontend/            # Interface PyScript
+│   ├── index.html       # Dashboard otimizado
+│   └── static/js/       # API client e componentes
 ├── config/              # Configurações
 ├── utils/               # Utilidades comuns
 ├── tests/               # Testes automatizados
 ├── docs/                # Documentação adicional
 ├── requirements.txt     # Dependências Python
-├── docker-compose.yml   # Configuração Docker
-├── .env.example         # Variáveis de ambiente
-└── render.yaml          # Deploy no Render
+├── render.yaml          # Configuração Render
+├── render_health_check.py # Diagnóstico Render
+├── render_debug.py      # Debug deployment
+├── startup_test.py      # Teste de inicialização
+├── main.py              # Bot completo (local)
+└── .env.example         # Variáveis de ambiente
 ```
 
 ## 🚀 Funcionalidades Principais
