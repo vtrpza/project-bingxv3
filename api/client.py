@@ -43,22 +43,31 @@ class BingXClient:
     def __init__(self):
         self.exchange = None
         self._initialized = False
-        # BingX new rate limits (as of 2024)
-        # Market interfaces: 100 requests per 10 seconds per IP
-        # Account interfaces: 1,000 requests per 10 seconds per IP (final limit)
+        # Circuit breaker for rate limit protection
+        self._circuit_breaker = {
+            'is_open': False,
+            'failure_count': 0,
+            'failure_threshold': 3,
+            'recovery_time': 300,  # 5 minutes
+            'last_failure_time': 0
+        }
+        # BingX strict rate limits - ULTRA CONSERVATIVE to prevent rate limiting
+        # Market interfaces: 100 requests per 10 seconds per IP = 10 req/s theoretical max
+        # Account interfaces: 1,000 requests per 10 seconds per IP
+        # Using extremely conservative limits to ensure stability
         self._rate_limits = {
-            # Market data endpoints - MUITO mais conservativo para evitar rate limit
-            'fetch_ticker': 2,       # 2 por segundo (muito conservativo)
-            'fetch_ohlcv': 2,        # 2 por segundo (muito conservativo)
-            'fetch_markets': 1,      # 1 por segundo (escaneamento inicial apenas)
-            'fetch_orderbook': 2,    # 2 por segundo (muito conservativo)
+            # Market data endpoints - EXTREMELY conservative (60% of theoretical max)
+            'fetch_ticker': 1.5,     # 1.5 per second (ultra conservative)
+            'fetch_ohlcv': 1.5,      # 1.5 per second (ultra conservative)
+            'fetch_markets': 0.5,    # 0.5 per second (for initial scan only)
+            'fetch_orderbook': 1.0,  # 1 per second (ultra conservative)
             
-            # Account endpoints - conservativo
-            'create_order': 10,      # 10 por segundo (conservativo)
-            'cancel_order': 10,      # 10 por segundo (conservativo)
-            'fetch_balance': 2,      # 2 por segundo (muito conservativo)
-            'fetch_order_status': 5, # 5 por segundo (conservativo)
-            'fetch_open_orders': 2,  # 2 por segundo (muito conservativo)
+            # Account endpoints - conservative (10% of theoretical max)
+            'create_order': 20,      # 20 per second (conservative for trading)
+            'cancel_order': 20,      # 20 per second (conservative for trading)
+            'fetch_balance': 2,      # 2 per second (ultra conservative)
+            'fetch_order_status': 10,# 10 per second (moderate)
+            'fetch_open_orders': 2,  # 2 per second (ultra conservative)
         }
         # Track requests per endpoint for rate limiting
         self._request_timestamps = defaultdict(deque)
@@ -76,7 +85,7 @@ class BingXClient:
                 'apiKey': Settings.BINGX_API_KEY,
                 'secret': Settings.BINGX_SECRET_KEY,
                 'enableRateLimit': True,
-                'rateLimit': 1000,  # 1000ms between requests (1 req/s muito conservativo)
+                'rateLimit': 2000,  # 2000ms between requests (0.5 req/s ultra conservative)
                 'timeout': Settings.REQUEST_TIMEOUT * 1000,  # Convert to ms
                 'options': {
                     'defaultType': 'swap',  # Perpetual futures trading
@@ -158,9 +167,42 @@ class BingXClient:
         # Record this request
         timestamps.append(current_time)
     
-    async def _execute_with_retry(self, func: Callable, *args, max_retries: int = 3, 
-                                 delay_factor: float = 1.0) -> Any:
-        """Execute function with retry logic and exponential backoff."""
+    def _check_circuit_breaker(self):
+        """Check if circuit breaker should allow requests."""
+        current_time = time.time()
+        cb = self._circuit_breaker
+        
+        # If circuit is open, check if we can try to recover
+        if cb['is_open']:
+            if current_time - cb['last_failure_time'] > cb['recovery_time']:
+                logger.info("Circuit breaker attempting recovery...")
+                cb['is_open'] = False
+                cb['failure_count'] = 0
+            else:
+                remaining = cb['recovery_time'] - (current_time - cb['last_failure_time'])
+                raise RateLimitError(f"Circuit breaker open - retry in {remaining:.0f}s")
+    
+    def _record_success(self):
+        """Record successful request."""
+        if self._circuit_breaker['failure_count'] > 0:
+            self._circuit_breaker['failure_count'] = max(0, self._circuit_breaker['failure_count'] - 1)
+    
+    def _record_failure(self):
+        """Record failed request."""
+        cb = self._circuit_breaker
+        cb['failure_count'] += 1
+        cb['last_failure_time'] = time.time()
+        
+        if cb['failure_count'] >= cb['failure_threshold']:
+            cb['is_open'] = True
+            logger.warning(f"Circuit breaker opened after {cb['failure_count']} failures")
+
+    async def _execute_with_retry(self, func: Callable, *args, max_retries: int = 5, 
+                                 delay_factor: float = 2.0) -> Any:
+        """Execute function with retry logic, exponential backoff, and circuit breaker."""
+        # Check circuit breaker first
+        self._check_circuit_breaker()
+        
         last_exception = None
         
         for attempt in range(max_retries):
@@ -168,14 +210,20 @@ class BingXClient:
                 # Check if function is coroutine (async) or regular function
                 result = func(*args)
                 if asyncio.iscoroutine(result):
-                    return await result
-                else:
-                    return result
+                    result = await result
+                
+                # Record success and return
+                self._record_success()
+                return result
             except ccxt.RateLimitExceeded as e:
+                self._record_failure()  # Record failure for circuit breaker
                 logger.warning(f"Rate limit hit on attempt {attempt + 1}: {e}")
                 if attempt == max_retries - 1:
                     raise RateLimitError(f"Rate limit exceeded after {max_retries} attempts")
-                await asyncio.sleep(delay_factor * (2 ** attempt))
+                # Aggressive exponential backoff for rate limits
+                backoff_delay = delay_factor * (3 ** attempt) + (attempt * 5)  # Even more aggressive
+                logger.info(f"Rate limit backoff: waiting {backoff_delay:.1f}s before retry {attempt + 2}")
+                await asyncio.sleep(backoff_delay)
                 last_exception = e
             except ccxt.NetworkError as e:
                 logger.warning(f"Network error on attempt {attempt + 1}: {e}")

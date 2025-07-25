@@ -80,8 +80,8 @@ class ScannerWorker:
                 
                 logger.info(f"📊 Scanning {len(valid_assets)} valid assets concurrently...")
                 
-                # Process assets in highly concurrent batches for maximum performance
-                max_concurrent = min(30, len(valid_assets))  # Doubled batch size for 2x speed
+                # Process assets in conservative batches to prevent rate limiting
+                max_concurrent = min(5, len(valid_assets))  # Reduced to 5 to prevent rate limits
                 signals_generated = 0
                 
                 for i in range(0, len(valid_assets), max_concurrent):
@@ -104,18 +104,19 @@ class ScannerWorker:
                             signals_generated += 1
                             logger.info(f"🎯 Signal generated for {asset.symbol}: {result['type']}")
                     
-                    # Ultra-fast intelligent delay between batches
+                    # Conservative delay between batches to prevent rate limiting
                     if i + max_concurrent < len(valid_assets):
                         stats = self.rate_limiter.get_stats()
                         utilization = stats.get('market_data', {}).get('utilization_percent', 0)
                         
-                        if utilization < 70:
-                            delay = 0.05  # 50ms - Ultra fast
-                        elif utilization < 85:
-                            delay = 0.15  # 150ms - Fast
+                        if utilization < 50:
+                            delay = 2.0   # 2s - Conservative
+                        elif utilization < 70:
+                            delay = 3.0   # 3s - More conservative
                         else:
-                            delay = 0.25  # 250ms - Moderate
+                            delay = 5.0   # 5s - Very conservative
                             
+                        logger.debug(f"Rate limit utilization: {utilization:.1f}%, waiting {delay}s")
                         await asyncio.sleep(delay)
                 
                 session.commit()
