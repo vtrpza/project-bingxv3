@@ -110,12 +110,14 @@ class InitialScanner:
                 logger.error("No markets discovered")
                 return result
             
-            # Step 2: Filter and limit markets
+            # Step 2: Filter markets - PEGAR TODOS OS ATIVOS SEM LIMITAÇÃO
             usdt_symbols = self._extract_usdt_symbols(markets)
             
-            if max_assets:
-                usdt_symbols = usdt_symbols[:max_assets]
-                logger.info(f"Limited scan to {len(usdt_symbols)} assets")
+            # Remover limitação de max_assets - sempre processar TODOS
+            if max_assets and max_assets > 0:
+                logger.info(f"Max assets parameter provided ({max_assets}), but processing ALL {len(usdt_symbols)} assets")
+            else:
+                logger.info(f"Processing ALL {len(usdt_symbols)} assets - no limits applied")
             
             result.total_discovered = len(usdt_symbols)
             logger.info(f"Discovered {result.total_discovered} USDT pairs for validation")
@@ -243,7 +245,8 @@ class InitialScanner:
         processed_count = 0
         start_time = datetime.utcnow()
         
-        max_concurrent = min(50, max(30, TradingConfig.MAX_ASSETS_TO_SCAN // 10))
+        # Configuração agressiva para pegar TODOS os ativos
+        max_concurrent = 100  # Aumentar concorrência máxima
         
         for i in range(0, total_assets, max_concurrent):
             batch = sorted_symbols[i:i + max_concurrent]
@@ -296,21 +299,10 @@ class InitialScanner:
                     logger.info(f"Progress: {processed_count}/{total_assets} assets processed "
                                f"({valid_count} valid, {processed_count - valid_count} invalid)")
                 
-                # Ultra-intelligent delay based on rate limiter utilization
+                # Delay mínimo para não sobrecarregar a API
                 if i + max_concurrent < total_assets:
-                    stats = self.rate_limiter.get_stats()
-                    market_utilization = stats.get('market_data', {}).get('utilization_percent', 0)
-                    
-                    if market_utilization < 60:
-                        delay = 0.05  # Ultra aggressive - 50ms
-                    elif market_utilization < 80:
-                        delay = 0.15  # Fast - 150ms
-                    elif market_utilization < 90:
-                        delay = 0.3   # Moderate - 300ms
-                    else:
-                        delay = 0.5   # Conservative - 500ms
-                    
-                    await asyncio.sleep(delay)
+                    # Delay fixo ultra agressivo de apenas 10ms entre batches
+                    await asyncio.sleep(0.01)
                     
             except Exception as e:
                 logger.error(f"Error processing batch {i//max_concurrent + 1}: {e}")
@@ -326,86 +318,6 @@ class InitialScanner:
         
         return all_collected_results
     
-    async def _save_all_collected_results(self, all_collected_results: List[Tuple[str, Dict[str, Any]]]):
-        """Save all collected validation results to database in a single transaction."""
-        if not all_collected_results:
-            return
-            
-        try:
-            from utils.converters import convert_decimals
-            
-            bulk_update_data = []
-            bulk_insert_data = []
-            
-            for symbol, validation_result in all_collected_results:
-                is_valid = validation_result.get('is_valid', False)
-                validation_data = convert_decimals(validation_result.get('data', {}))
-                
-                db_validation_data = {
-                    'validation_timestamp': validation_result.get('validation_timestamp'),
-                    'validation_duration': validation_result.get('validation_duration_seconds', 0),
-                    'validation_checks': validation_data.get('validation_checks', {}),
-                    'market_summary': validation_data.get('market_summary', {}),
-                    'volume_analysis': validation_data.get('volume_analysis', {}),
-                    'priority': symbol in self.validator.criteria.PRIORITY_SYMBOLS,
-                    'is_valid': is_valid,
-                    'reason': validation_result.get('reason') if not is_valid else None
-                }
-                
-                bulk_update_data.append({
-                    'symbol': symbol,
-                    'is_valid': is_valid,
-                    'validation_data': db_validation_data
-                })
-                
-                if '/' in symbol:
-                    try:
-                        base_currency, quote_currency = symbol.split('/')
-                        market_summary = validation_data.get('market_summary', {})
-                        min_order_size = market_summary.get('quote_volume_24h', TradingConfig.MIN_ORDER_SIZE_USDT)
-                        if isinstance(min_order_size, (int, float, str)):
-                            min_order_size = min(float(min_order_size) / 1000, float(TradingConfig.MIN_ORDER_SIZE_USDT))
-                        
-                        bulk_insert_data.append({
-                            'symbol': symbol,
-                            'base_currency': base_currency,
-                            'quote_currency': quote_currency,
-                            'is_valid': is_valid,
-                            'min_order_size': min_order_size,
-                            'last_validation': utc_now(),
-                            'validation_data': db_validation_data
-                        })
-                    except Exception as prep_error:
-                        logger.warning(f"Could not prepare asset data for {symbol}: {prep_error}")
-            
-            with get_session() as session:
-                for update_data in bulk_update_data:
-                    try:
-                        self.asset_repo.update_validation_status(
-                            session,
-                            symbol=update_data['symbol'],
-                            is_valid=update_data['is_valid'],
-                            validation_data=update_data['validation_data']
-                        )
-                    except Exception as update_error:
-                        logger.warning(f"Could not update validation for {update_data['symbol']}: {update_error}")
-                
-                for insert_data in bulk_insert_data:
-                    try:
-                        existing = self.asset_repo.get_by_symbol(session, insert_data['symbol'])
-                        if not existing:
-                            self.asset_repo.create(session, **insert_data)
-                    except Exception as insert_error:
-                        logger.warning(f"Could not create asset {insert_data['symbol']}: {insert_error}")
-                
-                session.commit()
-                
-            logger.debug(f"Bulk saved {len(all_collected_results)} validation results to database")
-            
-        except Exception as e:
-            logger.error(f"Failed to bulk save validation results: {e}")
-            raise # Re-raise to indicate failure to the caller
-
     async def _save_all_collected_results(self, all_collected_results: List[Tuple[str, Dict[str, Any]]]):
         """Save all collected validation results to database in a single transaction."""
         if not all_collected_results:
