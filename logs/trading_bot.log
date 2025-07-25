@@ -13475,3 +13475,12 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 2025-07-24 21:31:41,639 - trading.order_manager - INFO - Starting order monitoring
 2025-07-24 21:31:41,640 - trading.risk_manager - INFO - Starting risk monitoring
 2025-07-24 21:31:41,641 - api.market_data - INFO - Initializing BingX client...
+2025-07-24 21:57:46,439 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:57:46,439 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:57:47,379 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:57:53,792 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:57:53,794 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:58:00,984 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:58:00,984 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:58:07,402 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:58:07,405 - api.client - INFO - BingX client initialized successfully (Testnet: True)
