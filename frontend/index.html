@@ -21,7 +21,12 @@
             constructor() {
                 this.ws = null;
                 this.reconnectInterval = 5000;
+                this.maxReconnectInterval = 30000; // Max 30 seconds
+                this.reconnectDecay = 1.5; // Exponential backoff
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 10;
                 this.reconnectTimer = null;
+                this.connectionTimeout = null;
                 this.isConnecting = false;
                 this.isConnected = false;
                 
@@ -127,12 +132,28 @@
             scheduleReconnect() {
                 if (this.reconnectTimer) return;
                 
+                // Stop trying after max attempts
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    console.error('Max reconnection attempts reached');
+                    this.updateConnectionStatus('Conexão Perdida', 'error');
+                    return;
+                }
+                
+                // Calculate next reconnect interval with exponential backoff
+                const timeout = Math.min(
+                    this.reconnectInterval * Math.pow(this.reconnectDecay, this.reconnectAttempts),
+                    this.maxReconnectInterval
+                );
+                
+                this.reconnectAttempts++;
+                console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${timeout}ms`);
+                
                 this.reconnectTimer = setTimeout(() => {
                     this.reconnectTimer = null;
                     if (!this.isConnected && !this.isConnecting) {
                         this.connect();
                     }
-                }, this.reconnectInterval);
+                }, timeout);
             }
             
             subscribe(channel) {
