@@ -337,6 +337,11 @@ class TradingEngine:
                 # Create stop loss order
                 await self._create_stop_loss_order(trade_id, symbol, side, actual_quantity, stop_loss_price)
                 
+                # Update test mode statistics if active
+                if is_test_mode_active():
+                    increment_test_mode_stat('trades_executed')
+                    logger.warning(f"🧪 TEST MODE: Trade executed for {symbol}, statistics updated")
+                
                 return {
                     'trade_id': trade_id,
                     'symbol': symbol,
@@ -345,7 +350,8 @@ class TradingEngine:
                     'quantity': actual_quantity,
                     'stop_loss': stop_loss_price,
                     'order_id': order_result.get('id'),
-                    'timestamp': datetime.now(timezone.utc)
+                    'timestamp': datetime.now(timezone.utc),
+                    'test_mode': is_test_mode_active()
                 }
                 
             except TradingAPIError as e:
