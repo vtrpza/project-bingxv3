@@ -4859,3 +4859,171 @@
 2025-07-25 15:40:16,149 - database.connection - INFO - Using SQLite database
 2025-07-25 15:40:16,150 - database.connection - INFO - Database connection established successfully
 2025-07-25 15:40:16,154 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:40:20,323 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:20,323 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:20,324 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:26,562 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:40:26,562 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:26,562 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:26,563 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:26,567 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:40:26,612 - api.web_api - ERROR - Error receiving message from conn_1_1753468794: (1012, None)
+2025-07-25 15:40:26,612 - api.web_api - INFO - WebSocket disconnected: conn_1_1753468794 | Host: 127.0.0.1 | Reason: final_cleanup* | Duration: 32.0s | Messages: 5 | Failures: 0 | Bytes sent: 3206 | Remaining: 0
+2025-07-25 15:40:26,712 - api.web_api - INFO - FastAPI server shutting down
+2025-07-25 15:40:26,713 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-25 15:40:26,713 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 15:40:29,237 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-25 15:40:29,238 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-25 15:40:29,477 - api.web_api - INFO - BingX client initialized successfully
+2025-07-25 15:40:29,500 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-25 15:40:29,500 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-25 15:40:29,500 - api.web_api - INFO - Database initialization starting with 0.13s delay...
+2025-07-25 15:40:29,633 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-25 15:40:29,633 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:29,633 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:29,689 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:29,689 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-25 15:40:29,691 - database.connection - INFO - Database tables created successfully
+2025-07-25 15:40:29,691 - api.web_api - INFO - Database initialization completed successfully
+2025-07-25 15:40:30,511 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-25 15:40:30,512 - api.web_api - INFO - Starting automated risk management task
+2025-07-25 15:40:30,512 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-25 15:40:30,512 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 15:40:31,767 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:31,768 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:31,769 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:32,800 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 15:40:32,800 - api.web_api - INFO - WebSocket connected: conn_1_1753468832 from 127.0.0.1. Total: 1
+2025-07-25 15:40:32,801 - api.web_api - INFO - WebSocket connected: conn_1_1753468832 from 127.0.0.1
+2025-07-25 15:40:32,971 - api.web_api - INFO - Subscription confirmed for conn_1_1753468832: trading_data
+2025-07-25 15:40:32,972 - api.web_api - INFO - Subscription confirmed for conn_1_1753468832: scanner_status
+2025-07-25 15:40:32,972 - api.web_api - INFO - Subscription confirmed for conn_1_1753468832: general
+2025-07-25 15:40:34,968 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:40:35,061 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:35,061 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:35,062 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:35,066 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:40:35,104 - api.web_api - ERROR - Error receiving message from conn_1_1753468832: (1000, None)
+2025-07-25 15:40:35,104 - api.web_api - INFO - WebSocket disconnected: conn_1_1753468832 | Host: 127.0.0.1 | Reason: final_cleanup* | Duration: 2.3s | Messages: 4 | Failures: 0 | Bytes sent: 838 | Remaining: 0
+2025-07-25 15:40:35,321 - api.web_api - INFO - WebSocket connection attempt from 127.0.0.1
+2025-07-25 15:40:35,322 - api.web_api - INFO - WebSocket connected: conn_2_1753468835 from 127.0.0.1. Total: 1
+2025-07-25 15:40:35,323 - api.web_api - INFO - WebSocket connected: conn_2_1753468835 from 127.0.0.1
+2025-07-25 15:40:35,449 - api.web_api - INFO - Subscription confirmed for conn_2_1753468835: trading_data
+2025-07-25 15:40:35,450 - api.web_api - INFO - Subscription confirmed for conn_2_1753468835: scanner_status
+2025-07-25 15:40:35,450 - api.web_api - INFO - Subscription confirmed for conn_2_1753468835: general
+2025-07-25 15:40:39,475 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:39,475 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:39,476 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:39,490 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:40:39,490 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:39,490 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:39,491 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:39,495 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:40:39,643 - api.web_api - INFO - Trading live data requested - symbols: None, limit: 50
+2025-07-25 15:40:39,643 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:39,643 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:39,644 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:46,105 - api.client - INFO - BingX API connection test successful - found 2250 markets
+2025-07-25 15:40:46,109 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-25 15:40:46,110 - database.connection - ERROR - Unexpected error in database session: AssetRepository.get_valid_assets() got an unexpected keyword argument 'limit'
+2025-07-25 15:40:46,110 - api.web_api - WARNING - No valid symbols in database: AssetRepository.get_valid_assets() got an unexpected keyword argument 'limit'
+2025-07-25 15:40:46,110 - api.web_api - ERROR - Error fetching trading live data: 424: {'error': 'no_valid_symbols', 'message': 'Nenhum ativo válido encontrado no banco de dados. Execute o scan inicial primeiro.', 'action_required': 'initial_scan', 'suggestion': "Clique em 'Executar Scan Inicial' na aba Scanner para descobrir ativos válidos."}
+2025-07-25 15:40:46,111 - database.connection - ERROR - Unexpected error in database session: 500: Trading data error: 424: {'error': 'no_valid_symbols', 'message': 'Nenhum ativo válido encontrado no banco de dados. Execute o scan inicial primeiro.', 'action_required': 'initial_scan', 'suggestion': "Clique em 'Executar Scan Inicial' na aba Scanner para descobrir ativos válidos."}
+2025-07-25 15:40:46,247 - api.web_api - INFO - Trading trades requested - symbol: None, status: None, limit: 20
+2025-07-25 15:40:49,743 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:40:49,744 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:49,744 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:49,745 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:49,748 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:40:49,818 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:49,818 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:49,819 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:52,061 - api.web_api - INFO - 🚀 Starting complete initial asset scan from frontend request...
+2025-07-25 15:40:52,061 - scanner.initial_scanner - INFO - Scanner started: Iniciando scan inicial de ativos... (0 assets)
+2025-07-25 15:40:52,062 - scanner.initial_scanner - INFO - Progress: 0/0 (20.0%) - Descobrindo mercados disponíveis...
+2025-07-25 15:40:58,471 - api.client - INFO - Fetched 1502 USDT markets
+2025-07-25 15:40:58,472 - performance.performance - INFO - Operation timing: fetch_markets
+2025-07-25 15:40:58,475 - api.market_data - INFO - Fetched 1502 USDT markets
+2025-07-25 15:40:58,476 - scanner.initial_scanner - INFO - Discovered 1502 markets from exchange
+2025-07-25 15:40:58,476 - scanner.initial_scanner - INFO - Progress: 0/0 (40.0%) - Filtrando e priorizando pares USDT...
+2025-07-25 15:40:58,477 - scanner.initial_scanner - INFO - Extracting all active USDT pairs...
+2025-07-25 15:40:58,477 - scanner.initial_scanner - INFO - Found 1502 active USDT pairs (0 invalid markets skipped)
+2025-07-25 15:40:58,477 - scanner.initial_scanner - INFO - Prioritized 18 priority symbols, 1484 regular symbols
+2025-07-25 15:40:58,477 - scanner.initial_scanner - INFO - Processing ALL 1502 discovered assets
+2025-07-25 15:40:58,478 - scanner.initial_scanner - INFO - Progress: 0/0 (60.0%) - Validando 1502 ativos usando estratégia high_performance...
+2025-07-25 15:40:58,478 - scanner.validation_strategy - INFO - Starting high-performance validation of 1502 symbols
+2025-07-25 15:41:13,990 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:15,986 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:18,261 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:19,988 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:21,985 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:21,985 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 2.11s
+2025-07-25 15:41:21,985 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,986 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,987 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,988 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,989 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:21,990 - api.client - WARNING - Rate limit approaching for fetch_ticker, waiting 4.10s
+2025-07-25 15:41:22,000 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:41:22,000 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:41:22,000 - database.connection - INFO - Using SQLite database
+2025-07-25 15:41:22,001 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:41:22,004 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:41:22,007 - api.web_api - WARNING - Failed to send high message (attempt 1): 
+2025-07-25 15:41:22,007 - api.web_api - INFO - WebSocket disconnected: conn_2_1753468835 | Host: 127.0.0.1 | Reason: send_failure:  | Duration: 46.7s | Messages: 5 | Failures: 1 | Bytes sent: 5207 | Remaining: 0
+2025-07-25 15:41:22,008 - api.web_api - WARNING - Broadcast 'scanner_status' failed to reach any connections
+2025-07-25 15:41:22,008 - api.web_api - INFO - Removed 1 failed connections during broadcast
+2025-07-25 15:41:22,010 - api.web_api - ERROR - Error receiving message from conn_2_1753468835: (<CloseCode.ABNORMAL_CLOSURE: 1006>, None)
+2025-07-25 15:41:22,116 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:41:22,116 - database.connection - INFO - Using SQLite database
+2025-07-25 15:41:22,117 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:41:24,426 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:26,447 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:26,447 - api.client - WARNING - Rate limit approaching for fetch_ohlcv, waiting 1.91s
+2025-07-25 15:41:28,483 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:33,573 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:35,555 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:41,595 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:43,581 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:49,562 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:51,543 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:41:57,551 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:41:59,566 - performance.performance - INFO - Operation timing: fetch_market_summary
+2025-07-25 15:42:00,708 - performance.performance - INFO - Operation timing: fetch_ohlcv
+2025-07-25 15:42:02,704 - performance.performance - INFO - Operation timing: fetch_market_summary
