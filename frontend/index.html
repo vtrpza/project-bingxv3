@@ -2589,8 +2589,9 @@
         
         // ====== AUTO-REFRESH AND REAL-TIME UPDATES ======
         
-        // Auto-refresh interval for trading data
+        // Auto-refresh intervals
         let tradingDataRefreshInterval = null;
+        let scannerStatusRefreshInterval = null;
         
         // Start auto-refresh for trading data
         function startTradingDataAutoRefresh(intervalMs = 30000) { // 30 seconds default
@@ -2609,12 +2610,36 @@
             addActivityLog('🔄', `Auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
         }
         
-        // Stop auto-refresh
+        // Start auto-refresh for scanner status
+        function startScannerStatusAutoRefresh(intervalMs = 15000) { // 15 seconds default
+            stopScannerStatusAutoRefresh(); // Clear any existing interval
+            
+            // Initial refresh
+            refreshScannerStatus();
+            
+            // Set up periodic refresh
+            scannerStatusRefreshInterval = setInterval(() => {
+                refreshScannerStatus();
+            }, intervalMs);
+            
+            console.log(`🔍 Scanner auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
+        }
+        
+        // Stop auto-refresh for trading data
         function stopTradingDataAutoRefresh() {
             if (tradingDataRefreshInterval) {
                 clearInterval(tradingDataRefreshInterval);
                 tradingDataRefreshInterval = null;
                 addActivityLog('⏹️', 'Auto-refresh desativado');
+            }
+        }
+        
+        // Stop auto-refresh for scanner status
+        function stopScannerStatusAutoRefresh() {
+            if (scannerStatusRefreshInterval) {
+                clearInterval(scannerStatusRefreshInterval);
+                scannerStatusRefreshInterval = null;
+                console.log('🔍 Scanner auto-refresh desativado');
             }
         }
         
