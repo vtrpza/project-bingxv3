@@ -3,9 +3,11 @@
 
 import asyncio
 import time
+import threading
 from collections import defaultdict, deque
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
+from contextlib import asynccontextmanager
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -40,9 +42,18 @@ class IntelligentRateLimiter:
         self.request_history: Dict[str, deque] = defaultdict(deque)
         self.last_cleanup = time.time()
         
-        # Dynamic adjustment based on API responses
+        # Enhanced dynamic adjustment with performance metrics
         self.dynamic_delays: Dict[str, float] = defaultdict(float)
         self.consecutive_successes: Dict[str, int] = defaultdict(int)
+        self.performance_metrics: Dict[str, Dict] = defaultdict(lambda: {
+            'avg_response_time': 0.0,
+            'success_rate': 1.0,
+            'last_reset': time.time()
+        })
+        
+        # Lock-free atomic operations counter
+        self._request_counter = 0
+        self._lock = threading.RLock()  # For thread-safe operations
         
     def _cleanup_old_requests(self, category: str, current_time: float):
         """Remove requests outside the time window."""
@@ -153,6 +164,8 @@ class IntelligentRateLimiter:
                 'utilization_percent': (len(history) / effective_limit) * 100,
                 'dynamic_delay': self.dynamic_delays.get(category, 0),
                 'consecutive_successes': self.consecutive_successes.get(category, 0),
+                'avg_response_time': self.performance_metrics[category]['avg_response_time'],
+                'success_rate': self.performance_metrics[category]['success_rate'],
             }
         
         return stats

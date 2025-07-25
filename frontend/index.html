@@ -2092,13 +2092,35 @@
                         updateTradingTable(liveData.trading_data);
                         hasData = true;
                     }
-                } else if (liveDataResponse && liveDataResponse.status === 424) {
-                    // Handle 424 Failed Dependency - scan required
+                } else if (liveDataResponse && (liveDataResponse.status === 424 || liveDataResponse.status === 500)) {
+                    // Handle 424 Failed Dependency or 500 - scan required
                     const errorData = await liveDataResponse.json();
                     console.warn('Trading data requires initial scan:', errorData);
                     
-                    // Show user-friendly message
-                    updateTradingTableWithScanRequired(errorData.detail);
+                    // Check if it's the specific "no_valid_symbols" error
+                    let detail = errorData.detail || errorData;
+                    if (typeof detail === 'string' && detail.includes('no_valid_symbols')) {
+                        // Parse the nested error structure
+                        try {
+                            const match = detail.match(/\{"error":\s*"no_valid_symbols"[^}]+\}/);
+                            if (match) {
+                                const parsedError = JSON.parse(match[0]);
+                                detail = parsedError;
+                            }
+                        } catch (e) {
+                            console.warn('Could not parse nested error:', e);
+                        }
+                    }
+                    
+                    // Show prominent notification
+                    showNotificationSafe(
+                        '🔍 Scan Inicial Necessário', 
+                        'Os dados de trading não estão disponíveis. Execute o scan inicial para descobrir ativos válidos.', 
+                        'warning'
+                    );
+                    
+                    // Show user-friendly message in table
+                    updateTradingTableWithScanRequired(detail);
                     return; // Don't proceed with other data
                 }
                 
@@ -2135,7 +2157,22 @@
                 
             } catch (error) {
                 console.error('Error refreshing trading data:', error);
-                showNotificationSafe('Erro de Conexão', error.message, 'error');
+                
+                // Check if error message contains scan requirement info
+                if (error.message && error.message.includes('no_valid_symbols')) {
+                    showNotificationSafe(
+                        '🔍 Scan Inicial Necessário', 
+                        'Falha ao carregar dados - execute o scan inicial primeiro.', 
+                        'warning'
+                    );
+                    updateTradingTableWithScanRequired({ 
+                        message: 'Erro de conexão - possivelmente scan inicial necessário',
+                        suggestion: 'Verifique se o servidor está rodando e execute o scan inicial.'
+                    });
+                } else {
+                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                }
+                
                 hideLoadingIndicator();
             }
         }
@@ -2182,30 +2219,61 @@
                 const tbody = document.getElementById('trading-data-tbody');
                 if (!tbody) return;
                 
-                // Show scan required message
+                // Extract message and suggestion from error detail
+                let message = 'Execute o scan inicial para descobrir ativos válidos.';
+                let suggestion = 'Vá para a aba Scanner e clique em "🚀 Scan Completo".';
+                
+                if (errorDetail && typeof errorDetail === 'object') {
+                    message = errorDetail.message || message;
+                    suggestion = errorDetail.suggestion || suggestion;
+                } else if (typeof errorDetail === 'string') {
+                    // Try to extract message from string
+                    if (errorDetail.includes('Nenhum ativo válido encontrado')) {
+                        message = 'Nenhum ativo válido encontrado no banco de dados.';
+                    }
+                }
+                
+                // Show scan required message with enhanced styling
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="22" style="text-align: center; padding: 30px;">
-                            <div class="scan-required-message" style="max-width: 600px; margin: 0 auto;">
-                                <div style="font-size: 48px; margin-bottom: 20px;">🔍</div>
-                                <h3 style="color: #f85149; margin-bottom: 10px;">Scan Inicial Necessário</h3>
-                                <p style="color: #8b949e; margin-bottom: 20px;">
-                                    ${errorDetail.message || 'Execute o scan inicial para descobrir ativos válidos.'}
+                            <div class="scan-required-message" style="max-width: 600px; margin: 0 auto; animation: fadeIn 0.5s ease-in;">
+                                <div style="font-size: 48px; margin-bottom: 20px; animation: pulse 2s infinite;">🔍</div>
+                                <h3 style="color: #f85149; margin-bottom: 10px; font-size: 18px;">⚠️ Scan Inicial Necessário</h3>
+                                <p style="color: #8b949e; margin-bottom: 20px; font-size: 14px; line-height: 1.5;">
+                                    ${message}
                                 </p>
-                                <p style="color: #6e7681; font-size: 14px; margin-bottom: 20px;">
-                                    ${errorDetail.suggestion || 'Vá para a aba Scanner e clique em "Executar Scan Inicial".'}
+                                <p style="color: #6e7681; font-size: 13px; margin-bottom: 20px; font-style: italic;">
+                                    💡 ${suggestion}
                                 </p>
-                                <button 
-                                    onclick="showTab('scanner')" 
-                                    style="background: #238636; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px;">
-                                    Ir para Scanner
-                                </button>
+                                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                                    <button 
+                                        onclick="showTab('scanner')" 
+                                        style="background: #238636; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                        📊 Ir para Scanner
+                                    </button>
+                                    <button 
+                                        onclick="startInitialScan()" 
+                                        style="background: #1f6feb; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                                        🚀 Executar Scan Agora
+                                    </button>
+                                </div>
+                                <p style="color: #6e7681; font-size: 12px; margin-top: 15px;">
+                                    ⏱️ O scan inicial pode levar 5-10 minutos para completar
+                                </p>
                             </div>
                         </td>
                     </tr>
                 `;
                 
-                addActivityLog('⚠️', 'Dados de trading indisponíveis - Scan inicial necessário');
+                // Add enhanced activity log
+                addActivityLog('⚠️', 'Dados de trading indisponíveis - Scan inicial necessário', 'warning');
+                
+                // Update last update timestamp
+                const lastUpdateElement = document.getElementById('trading-last-update');
+                if (lastUpdateElement) {
+                    lastUpdateElement.textContent = `Última atualização: ${new Date().toLocaleTimeString()} (⚠️ Scan necessário)`;
+                }
                 
             } catch (error) {
                 console.error('Error showing scan required message:', error);

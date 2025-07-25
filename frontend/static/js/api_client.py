@@ -22,17 +22,39 @@ class APIClient:
         self.reconnect_attempts = 0
         
     async def get(self, endpoint):
-        """Make GET request to API"""
+        """Make GET request to API with enhanced error handling"""
         try:
             response = await fetch(f"{self.base_url}/api{endpoint}")
             if response.ok:
                 return (await response.json()).to_py()
             else:
-                console.error(f"API Error: {response.status} - {await response.text()}")
+                response_text = await response.text()
+                console.error(f"API Error: {response.status} - {response_text}")
+                
+                # Check for specific scan required errors
+                if (response.status == 424 or response.status == 500):
+                    try:
+                        error_data = json.loads(response_text)
+                        error_detail = error_data.get("detail", "")
+                        
+                        # Check if it's the no_valid_symbols error
+                        if "no_valid_symbols" in str(error_detail):
+                            # Raise specific exception with scan requirement info
+                            raise Exception(f"SCAN_REQUIRED: {error_detail}")
+                    except json.JSONDecodeError:
+                        # If can't parse JSON, check if text contains scan info  
+                        if "no_valid_symbols" in response_text:
+                            raise Exception(f"SCAN_REQUIRED: {response_text}")
+                
                 return None
         except Exception as e:
-            console.error(f"Request failed: {str(e)}")
-            return None
+            error_msg = str(e)
+            if error_msg.startswith("SCAN_REQUIRED:"):
+                # Re-raise scan required exceptions to be handled by caller
+                raise e
+            else:
+                console.error(f"Request failed: {error_msg}")
+                return None
     
     async def post(self, endpoint, data=None):
         """Make POST request to API with improved error handling"""
