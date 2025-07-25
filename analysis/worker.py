@@ -65,11 +65,17 @@ class AnalysisWorker:
         logger.info("Starting analysis worker...")
         
         try:
+            # Register with coordinator
+            await self.coordinator.register_worker(self.worker_id, 'analysis')
+            logger.info(f"Registered analysis worker with coordinator: {self.worker_id}")
+            
             # Start main analysis loop
             await self._run_analysis_loop()
         except Exception as e:
             logger.error(f"Analysis worker error: {e}")
             self.is_running = False
+            # Unregister from coordinator on error
+            await self.coordinator.unregister_worker(self.worker_id)
             raise
     
     async def stop(self):
@@ -291,6 +297,9 @@ class AnalysisWorker:
         # Fetch data for each timeframe
         for tf_name, tf_value in timeframes.items():
             try:
+                # Request permission from coordinator before making API call
+                await self.coordinator.request_api_permission(self.worker_id, 'market_data')
+                
                 # Determine limit based on indicator requirements
                 if tf_name == 'spot':
                     limit = max(100, self.config.VOLUME_SPIKE_LOOKBACK + 20)  # Increased for correlation analysis
