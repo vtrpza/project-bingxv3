@@ -1182,7 +1182,7 @@ async def get_scanner_status(
             scanner_status["scanning_active"] = False
             scanner_status["assets_being_scanned"] = 0
         
-        return {
+        status_data = {
             "scanning_active": scanner_status["scanning_active"],
             "assets_being_scanned": scanner_status["assets_being_scanned"],
             "monitored_assets": valid_assets_count,  # Add explicit monitored assets count
@@ -1191,6 +1191,17 @@ async def get_scanner_status(
             "scan_interval": scanner_status["scan_interval"],
             "timestamp": current_time
         }
+        
+        # Broadcast scanner status update to WebSocket clients
+        try:
+            await manager.broadcast({
+                "type": "scanner_status_update",
+                "payload": status_data
+            })
+        except Exception as e:
+            logger.warning(f"Failed to broadcast scanner status update: {e}")
+        
+        return status_data
     except Exception as e:
         logger.error(f"Error getting scanner status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
