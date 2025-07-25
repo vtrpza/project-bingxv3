@@ -355,7 +355,8 @@ class ScannerWorker:
 def signal_handler(signum, frame):
     """Handle shutdown signals."""
     logger.info(f"Received signal {signum}, shutting down...")
-    worker.stop()
+    # Set running to False to stop the main loop, cleanup will happen in main()
+    worker.running = False
 
 async def main():
     """Main function."""
