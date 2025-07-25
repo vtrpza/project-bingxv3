@@ -1076,7 +1076,7 @@ async def start_initial_scan():
                 "message": "Iniciando scan completo de todos os ativos...",
                 "timestamp": utc_now().isoformat()
             }
-        })
+        }, channel="scanner_status", priority="high")
         
         # Executar scan de forma assíncrona
         async def run_initial_scan():
@@ -1101,7 +1101,7 @@ async def start_initial_scan():
                         "duration": result.scan_duration,
                         "timestamp": utc_now().isoformat()
                     }
-                })
+                }, channel="scanner_status", priority="high")
                 
                 logger.info(f"✅ Complete initial scan finished: {len(result.valid_assets)}/{result.total_discovered} valid assets")
                 
@@ -1114,7 +1114,7 @@ async def start_initial_scan():
                         "message": str(e),
                         "timestamp": utc_now().isoformat()
                     }
-                })
+                }, channel="scanner_status", priority="high")
         
         # Iniciar task assíncrona
         asyncio.create_task(run_initial_scan())
@@ -1632,7 +1632,7 @@ async def get_scanner_status(
             await manager.broadcast({
                 "type": "scanner_status_update",
                 "payload": status_data
-            })
+            }, channel="scanner_status")
         except Exception as e:
             logger.warning(f"Failed to broadcast scanner status update: {e}")
         
@@ -3439,9 +3439,9 @@ async def broadcast_realtime_data():
                                 }
                             }
                             
-                            await manager.broadcast(broadcast_data)
+                            await manager.broadcast(broadcast_data, channel="trading_data", priority="normal")
                             last_broadcast_time = current_time
-                            logger.debug(f"Sent trading update to {len(manager.active_connections)} clients")
+                            logger.debug(f"Sent trading update to trading_data channel subscribers")
                     
                     except Exception as data_error:
                         logger.warning(f"Error getting trading data for broadcast: {data_error}")
@@ -3454,7 +3454,7 @@ async def broadcast_realtime_data():
                                 "message": "Data refresh recommended"
                             }
                         }
-                        await manager.broadcast(broadcast_data)
+                        await manager.broadcast(broadcast_data, channel="general", priority="low")
                         last_broadcast_time = current_time
                 
         except Exception as e:
@@ -3696,11 +3696,11 @@ async def broadcast_scanner_status():
                             "timestamp": utc_now().isoformat()
                         }
                         
-                        # Broadcast to all connected clients
+                        # Broadcast to scanner status subscribers
                         await manager.broadcast({
                             "type": "scanner_status_update",
                             "payload": status_data
-                        })
+                        }, channel="scanner_status")
                         
                         logger.debug(f"Broadcasted scanner status: {valid_assets_count} assets monitored, {signals_count} active signals")
                         
