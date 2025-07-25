@@ -2840,7 +2840,8 @@ async def start_background_tasks():
     """Start background tasks"""
     asyncio.create_task(broadcast_realtime_data())
     asyncio.create_task(automated_risk_management())
-    logger.info("Background tasks started: real-time data broadcasting and automated risk management")
+    asyncio.create_task(broadcast_scanner_status())
+    logger.info("Background tasks started: real-time data broadcasting, automated risk management, and scanner status broadcasting")
 
 @app.on_event("shutdown")
 async def shutdown_event():
