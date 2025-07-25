@@ -766,8 +766,22 @@ class TradingBotApp:
     
     def handle_scanner_message(self, data):
         """Handle scanner-related WebSocket messages with UI updates"""
-        message_type = data.get("type")
-        payload = data.get("payload", {})
+        try:
+            # Defensive check for data structure
+            if not isinstance(data, dict):
+                console.error(f"Expected dict, got {type(data)}: {data}")
+                return
+                
+            message_type = data.get("type")
+            payload = data.get("payload", {})
+            
+            if not message_type:
+                console.error(f"No message type in data: {data}")
+                return
+                
+        except Exception as e:
+            console.error(f"Error parsing scanner message data: {e}")
+            return
         
         if message_type == "scanner_progress":
             processed = payload.get("processed_count", 0)
@@ -1291,9 +1305,24 @@ window.handleScannerMessage = create_proxy(app.handle_scanner_message)
 def handleScannerWebSocketMessage(data):
     """Global function to handle scanner messages from JavaScript WebSocket"""
     try:
+        # Debug logging to understand the data structure
+        console.log(f"Handling scanner WebSocket message: {type(data)}")
+        console.log(f"Data content: {data}")
+        
+        # Ensure data is properly formatted
+        if isinstance(data, str):
+            import json
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError as json_err:
+                console.error(f"Failed to parse JSON data: {json_err}")
+                return
+        
         app.handle_scanner_message(data)
     except Exception as e:
         console.error(f"Error handling scanner WebSocket message: {e}")
+        console.error(f"Error type: {type(e)}")
+        console.error(f"Data type: {type(data)}, Data: {data}")
 
 window.handleScannerWebSocketMessage = create_proxy(handleScannerWebSocketMessage)
 
