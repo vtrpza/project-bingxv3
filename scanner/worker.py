@@ -130,22 +130,15 @@ class ScannerWorker:
         try:
             client = get_client()
             
-            # Use cached data when possible
-            ticker = await self.cache.get_or_fetch(
-                'ticker', asset.symbol,
-                lambda: self._fetch_ticker_with_rate_limit(client, asset.symbol)
-            )
+            # Fetch ticker data
+            ticker = await self._fetch_ticker_with_rate_limit(client, asset.symbol)
             
-            # Get OHLCV data with caching
-            ohlcv_2h = await self.cache.get_or_fetch(
-                'candles', f"{asset.symbol}_2h_100",
-                lambda: self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '2h', 100)
-            )
+            if not ticker:
+                return None
             
-            ohlcv_4h = await self.cache.get_or_fetch(
-                'candles', f"{asset.symbol}_4h_100", 
-                lambda: self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '4h', 100)
-            )
+            # Get OHLCV data
+            ohlcv_2h = await self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '2h', 100)
+            ohlcv_4h = await self._fetch_ohlcv_with_rate_limit(client, asset.symbol, '4h', 100)
             
             if not ohlcv_2h or not ohlcv_4h:
                 return None
