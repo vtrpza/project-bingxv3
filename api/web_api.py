@@ -169,10 +169,30 @@ async def start_background_tasks_delayed():
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "*",  # Allow all for now, can be restricted later
+        "https://*.onrender.com",  # Render subdomains
+        "https://bingx-trading-bot-3i13.onrender.com",  # Specific production URL
+        "http://localhost:*",  # Local development
+        "https://localhost:*"  # Local HTTPS development
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Authorization",
+        "Content-Type", 
+        "X-Requested-With",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Mx-ReqToken",
+        "Keep-Alive",
+        "X-Requested-With",
+        "If-Modified-Since"
+    ],
+    expose_headers=["*"]
 )
 
 def _safe_get_candle_price(candles, fallback_price):
