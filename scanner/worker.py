@@ -80,8 +80,8 @@ class ScannerWorker:
                 
                 logger.info(f"📊 Scanning {len(valid_assets)} valid assets concurrently...")
                 
-                # Process assets in highly concurrent batches for maximum performance
-                max_concurrent = min(30, len(valid_assets))  # Doubled batch size for 2x speed
+                # Process assets in conservative batches to prevent rate limiting
+                max_concurrent = min(5, len(valid_assets))  # Reduced to 5 to prevent rate limits
                 signals_generated = 0
                 
                 for i in range(0, len(valid_assets), max_concurrent):
