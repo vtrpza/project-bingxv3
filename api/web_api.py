@@ -201,45 +201,162 @@ def mount_frontend():
     if frontend_path.exists():
         app.mount("/", StaticFiles(directory=str(frontend_path), html=True), name="frontend")
 
-# WebSocket connection manager
+# WebSocket connection manager with enhanced error handling and heartbeat
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.connection_metadata: Dict[WebSocket, Dict] = {}
+        self.heartbeat_interval = 30  # seconds
+        self.max_retries = 3
     
     async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-        logger.info(f"WebSocket connected. Total connections: {len(self.active_connections)}")
+        """Accept WebSocket connection with enhanced error handling."""
+        try:
+            await websocket.accept()
+            self.active_connections.append(websocket)
+            self.connection_metadata[websocket] = {
+                "connected_at": utc_now(),
+                "last_ping": utc_now(),
+                "client_host": websocket.client.host if websocket.client else "unknown",
+                "failures": 0
+            }
+            logger.info(f"WebSocket connected from {self.connection_metadata[websocket]['client_host']}. Total: {len(self.active_connections)}")
+        except Exception as e:
+            logger.error(f"Failed to accept WebSocket connection: {e}")
+            raise
     
     def disconnect(self, websocket: WebSocket):
-        if websocket in self.active_connections:
-            self.active_connections.remove(websocket)
-        logger.info(f"WebSocket disconnected. Total connections: {len(self.active_connections)}")
-    
-    async def send_personal_message(self, message: str, websocket: WebSocket):
+        """Safely disconnect WebSocket with cleanup."""
         try:
-            await websocket.send_text(message)
+            if websocket in self.active_connections:
+                self.active_connections.remove(websocket)
+            if websocket in self.connection_metadata:
+                client_info = self.connection_metadata.pop(websocket)
+                logger.info(f"WebSocket disconnected from {client_info.get('client_host', 'unknown')}. Total: {len(self.active_connections)}")
         except Exception as e:
-            logger.error(f"Error sending personal message: {e}")
-            self.disconnect(websocket)
+            logger.warning(f"Error during WebSocket disconnect cleanup: {e}")
+    
+    async def send_personal_message(self, message: str, websocket: WebSocket, retry: bool = True):
+        """Send message to specific WebSocket with retry logic."""
+        if websocket not in self.active_connections:
+            return False
+            
+        attempts = 0
+        while attempts < self.max_retries:
+            try:
+                await websocket.send_text(message)
+                # Reset failure count on success
+                if websocket in self.connection_metadata:
+                    self.connection_metadata[websocket]["failures"] = 0
+                return True
+            except Exception as e:
+                attempts += 1
+                if websocket in self.connection_metadata:
+                    self.connection_metadata[websocket]["failures"] += 1
+                
+                logger.warning(f"Failed to send personal message (attempt {attempts}): {e}")
+                
+                if attempts >= self.max_retries or not retry:
+                    self.disconnect(websocket)
+                    return False
+                    
+                await asyncio.sleep(0.5 * attempts)  # Exponential backoff
+        
+        return False
     
     async def broadcast(self, message: Dict[str, Any]):
+        """Broadcast message to all connections with error resilience."""
         if not self.active_connections:
             return
             
         message_str = json.dumps(message, default=str)
         disconnected = []
+        successful_sends = 0
         
-        for connection in self.active_connections:
+        # Send to all connections concurrently
+        send_tasks = []
+        for connection in self.active_connections.copy():  # Use copy to avoid modification during iteration
+            task = asyncio.create_task(self._safe_send(connection, message_str))
+            send_tasks.append((connection, task))
+        
+        # Wait for all sends to complete
+        for connection, task in send_tasks:
             try:
-                await connection.send_text(message_str)
+                success = await asyncio.wait_for(task, timeout=5.0)  # 5 second timeout per send
+                if success:
+                    successful_sends += 1
+                else:
+                    disconnected.append(connection)
+            except asyncio.TimeoutError:
+                logger.warning(f"Broadcast timeout for WebSocket client")
+                disconnected.append(connection)
             except Exception as e:
-                logger.error(f"Error broadcasting to connection: {e}")
+                logger.warning(f"Broadcast error for WebSocket client: {e}")
                 disconnected.append(connection)
         
-        # Remove disconnected connections
-        for conn in disconnected:
-            self.disconnect(conn)
+        # Clean up disconnected clients
+        for connection in disconnected:
+            self.disconnect(connection)
+        
+        if disconnected:
+            logger.info(f"Broadcast completed: {successful_sends} successful, {len(disconnected)} failed/disconnected")
+    
+    async def _safe_send(self, websocket: WebSocket, message: str) -> bool:
+        """Safely send message to WebSocket with error handling."""
+        try:
+            if websocket not in self.active_connections:
+                return False
+                
+            await websocket.send_text(message)
+            return True
+        except Exception as e:
+            logger.debug(f"Send failed for WebSocket: {e}")
+            return False
+    
+    async def heartbeat_check(self):
+        """Check connection health and send ping to stale connections."""
+        if not self.active_connections:
+            return
+            
+        current_time = utc_now()
+        stale_connections = []
+        
+        for websocket in self.active_connections.copy():
+            if websocket not in self.connection_metadata:
+                continue
+                
+            metadata = self.connection_metadata[websocket]
+            time_since_ping = (current_time - metadata["last_ping"]).total_seconds()
+            
+            if time_since_ping > self.heartbeat_interval:
+                try:
+                    # Send ping
+                    ping_message = {
+                        "type": "ping",
+                        "timestamp": current_time.isoformat(),
+                        "server_time": int(current_time.timestamp())
+                    }
+                    await websocket.send_text(json.dumps(ping_message))
+                    metadata["last_ping"] = current_time
+                except Exception as e:
+                    logger.warning(f"Heartbeat ping failed for WebSocket: {e}")
+                    stale_connections.append(websocket)
+        
+        # Clean up stale connections
+        for websocket in stale_connections:
+            self.disconnect(websocket)
+            
+        if stale_connections:
+            logger.info(f"Removed {len(stale_connections)} stale WebSocket connections")
+    
+    def get_connection_stats(self) -> Dict[str, Any]:
+        """Get connection statistics for monitoring."""
+        return {
+            "total_connections": len(self.active_connections),
+            "connections_by_host": {},
+            "average_connection_age": 0,
+            "total_failures": sum(meta.get("failures", 0) for meta in self.connection_metadata.values())
+        }
 
 manager = ConnectionManager()
 
