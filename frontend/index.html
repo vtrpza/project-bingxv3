@@ -629,6 +629,186 @@
                 if (window.updatePositionsFromWebSocket) {
                     window.updatePositionsFromWebSocket(positions);
                 }
+                
+                // Also update the HTML table directly for better real-time experience
+                this.updatePositionsTableDirect(positions);
+            }
+            
+            updateTradingDashboard(data) {
+                console.log('Updating trading dashboard with comprehensive data:', data);
+                
+                const summary = data.summary;
+                
+                // Update main P&L display
+                const totalPnlEl = document.getElementById('total-pnl');
+                const pnlPercentageEl = document.getElementById('pnl-percentage');
+                if (totalPnlEl && summary.total_unrealized_pnl !== undefined) {
+                    totalPnlEl.textContent = `$${summary.total_unrealized_pnl.toFixed(2)}`;
+                    totalPnlEl.className = `total-pnl ${summary.total_unrealized_pnl >= 0 ? 'profit' : 'loss'}`;
+                    
+                    if (pnlPercentageEl) {
+                        const percentage = summary.total_unrealized_pnl >= 0 ? '+' : '';
+                        pnlPercentageEl.textContent = `(${percentage}${(summary.total_unrealized_pnl / 1000 * 100).toFixed(2)}%)`;
+                    }
+                }
+                
+                // Update trading status indicators
+                const robotStateEl = document.getElementById('robot-state');
+                if (robotStateEl && summary.trading_enabled !== undefined) {
+                    const stateText = robotStateEl.querySelector('.state-text');
+                    if (stateText) {
+                        stateText.textContent = summary.trading_enabled ? 
+                            `Monitoring ${summary.selected_symbols || 0} symbols` : 
+                            'Trading Pausado';
+                    }
+                }
+                
+                // Update monitored assets count
+                const monitoredAssetsEl = document.getElementById('monitored-assets');
+                if (monitoredAssetsEl && summary.selected_symbols !== undefined) {
+                    monitoredAssetsEl.textContent = summary.selected_symbols;
+                }
+                
+                // Update signals detected count
+                const signalsDetectedEl = document.getElementById('signals-detected');
+                if (signalsDetectedEl && summary.symbols_with_signals !== undefined) {
+                    signalsDetectedEl.textContent = summary.symbols_with_signals;
+                }
+                
+                // Update positions count
+                const openPositionsEl = document.getElementById('open-positions');
+                if (openPositionsEl && summary.open_positions !== undefined) {
+                    openPositionsEl.textContent = summary.open_positions;
+                }
+                
+                // Update active signals count
+                const activeSignalsEl = document.getElementById('active-signals-count');
+                if (activeSignalsEl && summary.symbols_with_signals !== undefined) {
+                    activeSignalsEl.textContent = summary.symbols_with_signals;
+                }
+                
+                // Update last action timestamp
+                const lastActionEl = document.getElementById('last-action');
+                if (lastActionEl) {
+                    const now = new Date();
+                    lastActionEl.textContent = `Última ação: Dashboard atualizado - ${now.toLocaleTimeString()}`;
+                }
+            }
+            
+            updatePositionsTableDirect(positions) {
+                console.log('Updating positions table directly:', positions);
+                
+                const tbody = document.getElementById('positions-table')?.querySelector('tbody');
+                if (!tbody) return;
+                
+                if (!positions || positions.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 20px;">
+                                📊 Nenhuma posição aberta no momento
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = positions.map(position => {
+                    const pnlClass = position.unrealized_pnl >= 0 ? 'profit' : 'loss';
+                    const sideClass = position.side === 'BUY' ? 'buy' : 'sell';
+                    const duration = this.calculateDuration(position.entry_time);
+                    
+                    return `
+                        <tr style="animation: fadeIn 0.3s ease-in;">
+                            <td><strong>${position.symbol}</strong></td>
+                            <td><span class="side ${sideClass}" style="padding: 2px 6px; border-radius: 3px; ${position.side === 'BUY' ? 'background-color: #d4edda; color: #155724;' : 'background-color: #f8d7da; color: #721c24;'}">${position.side}</span></td>
+                            <td>$${position.entry_price.toFixed(2)}</td>
+                            <td style="font-weight: bold;">$${position.current_price.toFixed(2)}</td>
+                            <td class="${pnlClass}" style="font-weight: bold; ${position.unrealized_pnl >= 0 ? 'color: #28a745;' : 'color: #dc3545;'}">
+                                $${position.unrealized_pnl.toFixed(2)}
+                                <br><small>(${position.pnl_percentage.toFixed(2)}%)</small>
+                            </td>
+                            <td>${position.stop_loss ? '$' + position.stop_loss.toFixed(2) : 'N/A'}</td>
+                            <td style="color: #6c757d;">-</td>
+                            <td>${position.take_profit ? '$' + position.take_profit.toFixed(2) : 'N/A'}</td>
+                            <td style="color: #6c757d;">${duration}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            updateRecentSignalsDisplay(signals) {
+                console.log('Updating recent signals:', signals);
+                
+                // Update signals count in dashboard
+                const signalsDetectedEl = document.getElementById('signals-detected');
+                if (signalsDetectedEl) {
+                    signalsDetectedEl.textContent = signals.length;
+                }
+                
+                // You can add a dedicated signals display area here if needed
+                // For now, just log the signals for debugging
+                if (signals.length > 0) {
+                    console.log(`Latest signal: ${signals[0].symbol} - ${signals[0].signal_type} (${signals[0].strength})`);
+                }
+            }
+            
+            updateActiveSignalsDisplay(signals) {
+                console.log('Updating active signals:', signals);
+                
+                // Update active signals count
+                const activeSignalsEl = document.getElementById('active-signals-count');
+                if (activeSignalsEl) {
+                    activeSignalsEl.textContent = signals.length;
+                }
+                
+                // Update scanner status with visual feedback
+                const scannerStatusEl = document.getElementById('scanner-status');
+                if (scannerStatusEl) {
+                    scannerStatusEl.textContent = signals.length > 0 ? 'SINAIS DETECTADOS' : 'MONITORANDO';
+                    scannerStatusEl.className = 'card-status ' + (signals.length > 0 ? 'signals-detected' : 'monitoring');
+                    
+                    // Add visual styling
+                    if (signals.length > 0) {
+                        scannerStatusEl.style.backgroundColor = '#d4edda';
+                        scannerStatusEl.style.color = '#155724';
+                        scannerStatusEl.style.fontWeight = 'bold';
+                        scannerStatusEl.style.animation = 'pulse 1s ease-in-out';
+                    } else {
+                        scannerStatusEl.style.backgroundColor = '#f8f9fa';
+                        scannerStatusEl.style.color = '#6c757d';
+                        scannerStatusEl.style.fontWeight = 'normal';
+                        scannerStatusEl.style.animation = 'none';
+                    }
+                }
+            }
+            
+            updateTradingSymbolsStatus(cacheStats) {
+                console.log('Updating trading symbols status:', cacheStats);
+                
+                // Update next scan time (estimate)
+                const nextScanEl = document.getElementById('next-scan');
+                if (nextScanEl && cacheStats.selection_age_minutes !== undefined) {
+                    const nextUpdate = 60 - (cacheStats.selection_age_minutes % 60); // Symbols refresh every hour
+                    const nextTime = new Date(Date.now() + nextUpdate * 60000);
+                    nextScanEl.textContent = nextTime.toLocaleTimeString();
+                }
+            }
+            
+            calculateDuration(entryTime) {
+                if (!entryTime) return '-';
+                
+                const now = new Date();
+                const entry = new Date(entryTime);
+                const diffMs = now - entry;
+                
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                } else {
+                    return `${minutes}m`;
+                }
             }
             
             refreshTradingData() {
@@ -3221,13 +3401,27 @@
             
             // Handle tab-specific logic
             if (tabName === 'trading') {
-                // Start auto-refresh for trading tab
+                // Subscribe to trading data channels for real-time updates
+                if (window.wsClient && window.wsClient.isConnected) {
+                    window.wsClient.subscribe('trading_data');
+                    window.wsClient.subscribe('trading_signals');
+                    console.log('Subscribed to trading data channels');
+                }
+                
+                // Start auto-refresh for trading tab (as fallback)
                 startTradingDataAutoRefresh(30000); // 30 seconds
                 
                 // Initial data load
                 refreshTradingData();
-                addActivityLog('📊', 'Aba de Trading ativada - carregando dados...');
+                addActivityLog('📊', 'Aba de Trading ativada - dados em tempo real habilitados');
             } else {
+                // Unsubscribe from trading channels when leaving trading tab
+                if (window.wsClient && window.wsClient.isConnected) {
+                    window.wsClient.unsubscribe('trading_data');
+                    window.wsClient.unsubscribe('trading_signals');
+                    console.log('Unsubscribed from trading data channels');
+                }
+                
                 // Stop auto-refresh when switching away from trading tab
                 stopTradingDataAutoRefresh();
             }
