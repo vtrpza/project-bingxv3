@@ -39,12 +39,29 @@
                 this.updateConnectionStatus('Conectando...', 'connecting');
                 
                 try {
+                    // Add timeout for connection attempt
+                    this.connectionTimeout = setTimeout(() => {
+                        if (this.isConnecting) {
+                            console.warn('WebSocket connection timeout');
+                            this.isConnecting = false;
+                            this.updateConnectionStatus('Timeout de Conexão', 'error');
+                            this.scheduleReconnect();
+                        }
+                    }, 10000); // 10 second timeout
+                    
                     this.ws = new WebSocket(wsUrl);
                     
                     this.ws.onopen = (event) => {
                         console.log('WebSocket connected');
                         this.isConnected = true;
                         this.isConnecting = false;
+                        
+                        // Clear connection timeout
+                        if (this.connectionTimeout) {
+                            clearTimeout(this.connectionTimeout);
+                            this.connectionTimeout = null;
+                        }
+                        
                         this.updateConnectionStatus('Conectado', 'online');
                         
                         // Subscribe to trading data
@@ -79,13 +96,30 @@
                     this.ws.onerror = (error) => {
                         console.error('WebSocket error:', error);
                         this.isConnecting = false;
-                        this.updateConnectionStatus('Erro de Conexão', 'error');
+                        
+                        // Clear connection timeout
+                        if (this.connectionTimeout) {
+                            clearTimeout(this.connectionTimeout);
+                            this.connectionTimeout = null;
+                        }
+                        
+                        // Check if server might be down
+                        const errorMsg = error.type === 'error' && !this.isConnected ? 
+                            'Servidor Não Disponível' : 'Erro de Conexão';
+                        this.updateConnectionStatus(errorMsg, 'error');
                     };
                     
                 } catch (error) {
                     console.error('Error creating WebSocket:', error);
                     this.isConnecting = false;
-                    this.updateConnectionStatus('Erro de Conexão', 'error');
+                    
+                    // Clear connection timeout
+                    if (this.connectionTimeout) {
+                        clearTimeout(this.connectionTimeout);
+                        this.connectionTimeout = null;
+                    }
+                    
+                    this.updateConnectionStatus('Falha na Conexão', 'error');
                     this.scheduleReconnect();
                 }
             }

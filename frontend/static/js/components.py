@@ -10,20 +10,26 @@ from js import document, console
 class UIComponents:
     @staticmethod
     def format_currency(value, currency="$"):
-        """Format currency value"""
-        if value is None:
+        """Format currency value with safe None handling"""
+        if value is None or value == "":
             return f"{currency}0.00"
         try:
+            # Handle string representations of None
+            if str(value).lower() in ['none', 'null', '']:
+                return f"{currency}0.00"
             return f"{currency}{float(value):,.2f}"
         except (ValueError, TypeError):
             return f"{currency}0.00"
     
     @staticmethod
     def format_percentage(value):
-        """Format percentage value"""
-        if value is None:
+        """Format percentage value with safe None handling"""
+        if value is None or value == "":
             return "0.00%"
         try:
+            # Handle string representations of None
+            if str(value).lower() in ['none', 'null', '']:
+                return "0.00%"
             return f"{float(value):+.2f}%"
         except (ValueError, TypeError):
             return "0.00%"
@@ -164,14 +170,14 @@ class UIComponents:
         if not indicator_data:
             return ""
         
-        # Get the latest indicator data
-        timeframe = indicator_data.get("timeframe", "1h")
-        price = indicator_data.get("price", 0)
-        mm1 = indicator_data.get("mm1", 0)
-        center = indicator_data.get("center", 0)
-        rsi = indicator_data.get("rsi", 50)
-        volume_ratio = indicator_data.get("volume_ratio", 1)
-        timestamp = indicator_data.get("timestamp", "")
+        # Get the latest indicator data with safe None handling
+        timeframe = indicator_data.get("timeframe", "1h") or "1h"
+        price = indicator_data.get("price") or 0
+        mm1 = indicator_data.get("mm1") or 0
+        center = indicator_data.get("center") or 0
+        rsi = indicator_data.get("rsi") or 50
+        volume_ratio = indicator_data.get("volume_ratio") or 1
+        timestamp = indicator_data.get("timestamp") or ""
         
         # Determine signal based on MM1 vs Center
         signal = ""
@@ -186,7 +192,7 @@ class UIComponents:
         
         # Calculate strength based on distance and RSI
         strength = 0
-        if mm1 and center and price:
+        if mm1 and center and price and rsi is not None:
             distance = abs(mm1 - center) / center * 100
             rsi_strength = 1 - abs(rsi - 50) / 50  # Closer to 50 = lower strength
             strength = min(distance * rsi_strength * 10, 100)
@@ -204,17 +210,17 @@ class UIComponents:
                     <div>Preço: {UIComponents.format_currency(price)}</div>
                     <div>MM1: {UIComponents.format_currency(mm1)}</div>
                     <div>Center: {UIComponents.format_currency(center)}</div>
-                    <div>RSI: {rsi:.1f}</div>
+                    <div>RSI: {rsi:.1f if rsi is not None else 50.0:.1f}</div>
                 </div>
                 <div class="timeframe">
                     <h4>Volume</h4>
-                    <div>Ratio: {volume_ratio:.2f}x</div>
-                    <div>Status: {"Alto" if volume_ratio > 1.5 else "Normal"}</div>
+                    <div>Ratio: {volume_ratio:.2f if volume_ratio is not None else 1.0:.2f}x</div>
+                    <div>Status: {"Alto" if (volume_ratio or 0) > 1.5 else "Normal"}</div>
                 </div>
                 <div class="timeframe">
                     <h4>Sinal</h4>
                     <div class="signal-type {signal_class}">{signal or "NEUTRO"}</div>
-                    <div>Força: {strength:.0f}%</div>
+                    <div>Força: {strength:.0f if strength is not None else 0.0:.0f}%</div>
                 </div>
             </div>
         </div>
