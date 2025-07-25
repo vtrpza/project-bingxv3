@@ -66,8 +66,8 @@ class TradingConfig:
     VOLUME_SPIKE_LOOKBACK: int = int(os.getenv("VOLUME_SPIKE_LOOKBACK", "20"))  # Periods to look back for average
     
     # Scanner Configuration - OPTIMIZED FOR PERFORMANCE
-    SCAN_INTERVAL: int = int(os.getenv("SCAN_INTERVAL", "10"))  # Ultra-fast 10s scanning
-    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL", "10"))  # Alias for consistency
+    SCAN_INTERVAL: int = int(os.getenv("SCAN_INTERVAL", "60"))  # 60s scanning (conservativo)
+    SCAN_INTERVAL_SECONDS: int = int(os.getenv("SCAN_INTERVAL", "60"))  # Alias for consistency
     MIN_VOLUME_24H_USDT: Decimal = Decimal(os.getenv("MIN_VOLUME_24H_USDT", "1000"))  # Lower threshold for VST
     MAX_ASSETS_TO_SCAN: int = int(os.getenv("MAX_ASSETS_TO_SCAN", "1500"))  # Support up to 1500 assets
     
