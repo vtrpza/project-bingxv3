@@ -2835,6 +2835,54 @@ async def automated_risk_management():
             # Continue running even if there's an error
             continue
 
+async def broadcast_scanner_status():
+    """Background task to broadcast scanner status periodically"""
+    logger.info("Starting scanner status broadcast task")
+    
+    while True:
+        try:
+            # Broadcast scanner status every 30 seconds
+            await asyncio.sleep(30)
+            
+            if manager.active_connections:
+                # Get scanner status data
+                try:
+                    with get_session() as db:
+                        asset_repo = AssetRepository()
+                        valid_assets_count = asset_repo.get_valid_assets_count(db)
+                        signals_count = SignalRepository().get_active_signals_count(db)
+                        
+                        # Create status update
+                        status_data = {
+                            "scanning_active": scanner_status.get("scanning_active", False),
+                            "assets_being_scanned": scanner_status.get("assets_being_scanned", 0),
+                            "monitored_assets": valid_assets_count,
+                            "signals_count": signals_count,
+                            "last_scan_start": scanner_status.get("last_scan_start"),
+                            "last_scan_end": scanner_status.get("last_scan_end"),
+                            "scan_interval": scanner_status.get("scan_interval", 60),
+                            "timestamp": utc_now().isoformat()
+                        }
+                        
+                        # Broadcast to all connected clients
+                        await manager.broadcast({
+                            "type": "scanner_status_update",
+                            "payload": status_data
+                        })
+                        
+                        logger.debug(f"Broadcasted scanner status: {valid_assets_count} assets monitored, {signals_count} active signals")
+                        
+                except Exception as e:
+                    logger.error(f"Error broadcasting scanner status: {e}")
+                    
+        except asyncio.CancelledError:
+            logger.info("Scanner status broadcast task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in scanner status broadcast task: {e}")
+            # Continue running even if there's an error
+            continue
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
     """Start background tasks"""
