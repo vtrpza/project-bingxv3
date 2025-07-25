@@ -229,110 +229,302 @@ class ConnectionManager:
         self.connection_metadata: Dict[WebSocket, Dict] = {}
         self.heartbeat_interval = 30  # seconds
         self.max_retries = 3
+        self.reconnect_delay = 1.0  # exponential backoff base
+        self.max_reconnect_delay = 30.0
+        self.message_queue_size = 1000
+        self.cleanup_interval = 60  # seconds
+        self._shutdown = False
+        self._connection_counter = 0
     
     async def connect(self, websocket: WebSocket):
-        """Accept WebSocket connection with enhanced error handling."""
+        """Accept WebSocket connection with enhanced metadata tracking and initialization."""
         try:
             await websocket.accept()
+            self._connection_counter += 1
+            connection_id = f"conn_{self._connection_counter}_{int(utc_now().timestamp())}"
+            
             self.active_connections.append(websocket)
+            
+            # Initialize comprehensive connection metadata
             self.connection_metadata[websocket] = {
+                "id": connection_id,
                 "connected_at": utc_now(),
+                "last_activity": utc_now(),
                 "last_ping": utc_now(),
-                "client_host": websocket.client.host if websocket.client else "unknown",
-                "failures": 0
+                "last_pong": None,
+                "failures": 0,
+                "reconnect_attempts": 0,
+                "message_count": 0,
+                "bytes_sent": 0,
+                "bytes_received": 0,
+                "subscriptions": set(),
+                "client_info": {
+                    "host": websocket.client.host if websocket.client else "unknown",
+                    "port": websocket.client.port if websocket.client else 0,
+                    "user_agent": websocket.headers.get("user-agent", ""),
+                    "origin": websocket.headers.get("origin", ""),
+                    "protocol": websocket.headers.get("sec-websocket-protocol", "")
+                }
             }
-            logger.info(f"WebSocket connected from {self.connection_metadata[websocket]['client_host']}. Total: {len(self.active_connections)}")
+            
+            client_host = self.connection_metadata[websocket]['client_info']['host']
+            logger.info(f"WebSocket connected: {connection_id} from {client_host}. Total: {len(self.active_connections)}")
+            
+            # Send enhanced welcome message
+            await self.send_personal_message(
+                json.dumps({
+                    "type": "connection_established",
+                    "data": {
+                        "connection_id": connection_id,
+                        "server_time": utc_now().isoformat(),
+                        "heartbeat_interval": self.heartbeat_interval,
+                        "server_version": "1.0.0",
+                        "supported_features": ["heartbeat", "subscriptions", "broadcast", "priority_messages"]
+                    }
+                }), websocket, retry=False
+            )
+            
         except Exception as e:
             logger.error(f"Failed to accept WebSocket connection: {e}")
             raise
     
-    def disconnect(self, websocket: WebSocket):
-        """Safely disconnect WebSocket with cleanup."""
+    def disconnect(self, websocket: WebSocket, reason: str = "unknown"):
+        """Safely disconnect WebSocket with comprehensive cleanup and logging."""
         try:
             if websocket in self.active_connections:
                 self.active_connections.remove(websocket)
+                
             if websocket in self.connection_metadata:
-                client_info = self.connection_metadata.pop(websocket)
-                logger.info(f"WebSocket disconnected from {client_info.get('client_host', 'unknown')}. Total: {len(self.active_connections)}")
+                metadata = self.connection_metadata.pop(websocket)
+                connection_duration = (utc_now() - metadata["connected_at"]).total_seconds()
+                client_host = metadata.get('client_info', {}).get('host', 'unknown')
+                connection_id = metadata.get('id', 'unknown')
+                
+                # Log comprehensive disconnection stats
+                logger.info(
+                    f"WebSocket disconnected: {connection_id} | "
+                    f"Host: {client_host} | "
+                    f"Reason: {reason} | "
+                    f"Duration: {connection_duration:.1f}s | "
+                    f"Messages: {metadata.get('message_count', 0)} | "
+                    f"Failures: {metadata.get('failures', 0)} | "
+                    f"Bytes sent: {metadata.get('bytes_sent', 0)} | "
+                    f"Remaining: {len(self.active_connections)}"
+                )
+                
+                # Clean up subscriptions
+                subscriptions = metadata.get('subscriptions', set())
+                if subscriptions:
+                    logger.debug(f"Cleaned up {len(subscriptions)} subscriptions for {connection_id}")
+                    subscriptions.clear()
+                    
         except Exception as e:
             logger.warning(f"Error during WebSocket disconnect cleanup: {e}")
     
-    async def send_personal_message(self, message: str, websocket: WebSocket, retry: bool = True):
-        """Send message to specific WebSocket with retry logic."""
+    async def send_personal_message(self, message: str, websocket: WebSocket, retry: bool = True, priority: str = "normal"):
+        """Send message to specific WebSocket with enhanced retry logic and metadata tracking."""
         if websocket not in self.active_connections:
             return False
-            
+        
+        message_size = len(message.encode('utf-8'))
         attempts = 0
+        
+        # Update connection metadata
+        if websocket in self.connection_metadata:
+            metadata = self.connection_metadata[websocket]
+            metadata["last_activity"] = utc_now()
+            metadata["message_count"] += 1
+        
         while attempts < self.max_retries:
             try:
                 await websocket.send_text(message)
-                # Reset failure count on success
+                
+                # Update success metrics
                 if websocket in self.connection_metadata:
-                    self.connection_metadata[websocket]["failures"] = 0
+                    metadata = self.connection_metadata[websocket]
+                    metadata["failures"] = 0
+                    metadata["bytes_sent"] += message_size
+                    
                 return True
+                
             except Exception as e:
                 attempts += 1
                 if websocket in self.connection_metadata:
                     self.connection_metadata[websocket]["failures"] += 1
                 
-                logger.warning(f"Failed to send personal message (attempt {attempts}): {e}")
+                logger.warning(f"Failed to send {priority} message (attempt {attempts}): {e}")
                 
                 if attempts >= self.max_retries or not retry:
-                    self.disconnect(websocket)
+                    self.disconnect(websocket, f"send_failure: {str(e)}")
                     return False
                     
-                await asyncio.sleep(0.5 * attempts)  # Exponential backoff
+                # Enhanced exponential backoff with jitter
+                base_delay = self.reconnect_delay * (2 ** (attempts - 1))
+                jitter = asyncio.get_event_loop().time() % 0.1  # Small random component
+                delay = min(base_delay + jitter, self.max_reconnect_delay)
+                await asyncio.sleep(delay)
         
         return False
     
-    async def broadcast(self, message: Dict[str, Any]):
-        """Broadcast message to all connections with error resilience."""
+    async def broadcast(self, message: Dict[str, Any], channel: str = "general", priority: str = "normal"):
+        """Enhanced broadcast with channel filtering, priority handling, and comprehensive error resilience."""
         if not self.active_connections:
             return
-            
+        
+        # Add broadcast metadata
+        broadcast_id = f"{channel}_{int(utc_now().timestamp() * 1000)}"
+        message["broadcast_info"] = {
+            "id": broadcast_id,
+            "channel": channel,
+            "priority": priority,
+            "timestamp": utc_now().isoformat(),
+            "server_version": "1.0.0"
+        }
+        
         message_str = json.dumps(message, default=str)
+        message_size = len(message_str.encode('utf-8'))
         disconnected = []
         successful_sends = 0
+        filtered_connections = []
         
-        # Send to all connections concurrently
+        # Filter connections based on subscriptions and channel
+        for connection in self.active_connections.copy():
+            if connection in self.connection_metadata:
+                subscriptions = self.connection_metadata[connection].get('subscriptions', set())
+                # Allow general broadcasts to all, or check specific channel subscriptions
+                if not subscriptions or channel in subscriptions or channel == "general":
+                    filtered_connections.append(connection)
+        
+        if not filtered_connections:
+            logger.debug(f"No connections subscribed to channel '{channel}'")
+            return
+        
+        # Determine timeout based on priority
+        timeout = 3.0 if priority == "high" else 5.0 if priority == "normal" else 10.0
+        
+        # Send to filtered connections concurrently
         send_tasks = []
-        for connection in self.active_connections.copy():  # Use copy to avoid modification during iteration
+        for connection in filtered_connections:
             task = asyncio.create_task(self._safe_send(connection, message_str))
             send_tasks.append((connection, task))
         
-        # Wait for all sends to complete
+        # Wait for all sends to complete with appropriate timeout
         for connection, task in send_tasks:
             try:
-                success = await asyncio.wait_for(task, timeout=5.0)  # 5 second timeout per send
+                success = await asyncio.wait_for(task, timeout=timeout)
                 if success:
                     successful_sends += 1
+                    # Update bytes sent in metadata
+                    if connection in self.connection_metadata:
+                        self.connection_metadata[connection]["bytes_sent"] += message_size
                 else:
                     disconnected.append(connection)
             except asyncio.TimeoutError:
-                logger.warning(f"Broadcast timeout for WebSocket client")
+                connection_id = self.connection_metadata.get(connection, {}).get('id', 'unknown')
+                logger.warning(f"Broadcast timeout for {connection_id} on channel '{channel}'")
                 disconnected.append(connection)
             except Exception as e:
-                logger.warning(f"Broadcast error for WebSocket client: {e}")
+                connection_id = self.connection_metadata.get(connection, {}).get('id', 'unknown')
+                logger.warning(f"Broadcast error for {connection_id}: {e}")
                 disconnected.append(connection)
         
         # Clean up disconnected clients
         for connection in disconnected:
-            self.disconnect(connection)
+            self.disconnect(connection, "broadcast_failure")
+        
+        # Enhanced logging
+        total_connections = len(self.active_connections)
+        filtered_count = len(filtered_connections)
+        
+        if successful_sends > 0:
+            logger.debug(
+                f"Broadcast '{channel}' (ID: {broadcast_id}) sent to {successful_sends}/{filtered_count} "
+                f"filtered connections ({total_connections} total)"
+            )
+        else:
+            logger.warning(f"Broadcast '{channel}' failed to reach any connections")
         
         if disconnected:
-            logger.info(f"Broadcast completed: {successful_sends} successful, {len(disconnected)} failed/disconnected")
+            logger.info(f"Removed {len(disconnected)} failed connections during broadcast")
     
     async def _safe_send(self, websocket: WebSocket, message: str) -> bool:
-        """Safely send message to WebSocket with error handling."""
+        """Safely send message to WebSocket with comprehensive error handling and connection validation."""
         try:
             if websocket not in self.active_connections:
                 return False
+            
+            # Check if connection is still valid
+            if websocket.client_state.value != 1:  # 1 = CONNECTED state
+                return False
                 
             await websocket.send_text(message)
+            
+            # Update activity timestamp on successful send
+            if websocket in self.connection_metadata:
+                self.connection_metadata[websocket]["last_activity"] = utc_now()
+                
             return True
+            
         except Exception as e:
-            logger.debug(f"Send failed for WebSocket: {e}")
+            connection_id = "unknown"
+            if websocket in self.connection_metadata:
+                connection_id = self.connection_metadata[websocket].get('id', 'unknown')
+            logger.debug(f"Send failed for WebSocket {connection_id}: {e}")
             return False
+    
+    def subscribe_to_channel(self, websocket: WebSocket, channel: str) -> bool:
+        """Subscribe a WebSocket connection to a specific channel."""
+        if websocket not in self.connection_metadata:
+            return False
+        
+        subscriptions = self.connection_metadata[websocket].get('subscriptions', set())
+        subscriptions.add(channel)
+        self.connection_metadata[websocket]['subscriptions'] = subscriptions
+        
+        connection_id = self.connection_metadata[websocket].get('id', 'unknown')
+        logger.debug(f"WebSocket {connection_id} subscribed to channel '{channel}'")
+        return True
+    
+    def unsubscribe_from_channel(self, websocket: WebSocket, channel: str) -> bool:
+        """Unsubscribe a WebSocket connection from a specific channel."""
+        if websocket not in self.connection_metadata:
+            return False
+        
+        subscriptions = self.connection_metadata[websocket].get('subscriptions', set())
+        subscriptions.discard(channel)
+        self.connection_metadata[websocket]['subscriptions'] = subscriptions
+        
+        connection_id = self.connection_metadata[websocket].get('id', 'unknown')
+        logger.debug(f"WebSocket {connection_id} unsubscribed from channel '{channel}'")
+        return True
+    
+    def get_channel_subscribers(self, channel: str) -> List[WebSocket]:
+        """Get all WebSocket connections subscribed to a specific channel."""
+        subscribers = []
+        for websocket, metadata in self.connection_metadata.items():
+            subscriptions = metadata.get('subscriptions', set())
+            if channel in subscriptions or (not subscriptions and channel == "general"):
+                subscribers.append(websocket)
+        return subscribers
+    
+    def get_subscription_stats(self) -> Dict[str, Any]:
+        """Get statistics about channel subscriptions."""
+        channel_counts = {}
+        total_subscriptions = 0
+        
+        for metadata in self.connection_metadata.values():
+            subscriptions = metadata.get('subscriptions', set())
+            total_subscriptions += len(subscriptions)
+            
+            for channel in subscriptions:
+                channel_counts[channel] = channel_counts.get(channel, 0) + 1
+        
+        return {
+            "total_connections": len(self.active_connections),
+            "total_subscriptions": total_subscriptions,
+            "channel_counts": channel_counts,
+            "channels": list(channel_counts.keys())
+        }
     
     async def heartbeat_check(self):
         """Check connection health and send ping to stale connections."""
@@ -371,12 +563,45 @@ class ConnectionManager:
             logger.info(f"Removed {len(stale_connections)} stale WebSocket connections")
     
     def get_connection_stats(self) -> Dict[str, Any]:
-        """Get connection statistics for monitoring."""
+        """Get comprehensive connection statistics for monitoring and debugging."""
+        current_time = utc_now()
+        total_bytes_sent = 0
+        total_bytes_received = 0
+        total_messages = 0
+        total_failures = 0
+        connection_durations = []
+        connections_by_host = {}
+        
+        for metadata in self.connection_metadata.values():
+            total_bytes_sent += metadata.get('bytes_sent', 0)
+            total_bytes_received += metadata.get('bytes_received', 0)
+            total_messages += metadata.get('message_count', 0)
+            total_failures += metadata.get('failures', 0)
+            
+            # Track connections by host
+            host = metadata.get('client_info', {}).get('host', 'unknown')
+            connections_by_host[host] = connections_by_host.get(host, 0) + 1
+            
+            connected_at = metadata.get('connected_at')
+            if connected_at:
+                duration = (current_time - connected_at).total_seconds()
+                connection_durations.append(duration)
+        
+        avg_duration = sum(connection_durations) / len(connection_durations) if connection_durations else 0
+        
         return {
-            "total_connections": len(self.active_connections),
-            "connections_by_host": {},
-            "average_connection_age": 0,
-            "total_failures": sum(meta.get("failures", 0) for meta in self.connection_metadata.values())
+            "active_connections": len(self.active_connections),
+            "total_connected": len(self.connection_metadata),
+            "heartbeat_interval": self.heartbeat_interval,
+            "total_bytes_sent": total_bytes_sent,
+            "total_bytes_received": total_bytes_received,
+            "total_messages": total_messages,
+            "total_failures": total_failures,
+            "average_connection_duration": avg_duration,
+            "longest_connection": max(connection_durations) if connection_durations else 0,
+            "shortest_connection": min(connection_durations) if connection_durations else 0,
+            "connections_by_host": connections_by_host,
+            "subscription_stats": self.get_subscription_stats()
         }
 
 manager = ConnectionManager()
@@ -851,7 +1076,7 @@ async def start_initial_scan():
                 "message": "Iniciando scan completo de todos os ativos...",
                 "timestamp": utc_now().isoformat()
             }
-        })
+        }, channel="scanner_status", priority="high")
         
         # Executar scan de forma assíncrona
         async def run_initial_scan():
@@ -876,7 +1101,7 @@ async def start_initial_scan():
                         "duration": result.scan_duration,
                         "timestamp": utc_now().isoformat()
                     }
-                })
+                }, channel="scanner_status", priority="high")
                 
                 logger.info(f"✅ Complete initial scan finished: {len(result.valid_assets)}/{result.total_discovered} valid assets")
                 
@@ -889,7 +1114,7 @@ async def start_initial_scan():
                         "message": str(e),
                         "timestamp": utc_now().isoformat()
                     }
-                })
+                }, channel="scanner_status", priority="high")
         
         # Iniciar task assíncrona
         asyncio.create_task(run_initial_scan())
@@ -1407,7 +1632,7 @@ async def get_scanner_status(
             await manager.broadcast({
                 "type": "scanner_status_update",
                 "payload": status_data
-            })
+            }, channel="scanner_status")
         except Exception as e:
             logger.warning(f"Failed to broadcast scanner status update: {e}")
         
@@ -2812,33 +3037,139 @@ def increment_test_mode_stat(stat_name: str, increment: int = 1):
 # WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
+    """Enhanced WebSocket endpoint with improved message handling and subscription management."""
     client_host = websocket.client.host if websocket.client else "unknown"
     logger.info(f"WebSocket connection attempt from {client_host}")
     
-    await manager.connect(websocket)
-    logger.info(f"WebSocket connected from {client_host}")
-    
+    connection_metadata = None
     try:
+        await manager.connect(websocket)
+        connection_metadata = manager.connection_metadata.get(websocket)
+        connection_id = connection_metadata.get('id', 'unknown') if connection_metadata else 'unknown'
+        logger.info(f"WebSocket connected: {connection_id} from {client_host}")
+        
+        # Message processing loop with enhanced error handling
         while True:
-            # Keep connection alive and handle incoming messages
-            data = await websocket.receive_text()
-            message = json.loads(data)
+            try:
+                # Receive message with timeout to prevent hanging
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=300.0)  # 5 minute timeout
+                
+                # Update bytes received in metadata
+                if connection_metadata:
+                    connection_metadata["bytes_received"] += len(data.encode('utf-8'))
+                    connection_metadata["last_activity"] = utc_now()
+                
+                try:
+                    message = json.loads(data)
+                except json.JSONDecodeError as json_error:
+                    logger.warning(f"Invalid JSON from {connection_id}: {json_error}")
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "invalid_json",
+                            "message": "Invalid JSON format",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                # Validate message structure
+                if not isinstance(message, dict) or "type" not in message:
+                    logger.warning(f"Invalid message format from {connection_id}")
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "invalid_format",
+                            "message": "Message must be JSON object with 'type' field",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                message_type = message.get("type")
+                logger.debug(f"Received {message_type} message from {connection_id}")
+                
+            except asyncio.TimeoutError:
+                # Send ping to check if connection is still alive
+                ping_success = await manager.send_personal_message(
+                    json.dumps({
+                        "type": "ping",
+                        "timestamp": utc_now().isoformat(),
+                        "server_info": "BingX Trading Bot WebSocket"
+                    }), websocket, retry=False, priority="high"
+                )
+                if not ping_success:
+                    logger.info(f"Connection {connection_id} timed out and ping failed")
+                    break
+                continue
+                
+            except Exception as receive_error:
+                logger.error(f"Error receiving message from {connection_id}: {receive_error}")
+                break
             
-            # Handle different message types
-            if message.get("type") == "ping":
-                await websocket.send_text(json.dumps({
+            # Enhanced message type handling with comprehensive responses
+            if message_type == "ping":
+                pong_response = {
                     "type": "pong", 
                     "timestamp": utc_now().isoformat(),
-                    "server_info": "BingX Trading Bot WebSocket"
-                }))
-                logger.debug(f"Pong sent to {client_host}")
+                    "server_info": "BingX Trading Bot WebSocket",
+                    "connection_id": connection_id,
+                    "server_version": "1.0.0"
+                }
+                await manager.send_personal_message(
+                    json.dumps(pong_response), websocket, retry=False, priority="high"
+                )
                 
-            elif message.get("type") == "subscribe":
-                # Handle subscription requests
-                subscription_type = message.get("data", {}).get("channel", "general")
+                # Update pong timestamp
+                if connection_metadata:
+                    connection_metadata["last_pong"] = utc_now()
+                    
+                logger.debug(f"Pong sent to {connection_id}")
                 
-                # Send immediate data based on subscription type
-                if subscription_type == "trading_data":
+            elif message_type == "subscribe":
+                # Enhanced subscription handling with validation
+                subscription_data = message.get("data", {})
+                if not isinstance(subscription_data, dict):
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "invalid_subscription_data",
+                            "message": "Subscription data must be an object",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                channel = subscription_data.get("channel", "general")
+                
+                # Validate channel name
+                valid_channels = {"general", "trading_data", "scanner_status", "market_data", "signals"}
+                if channel not in valid_channels:
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "invalid_channel",
+                            "message": f"Invalid channel '{channel}'. Valid channels: {', '.join(valid_channels)}",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                # Subscribe to channel using ConnectionManager
+                success = manager.subscribe_to_channel(websocket, channel)
+                if not success:
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "subscription_failed",
+                            "message": f"Failed to subscribe to channel '{channel}'",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                # Send immediate data based on subscription channel
+                if channel == "trading_data":
                     # Send current trading summary
                     try:
                         from database.connection import get_session
@@ -2870,29 +3201,63 @@ async def websocket_endpoint(websocket: WebSocket):
                     except Exception as snapshot_error:
                         logger.error(f"Error sending trading snapshot: {snapshot_error}")
                 
-                # Confirm subscription
-                await websocket.send_text(json.dumps({
+                # Confirm subscription with enhanced response
+                subscription_response = {
                     "type": "subscribed", 
                     "data": {
-                        "channel": subscription_type,
-                        "status": "active"
+                        "channel": channel,
+                        "status": "active",
+                        "connection_id": connection_id,
+                        "subscriber_count": len(manager.get_channel_subscribers(channel))
                     },
                     "timestamp": utc_now().isoformat()
-                }))
-                logger.info(f"Subscription confirmed for {client_host}: {subscription_type}")
+                }
+                await manager.send_personal_message(
+                    json.dumps(subscription_response), websocket, retry=False
+                )
+                logger.info(f"Subscription confirmed for {connection_id}: {channel}")
                 
-            elif message.get("type") == "unsubscribe":
-                # Handle unsubscription requests
-                await websocket.send_text(json.dumps({
+            elif message_type == "unsubscribe":
+                # Enhanced unsubscription handling
+                unsubscribe_data = message.get("data", {})
+                if isinstance(unsubscribe_data, dict):
+                    channel = unsubscribe_data.get("channel", "general")
+                else:
+                    # Legacy support for string data
+                    channel = str(unsubscribe_data) if unsubscribe_data else "general"
+                
+                # Unsubscribe from channel using ConnectionManager
+                success = manager.unsubscribe_from_channel(websocket, channel)
+                
+                unsubscribe_response = {
                     "type": "unsubscribed", 
-                    "data": message.get("data"),
+                    "data": {
+                        "channel": channel,
+                        "status": "removed" if success else "not_found",
+                        "connection_id": connection_id
+                    },
                     "timestamp": utc_now().isoformat()
-                }))
-                logger.info(f"Unsubscription confirmed for {client_host}: {message.get('data')}")
+                }
+                await manager.send_personal_message(
+                    json.dumps(unsubscribe_response), websocket, retry=False
+                )
+                logger.info(f"Unsubscription confirmed for {connection_id}: {channel}")
                 
-            elif message.get("type") == "request_update":
-                # Handle manual update requests
-                update_type = message.get("data", {}).get("type", "general")
+            elif message_type == "request_update":
+                # Enhanced manual update request handling
+                update_data = message.get("data", {})
+                if not isinstance(update_data, dict):
+                    await manager.send_personal_message(
+                        json.dumps({
+                            "type": "error",
+                            "error": "invalid_update_data",
+                            "message": "Update data must be an object",
+                            "timestamp": utc_now().isoformat()
+                        }), websocket, retry=False
+                    )
+                    continue
+                
+                update_type = update_data.get("type", "general")
                 
                 if update_type == "positions":
                     try:
@@ -2924,15 +3289,77 @@ async def websocket_endpoint(websocket: WebSocket):
                     except Exception as update_error:
                         logger.error(f"Error sending positions update: {update_error}")
                 
+            elif message_type == "get_stats":
+                # Handle connection statistics request
+                stats = manager.get_connection_stats()
+                stats_response = {
+                    "type": "stats",
+                    "data": stats,
+                    "timestamp": utc_now().isoformat()
+                }
+                await manager.send_personal_message(
+                    json.dumps(stats_response), websocket, retry=False
+                )
+                logger.debug(f"Stats sent to {connection_id}")
+                
             else:
-                logger.warning(f"Unknown message type from {client_host}: {message.get('type')}")
+                # Handle unknown message types
+                logger.warning(f"Unknown message type '{message_type}' from {connection_id}")
+                await manager.send_personal_message(
+                    json.dumps({
+                        "type": "error",
+                        "error": "unknown_message_type",
+                        "message": f"Unknown message type: {message_type}",
+                        "supported_types": ["ping", "subscribe", "unsubscribe", "request_update", "get_stats"],
+                        "timestamp": utc_now().isoformat()
+                    }), websocket, retry=False
+                )
             
-    except WebSocketDisconnect:
-        logger.info(f"WebSocket disconnected from {client_host}")
-        manager.disconnect(websocket)
+    except WebSocketDisconnect as disconnect_error:
+        # Client initiated disconnect
+        logger.info(f"WebSocket client-initiated disconnect from {client_host} (code: {getattr(disconnect_error, 'code', 'unknown')})")
+        manager.disconnect(websocket, "client_disconnect")
+        
+    except asyncio.CancelledError:
+        # Task was cancelled (e.g., server shutdown)
+        logger.info(f"WebSocket task cancelled for {client_host}")
+        manager.disconnect(websocket, "task_cancelled")
+        
+    except json.JSONDecodeError as json_error:
+        # JSON parsing error
+        logger.warning(f"WebSocket JSON error from {client_host}: {json_error}")
+        manager.disconnect(websocket, "json_error")
+        
+    except ConnectionResetError:
+        # Connection reset by peer
+        logger.info(f"WebSocket connection reset by {client_host}")
+        manager.disconnect(websocket, "connection_reset")
+        
     except Exception as e:
-        logger.error(f"WebSocket error from {client_host}: {e}")
-        manager.disconnect(websocket)
+        # Unexpected error
+        error_type = type(e).__name__
+        logger.error(f"WebSocket unexpected error from {client_host} ({error_type}): {e}")
+        manager.disconnect(websocket, f"unexpected_error: {error_type}")
+        
+    finally:
+        # Ensure cleanup happens regardless of how we exit
+        if websocket in manager.active_connections:
+            logger.debug(f"Final cleanup for WebSocket connection from {client_host}")
+            manager.disconnect(websocket, "final_cleanup*")
+
+# Helper function to format WebSocket error responses
+def create_websocket_error_response(error_type: str, message: str, details: dict = None) -> dict:
+    """Create standardized WebSocket error response."""
+    response = {
+        "type": "error",
+        "error": error_type,
+        "message": message,
+        "timestamp": utc_now().isoformat(),
+        "server_version": "1.0.0"
+    }
+    if details:
+        response["details"] = details
+    return response
 
 async def _get_current_price(symbol: str) -> float:
     """Helper function to get current price for WebSocket updates."""
@@ -3012,9 +3439,9 @@ async def broadcast_realtime_data():
                                 }
                             }
                             
-                            await manager.broadcast(broadcast_data)
+                            await manager.broadcast(broadcast_data, channel="trading_data", priority="normal")
                             last_broadcast_time = current_time
-                            logger.debug(f"Sent trading update to {len(manager.active_connections)} clients")
+                            logger.debug(f"Sent trading update to trading_data channel subscribers")
                     
                     except Exception as data_error:
                         logger.warning(f"Error getting trading data for broadcast: {data_error}")
@@ -3027,7 +3454,7 @@ async def broadcast_realtime_data():
                                 "message": "Data refresh recommended"
                             }
                         }
-                        await manager.broadcast(broadcast_data)
+                        await manager.broadcast(broadcast_data, channel="general", priority="low")
                         last_broadcast_time = current_time
                 
         except Exception as e:
@@ -3269,11 +3696,11 @@ async def broadcast_scanner_status():
                             "timestamp": utc_now().isoformat()
                         }
                         
-                        # Broadcast to all connected clients
+                        # Broadcast to scanner status subscribers
                         await manager.broadcast({
                             "type": "scanner_status_update",
                             "payload": status_data
-                        })
+                        }, channel="scanner_status")
                         
                         logger.debug(f"Broadcasted scanner status: {valid_assets_count} assets monitored, {signals_count} active signals")
                         
