@@ -210,9 +210,11 @@ class BingXClient:
                 # Check if function is coroutine (async) or regular function
                 result = func(*args)
                 if asyncio.iscoroutine(result):
-                    return await result
-                else:
-                    return result
+                    result = await result
+                
+                # Record success and return
+                self._record_success()
+                return result
             except ccxt.RateLimitExceeded as e:
                 logger.warning(f"Rate limit hit on attempt {attempt + 1}: {e}")
                 if attempt == max_retries - 1:
