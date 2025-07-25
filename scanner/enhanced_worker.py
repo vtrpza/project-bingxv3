@@ -248,6 +248,146 @@ class EnhancedScannerWorker:
         
         return signals_generated
     
+    async def _regular_scan_trading_symbols(self, trading_symbols: List[str], session) -> int:
+        """Regular optimized scanning method for trading symbols."""
+        # Process symbols in concurrent batches
+        max_concurrent = min(30, len(trading_symbols))
+        signals_generated = 0
+        
+        for i in range(0, len(trading_symbols), max_concurrent):
+            batch = trading_symbols[i:i + max_concurrent]
+            
+            # Process batch concurrently
+            batch_results = await asyncio.gather(*[
+                self._process_single_trading_symbol_optimized(symbol, session) 
+                for symbol in batch
+            ], return_exceptions=True)
+            
+            # Process results
+            for j, result in enumerate(batch_results):
+                symbol = batch[j]
+                if isinstance(result, Exception):
+                    logger.error(f"Error scanning {symbol}: {result}")
+                    self.scan_metrics['errors'] += 1
+                elif result:
+                    signals_generated += 1
+                    logger.info(f"🎯 Signal generated for {symbol}: {result['type']}")
+                    # Store signal in trading cache
+                    await self.trading_cache.set_signal(symbol, result)
+            
+            # Ultra-fast intelligent delay between batches
+            if i + max_concurrent < len(trading_symbols):
+                stats = self.rate_limiter.get_stats()
+                utilization = stats.get('market_data', {}).get('utilization_percent', 0)
+                
+                if utilization < 70:
+                    delay = 0.05  # 50ms - Ultra fast
+                elif utilization < 85:
+                    delay = 0.15  # 150ms - Fast
+                else:
+                    delay = 0.25  # 250ms - Moderate
+                    
+                await asyncio.sleep(delay)
+        
+        session.commit()
+        
+        # Log performance stats
+        cache_stats = self.cache.get_stats()
+        rate_stats = self.rate_limiter.get_stats()
+        
+        logger.info(f"✅ Trading symbols scan completed - {signals_generated} signals generated")
+        logger.info(f"Cache hit rate: {cache_stats['hit_rate_percent']}%")
+        logger.info(f"Rate limiter utilization: {rate_stats.get('market_data', {}).get('utilization_percent', 0):.1f}%")
+        
+        return signals_generated
+    
+    async def _process_single_trading_symbol_optimized(self, symbol: str, session):
+        """Process a single trading symbol with caching and rate limiting."""
+        try:
+            client = get_client()
+            
+            # Use cached data when possible
+            ticker = await self.cache.get_or_fetch(
+                'ticker', symbol,
+                lambda: self._fetch_ticker_with_rate_limit(client, symbol)
+            )
+            
+            # Get OHLCV data with caching
+            ohlcv_2h = await self.cache.get_or_fetch(
+                'candles', f"{symbol}_2h_100",
+                lambda: self._fetch_ohlcv_with_rate_limit(client, symbol, '2h', 100)
+            )
+            
+            ohlcv_4h = await self.cache.get_or_fetch(
+                'candles', f"{symbol}_4h_100", 
+                lambda: self._fetch_ohlcv_with_rate_limit(client, symbol, '4h', 100)
+            )
+            
+            if not ohlcv_2h or not ohlcv_4h:
+                return None
+            
+            # Calculate indicators with caching
+            indicators_2h = await self.cache.get_or_fetch(
+                'indicators', f"{symbol}_2h",
+                lambda: self.indicator_calc.calculate_all(ohlcv_2h)
+            )
+            
+            indicators_4h = await self.cache.get_or_fetch(
+                'indicators', f"{symbol}_4h",
+                lambda: self.indicator_calc.calculate_all(ohlcv_4h)
+            )
+            
+            # Update trading cache with indicators
+            await self.trading_cache.update_symbol_data(
+                symbol, 
+                last_price=float(ticker['last']),
+                indicators_2h=indicators_2h,
+                indicators_4h=indicators_4h
+            )
+            
+            # Check for trading signals
+            signal = await self._check_trading_signals_for_symbol(
+                symbol, ticker, indicators_2h, indicators_4h
+            )
+            
+            return signal
+            
+        except Exception as e:
+            logger.error(f"Error in optimized processing for {symbol}: {e}")
+            return None
+    
+    async def _check_trading_signals_for_symbol(self, symbol: str, ticker, indicators_2h, indicators_4h):
+        """Check for trading signals for a specific symbol."""
+        try:
+            current_price = float(ticker['last'])
+            
+            # Rule 1: MA Crossover
+            signal_2h = self._check_ma_crossover(indicators_2h, current_price, '2h')
+            signal_4h = self._check_ma_crossover(indicators_4h, current_price, '4h')
+            
+            # Rule 2: MA Distance
+            distance_signal_2h = self._check_ma_distance(indicators_2h, current_price, '2h')
+            distance_signal_4h = self._check_ma_distance(indicators_4h, current_price, '4h')
+            
+            # Rule 3: Volume Spike (would need volume data)
+            # volume_signal = self._check_volume_spike(ticker, historical_volume)
+            
+            # Return strongest signal
+            all_signals = [signal_2h, signal_4h, distance_signal_2h, distance_signal_4h]
+            valid_signals = [s for s in all_signals if s]
+            
+            if valid_signals:
+                # Return signal with highest strength and add symbol info
+                best_signal = max(valid_signals, key=lambda x: x.get('strength', 0))
+                best_signal['symbol'] = symbol
+                return best_signal
+                
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error checking signals for {symbol}: {e}")
+            return None
+    
     async def _process_single_asset_optimized(self, asset, session):
         """Process a single asset with caching and rate limiting."""
         try:
