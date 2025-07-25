@@ -370,8 +370,16 @@ class TradingEngine:
             return None
     
     def _calculate_initial_stop_loss(self, entry_price: Decimal, side: str) -> Decimal:
-        """Calculate initial stop loss price."""
+        """Calculate initial stop loss price (with test mode adjustments)."""
         stop_loss_percent = self.config.INITIAL_STOP_LOSS_PERCENT
+        
+        # In test mode, make stop loss more aggressive (tighter) to test more scenarios
+        if is_test_mode_active():
+            test_config = get_test_mode_config()
+            if test_config.get('aggressive_mode', False):
+                # Use a tighter stop loss (1% instead of 2%) to trigger more stop loss scenarios
+                stop_loss_percent = Decimal('0.01')
+                logger.warning(f"🧪 TEST MODE: Using aggressive stop loss {stop_loss_percent*100}% instead of {self.config.INITIAL_STOP_LOSS_PERCENT*100}%")
         
         if side.upper() == 'BUY':
             # For long positions, stop loss is below entry price
