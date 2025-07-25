@@ -869,6 +869,12 @@
                             <span id="connection-status" class="status-indicator">❓ Não testado</span>
                         </div>
                         <div class="control-group">
+                            <button id="test-mode-btn" class="control-btn test-btn" onclick="activateTestMode()">
+                                🧪 MODO TESTE
+                            </button>
+                            <span id="test-mode-status" class="status-indicator">⚡ Pronto</span>
+                        </div>
+                        <div class="control-group">
                             <label>Max Trades Simultâneos:</label>
                             <input type="number" id="max-concurrent-trades" value="10" min="1" max="20">
                         </div>
@@ -1723,6 +1729,131 @@
                 // Re-enable button
                 btn.disabled = false;
                 btn.innerHTML = '🔍 Testar Conexão API';
+            }
+        }
+        
+        // ====== TEST MODE ACTIVATION ======
+        
+        async function activateTestMode() {
+            const btn = document.getElementById('test-mode-btn');
+            const status = document.getElementById('test-mode-status');
+            
+            // Confirm activation
+            if (!confirm('⚠️ ATENÇÃO: O Modo Teste irá executar operações de trading agressivas para testar todo o fluxo do sistema, incluindo stop loss, break even e take profit. Deseja continuar?')) {
+                return;
+            }
+            
+            try {
+                // Disable button and show loading state
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Ativando...';
+                status.innerHTML = '🔄 Ativando';
+                
+                // Make API call to activate test mode
+                const response = await fetch('/api/trading/test-mode/start', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        aggressive_mode: true,
+                        test_all_flows: true,
+                        force_signals: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = '🧪 ATIVO';
+                    btn.innerHTML = '🔥 MODO TESTE ATIVO';
+                    btn.classList.remove('test-btn');
+                    btn.classList.add('stop-btn');
+                    btn.onclick = deactivateTestMode;
+                    
+                    showNotificationSafe(
+                        'Modo Teste Ativado', 
+                        `Sistema em modo agressivo. ${result.message || 'Testando fluxo completo de trading.'}`, 
+                        'warning'
+                    );
+                    
+                    // Auto-refresh trading data more frequently during test mode
+                    if (window.testModeRefreshInterval) {
+                        clearInterval(window.testModeRefreshInterval);
+                    }
+                    window.testModeRefreshInterval = setInterval(refreshTradingData, 5000);
+                    
+                } else {
+                    throw new Error(result.error || 'Falha na ativação do modo teste');
+                }
+                
+            } catch (error) {
+                status.innerHTML = '❌ Erro';
+                showNotificationSafe('Erro no Modo Teste', `Falha ao ativar: ${error.message}`, 'error');
+                console.error('Test mode activation failed:', error);
+                
+                // Reset button state
+                btn.innerHTML = '🧪 MODO TESTE';
+                btn.classList.remove('stop-btn');
+                btn.classList.add('test-btn');
+                btn.onclick = activateTestMode;
+                
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        async function deactivateTestMode() {
+            const btn = document.getElementById('test-mode-btn');
+            const status = document.getElementById('test-mode-status');
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Desativando...';
+                status.innerHTML = '🔄 Parando';
+                
+                const response = await fetch('/api/trading/test-mode/stop', { method: 'POST' });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = '⚡ Pronto';
+                    btn.innerHTML = '🧪 MODO TESTE';
+                    btn.classList.remove('stop-btn');
+                    btn.classList.add('test-btn');
+                    btn.onclick = activateTestMode;
+                    
+                    showNotificationSafe(
+                        'Modo Teste Desativado', 
+                        result.message || 'Sistema retornado ao modo normal.', 
+                        'info'
+                    );
+                    
+                    // Clear test mode refresh interval
+                    if (window.testModeRefreshInterval) {
+                        clearInterval(window.testModeRefreshInterval);
+                        window.testModeRefreshInterval = null;
+                    }
+                    
+                } else {
+                    throw new Error(result.error || 'Falha na desativação do modo teste');
+                }
+                
+            } catch (error) {
+                showNotificationSafe('Erro', `Falha ao desativar modo teste: ${error.message}`, 'error');
+                console.error('Test mode deactivation failed:', error);
+                
+            } finally {
+                btn.disabled = false;
             }
         }
         

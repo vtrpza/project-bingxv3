@@ -16,6 +16,15 @@ from api.client import BingXClient, TradingAPIError
 from utils.logger import get_logger
 from utils.validators import Validator, ValidationError
 
+# Import test mode functions for aggressive testing
+try:
+    from api.web_api import is_test_mode_active, get_test_mode_config, increment_test_mode_stat
+except ImportError:
+    # Fallback functions if import fails
+    def is_test_mode_active(): return False
+    def get_test_mode_config(): return {}
+    def increment_test_mode_stat(stat_name, increment=1): pass
+
 logger = get_logger(__name__)
 
 
@@ -129,10 +138,19 @@ class TradingEngine:
                     logger.error(f"Missing required field in signal: {field}")
                     return None
             
-            # Validate signal strength
+            # Validate signal strength (with test mode adjustments)
             strength = Decimal(str(signal['strength']))
-            if strength < self.config.SIGNAL_THRESHOLDS['buy']:
-                logger.debug(f"Signal strength too low: {strength}")
+            threshold = self.config.SIGNAL_THRESHOLDS['buy']
+            
+            # In test mode, lower the threshold significantly to allow more trades
+            if is_test_mode_active():
+                test_config = get_test_mode_config()
+                if test_config.get('aggressive_mode', False):
+                    threshold = Decimal('0.1')  # Much lower threshold in test mode
+                    logger.warning(f"🧪 TEST MODE: Using lowered signal threshold {threshold} for {signal['symbol']}")
+            
+            if strength < threshold:
+                logger.debug(f"Signal strength too low: {strength} < {threshold}")
                 return None
             
             # Validate signal type
@@ -171,12 +189,22 @@ class TradingEngine:
             return None
     
     async def _check_trading_limits(self, signal: Dict[str, Any]) -> bool:
-        """Check if trading limits allow for new position."""
+        """Check if trading limits allow for new position (with test mode adjustments)."""
         try:
-            # Check concurrent trades limit
+            # Check concurrent trades limit (with test mode override)
             open_trades_count = len(self._open_trades)
-            if open_trades_count >= self._max_concurrent_trades:
-                logger.warning(f"Max concurrent trades reached: {open_trades_count}/{self._max_concurrent_trades}")
+            max_trades = self._max_concurrent_trades
+            
+            # In test mode, temporarily increase the concurrent trades limit
+            if is_test_mode_active():
+                test_config = get_test_mode_config()
+                test_max_trades = test_config.get('max_test_trades', 5)
+                # Use the higher of current config or test config
+                max_trades = max(max_trades, test_max_trades)
+                logger.warning(f"🧪 TEST MODE: Using increased concurrent trades limit: {max_trades}")
+            
+            if open_trades_count >= max_trades:
+                logger.warning(f"Max concurrent trades reached: {open_trades_count}/{max_trades}")
                 return False
             
             # Check if already have position in this symbol
@@ -309,6 +337,11 @@ class TradingEngine:
                 # Create stop loss order
                 await self._create_stop_loss_order(trade_id, symbol, side, actual_quantity, stop_loss_price)
                 
+                # Update test mode statistics if active
+                if is_test_mode_active():
+                    increment_test_mode_stat('trades_executed')
+                    logger.warning(f"🧪 TEST MODE: Trade executed for {symbol}, statistics updated")
+                
                 return {
                     'trade_id': trade_id,
                     'symbol': symbol,
@@ -317,7 +350,8 @@ class TradingEngine:
                     'quantity': actual_quantity,
                     'stop_loss': stop_loss_price,
                     'order_id': order_result.get('id'),
-                    'timestamp': datetime.now(timezone.utc)
+                    'timestamp': datetime.now(timezone.utc),
+                    'test_mode': is_test_mode_active()
                 }
                 
             except TradingAPIError as e:
@@ -336,8 +370,16 @@ class TradingEngine:
             return None
     
     def _calculate_initial_stop_loss(self, entry_price: Decimal, side: str) -> Decimal:
-        """Calculate initial stop loss price."""
+        """Calculate initial stop loss price (with test mode adjustments)."""
         stop_loss_percent = self.config.INITIAL_STOP_LOSS_PERCENT
+        
+        # In test mode, make stop loss more aggressive (tighter) to test more scenarios
+        if is_test_mode_active():
+            test_config = get_test_mode_config()
+            if test_config.get('aggressive_mode', False):
+                # Use a tighter stop loss (1% instead of 2%) to trigger more stop loss scenarios
+                stop_loss_percent = Decimal('0.01')
+                logger.warning(f"🧪 TEST MODE: Using aggressive stop loss {stop_loss_percent*100}% instead of {self.config.INITIAL_STOP_LOSS_PERCENT*100}%")
         
         if side.upper() == 'BUY':
             # For long positions, stop loss is below entry price

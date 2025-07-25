@@ -617,6 +617,22 @@
     border-color: #0d6efd;
 }
 
+.test-btn {
+    background: linear-gradient(45deg, #ff6b35, #f7931e);
+    border-color: #ff6b35;
+    color: white;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(255, 107, 53, 0.3);
+}
+
+.test-btn:hover:not(:disabled) {
+    background: linear-gradient(45deg, #e55a2e, #e0821a);
+    border-color: #e55a2e;
+    box-shadow: 0 4px 8px rgba(255, 107, 53, 0.5);
+    transform: translateY(-2px);
+}
+
 .status-indicator {
     display: inline-block;
     margin-left: var(--spacing-md);

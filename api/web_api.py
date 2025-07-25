@@ -2162,6 +2162,234 @@ async def update_all_risk_management(
         logger.error(f"Error updating risk management: {e}")
         raise HTTPException(status_code=500, detail=f"Error updating risk management: {str(e)}")
 
+# ====== TEST MODE ENDPOINTS ======
+
+# Global test mode state
+test_mode_state = {
+    "active": False,
+    "activated_at": None,
+    "configuration": {},
+    "statistics": {
+        "signals_forced": 0,
+        "trades_executed": 0,
+        "tests_completed": 0
+    }
+}
+
+@app.post("/api/trading/test-mode/start")
+async def start_test_mode(
+    request: dict,
+    db: Session = Depends(get_db),
+    signal_repo: SignalRepository = Depends(get_signal_repo),
+    trade_repo: TradeRepository = Depends(get_trade_repo)
+):
+    """Start aggressive test mode for comprehensive trading flow testing"""
+    try:
+        global test_mode_state
+        
+        if test_mode_state["active"]:
+            return {
+                "success": False,
+                "error": "Test mode is already active",
+                "current_state": test_mode_state
+            }
+        
+        # Extract configuration from request
+        config = {
+            "aggressive_mode": request.get("aggressive_mode", True),
+            "test_all_flows": request.get("test_all_flows", True),
+            "force_signals": request.get("force_signals", True),
+            "max_test_trades": request.get("max_test_trades", 5),
+            "test_duration_minutes": request.get("test_duration_minutes", 30)
+        }
+        
+        # Activate test mode
+        test_mode_state = {
+            "active": True,
+            "activated_at": utc_now().isoformat(),
+            "configuration": config,
+            "statistics": {
+                "signals_forced": 0,
+                "trades_executed": 0,
+                "tests_completed": 0
+            }
+        }
+        
+        logger.warning("🧪 TEST MODE ACTIVATED - Aggressive trading testing enabled")
+        logger.info(f"Test mode configuration: {config}")
+        
+        # If force_signals is enabled, create some test signals
+        if config.get("force_signals", False):
+            await _create_test_signals(db, signal_repo)
+        
+        # Broadcast test mode activation to WebSocket clients
+        await manager.broadcast({
+            "type": "test_mode_activated",
+            "payload": {
+                "activated_at": test_mode_state["activated_at"],
+                "configuration": config,
+                "message": "Sistema em modo de teste agressivo ativado"
+            }
+        })
+        
+        return {
+            "success": True,
+            "message": "Modo teste ativado com sucesso. Sistema configurado para testes agressivos de trading.",
+            "state": test_mode_state,
+            "warnings": [
+                "⚠️ Operações de trading serão executadas de forma agressiva",
+                "⚠️ Stop loss e take profit serão testados automaticamente",
+                "⚠️ Use apenas com quantidades pequenas ou em ambiente de teste"
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting test mode: {e}")
+        raise HTTPException(status_code=500, detail=f"Error starting test mode: {str(e)}")
+
+@app.post("/api/trading/test-mode/stop")
+async def stop_test_mode():
+    """Stop test mode and return to normal operations"""
+    try:
+        global test_mode_state
+        
+        if not test_mode_state["active"]:
+            return {
+                "success": False,
+                "error": "Test mode is not currently active"
+            }
+        
+        # Store final statistics
+        final_stats = test_mode_state["statistics"].copy()
+        duration_minutes = 0
+        
+        if test_mode_state["activated_at"]:
+            activated_time = datetime.fromisoformat(test_mode_state["activated_at"].replace('Z', '+00:00'))
+            duration_minutes = (utc_now() - activated_time).total_seconds() / 60
+        
+        # Deactivate test mode
+        test_mode_state = {
+            "active": False,
+            "activated_at": None,
+            "configuration": {},
+            "statistics": {
+                "signals_forced": 0,
+                "trades_executed": 0,
+                "tests_completed": 0
+            }
+        }
+        
+        logger.warning("🧪 TEST MODE DEACTIVATED - Returning to normal operations")
+        
+        # Broadcast test mode deactivation to WebSocket clients
+        await manager.broadcast({
+            "type": "test_mode_deactivated",
+            "payload": {
+                "deactivated_at": utc_now().isoformat(),
+                "duration_minutes": round(duration_minutes, 2),
+                "final_statistics": final_stats,
+                "message": "Sistema retornado ao modo normal de operação"
+            }
+        })
+        
+        return {
+            "success": True,
+            "message": "Modo teste desativado com sucesso. Sistema retornado ao modo normal.",
+            "session_summary": {
+                "duration_minutes": round(duration_minutes, 2),
+                "statistics": final_stats
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error stopping test mode: {e}")
+        raise HTTPException(status_code=500, detail=f"Error stopping test mode: {str(e)}")
+
+@app.get("/api/trading/test-mode/status")
+async def get_test_mode_status():
+    """Get current test mode status and statistics"""
+    try:
+        global test_mode_state
+        
+        status_response = {
+            "active": test_mode_state["active"],
+            "state": test_mode_state
+        }
+        
+        if test_mode_state["active"] and test_mode_state["activated_at"]:
+            activated_time = datetime.fromisoformat(test_mode_state["activated_at"].replace('Z', '+00:00'))
+            duration_minutes = (utc_now() - activated_time).total_seconds() / 60
+            status_response["runtime_minutes"] = round(duration_minutes, 2)
+        
+        return status_response
+        
+    except Exception as e:
+        logger.error(f"Error getting test mode status: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting test mode status: {str(e)}")
+
+async def _create_test_signals(db: Session, signal_repo: SignalRepository):
+    """Create test signals for aggressive testing"""
+    try:
+        # Get a few valid assets for testing
+        asset_repo = AssetRepository()
+        valid_assets = asset_repo.get_valid_assets(db, limit=3)
+        
+        if not valid_assets:
+            logger.warning("No valid assets found for test signal creation")
+            return
+        
+        test_signals_created = 0
+        
+        for asset in valid_assets:
+            try:
+                # Create a test BUY signal
+                signal_repo.create_signal(
+                    db,
+                    asset_id=str(asset.id),
+                    signal_type="BUY",
+                    strength=0.9,  # High strength for testing
+                    rules_triggered=["test_mode_forced_signal"],
+                    indicators_snapshot={
+                        "test_mode": True,
+                        "forced_signal": True,
+                        "mm1": 42000.0,
+                        "center": 41900.0,
+                        "rsi": 45.0,
+                        "message": "Test signal created by aggressive test mode"
+                    }
+                )
+                test_signals_created += 1
+                logger.info(f"Created test signal for {asset.symbol}")
+                
+            except Exception as signal_error:
+                logger.warning(f"Failed to create test signal for {asset.symbol}: {signal_error}")
+                continue
+        
+        # Update test mode statistics
+        global test_mode_state
+        test_mode_state["statistics"]["signals_forced"] += test_signals_created
+        
+        logger.info(f"Created {test_signals_created} test signals for aggressive testing")
+        
+    except Exception as e:
+        logger.error(f"Error creating test signals: {e}")
+
+def is_test_mode_active() -> bool:
+    """Check if test mode is currently active"""
+    global test_mode_state
+    return test_mode_state.get("active", False)
+
+def get_test_mode_config() -> dict:
+    """Get current test mode configuration"""
+    global test_mode_state
+    return test_mode_state.get("configuration", {})
+
+def increment_test_mode_stat(stat_name: str, increment: int = 1):
+    """Increment a test mode statistic"""
+    global test_mode_state
+    if test_mode_state.get("active", False):
+        test_mode_state["statistics"][stat_name] = test_mode_state["statistics"].get(stat_name, 0) + increment
+
 # WebSocket endpoint
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
