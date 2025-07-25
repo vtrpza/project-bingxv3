@@ -4846,3 +4846,8 @@
 2025-07-25 15:40:00,092 - database.connection - INFO - Using DATABASE_URL from environment
 2025-07-25 15:40:00,092 - database.connection - INFO - Using SQLite database
 2025-07-25 15:40:00,093 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:05,454 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:40:05,454 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:40:05,454 - database.connection - INFO - Using SQLite database
+2025-07-25 15:40:05,455 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:40:05,458 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)

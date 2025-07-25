@@ -753,6 +753,8 @@
             setInterval(() => {
                 if (tradingWS && tradingWS.isConnected) {
                     tradingWS.ping();
+                    // Also refresh status to prevent it being overridden
+                    tradingWS.updateConnectionStatus('Conectado', 'online');
                 }
             }, 30000);
         });
