@@ -1657,6 +1657,75 @@
             }
         }
         
+        async function testAPIConnection() {
+            const statusSpan = document.getElementById('connection-status');
+            const btn = document.getElementById('test-connection-btn');
+            
+            // Disable button during test
+            btn.disabled = true;
+            btn.innerHTML = '🔄 Testando...';
+            statusSpan.innerHTML = '🔄 Testando...';
+            
+            try {
+                // Test multiple endpoints
+                const tests = [
+                    { name: 'Auto Trading Start', url: '/api/trading/auto-trading/start', expected: 'json', method: 'POST' },
+                    { name: 'Auto Trading Stop', url: '/api/trading/auto-trading/stop', expected: 'json', method: 'POST' }
+                ];
+                
+                const results = [];
+                
+                for (const test of tests) {
+                    try {
+                        // Test HTTP endpoint
+                        const response = await fetch(test.url, { 
+                            method: test.method || 'GET',
+                            headers: { 'Content-Type': 'application/json' }
+                        });
+                        
+                        const contentType = response.headers.get('content-type');
+                        let details = `Status: ${response.status}`;
+                        
+                        if (test.expected === 'json' && contentType && contentType.includes('application/json')) {
+                            const data = await response.json();
+                            details += `, JSON válido: ${Object.keys(data).length} campos`;
+                            results.push({ name: test.name, status: '✅ OK', details });
+                        } else if (response.ok) {
+                            results.push({ name: test.name, status: '⚠️ Parcial', details: details + ', mas não é JSON' });
+                        } else {
+                            const textResponse = await response.text();
+                            results.push({ name: test.name, status: '❌ Falhou', details: details + ` - ${textResponse.substring(0, 100)}` });
+                        }
+                    } catch (error) {
+                        results.push({ name: test.name, status: '❌ Erro', details: error.message });
+                    }
+                }
+                
+                // Show results
+                const allOk = results.every(r => r.status.includes('✅'));
+                const resultText = results.map(r => `${r.name}: ${r.status} (${r.details})`).join('\n');
+                
+                if (allOk) {
+                    statusSpan.innerHTML = '✅ Conectado';
+                    showNotificationSafe('Conectividade OK', 'Endpoints de Auto Trading estão funcionando!', 'success');
+                } else {
+                    statusSpan.innerHTML = '⚠️ Problemas';
+                    showNotificationSafe('Problemas de Conectividade', resultText, 'warning');
+                }
+                
+                console.log('Connection test results:', results);
+                
+            } catch (error) {
+                statusSpan.innerHTML = '❌ Falhou';
+                showNotificationSafe('Teste Falhou', `Erro geral: ${error.message}`, 'error');
+                console.error('Connection test failed:', error);
+            } finally {
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Testar Conexão API';
+            }
+        }
+        
         // ====== COMPREHENSIVE TRADING DATA INTEGRATION ======
         
         async function refreshTradingData() {

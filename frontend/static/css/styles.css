@@ -606,6 +606,17 @@
     border-color: #dc3545;
 }
 
+.info-btn {
+    background: var(--accent-info);
+    border-color: var(--accent-info);
+    color: white;
+}
+
+.info-btn:hover:not(:disabled) {
+    background: #0d6efd;
+    border-color: #0d6efd;
+}
+
 .status-indicator {
     display: inline-block;
     margin-left: var(--spacing-md);
