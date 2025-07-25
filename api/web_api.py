@@ -3497,61 +3497,36 @@ async def broadcast_realtime_data():
                     # Get real-time trading data for broadcast
                     try:
                         # Get database session
-                        from database.connection import get_session
-                        with get_session() as db:
-                            asset_repo = AssetRepository()
-                            trade_repo = TradeRepository()
+                        # Get comprehensive trading snapshot for broadcast
+                        try:
+                            snapshot_data = await _get_comprehensive_trading_snapshot()
                             
-                            # Get summary data for broadcast
-                            valid_assets = asset_repo.get_valid_assets(db)[:10]  # Top 10 assets
-                            open_trades = trade_repo.get_open_trades(db)
+                            # Send comprehensive snapshot
+                            await manager.broadcast(snapshot_data, channel="trading_data", priority="normal")
+                            last_broadcast_time = current_time
+                            logger.debug(f"Sent comprehensive trading snapshot to trading_data channel subscribers")
                             
-                            # Calculate total P&L
-                            total_unrealized_pnl = 0
-                            position_count = len(open_trades)
+                            # Also send signals snapshot if there are active signals
+                            signals_data = await _get_current_signals_snapshot()
+                            if signals_data.get('data', {}).get('count', 0) > 0:
+                                await manager.broadcast(signals_data, channel="trading_signals", priority="normal")
+                                logger.debug(f"Sent {signals_data['data']['count']} active signals to trading_signals channel")
+                                
+                        except Exception as snapshot_error:
+                            logger.warning(f"Error creating trading snapshot for broadcast: {snapshot_error}")
                             
-                            for trade in open_trades[:5]:  # Sample first 5 trades
-                                try:
-                                    current_ticker = await safe_fetch_ticker(trade.asset.symbol if trade.asset else "UNKNOWN")
-                                    current_price = current_ticker.get('last', 0) or float(trade.entry_price)
-                                    
-                                    if trade.side.upper() == 'BUY':
-                                        pnl = (current_price - float(trade.entry_price)) * float(trade.quantity)
-                                    else:
-                                        pnl = (float(trade.entry_price) - current_price) * float(trade.quantity)
-                                    
-                                    total_unrealized_pnl += pnl
-                                except Exception as trade_error:
-                                    logger.debug(f"Error calculating P&L for trade {trade.id}: {trade_error}")
-                                    continue
-                            
-                            # Prepare broadcast data
-                            broadcast_data = {
+                            # Fallback to basic update notification
+                            fallback_data = {
                                 "type": "trading_update",
                                 "timestamp": current_time.isoformat(),
                                 "data": {
-                                    "summary": {
-                                        "total_assets": len(valid_assets),
-                                        "open_positions": position_count,
-                                        "total_unrealized_pnl": round(total_unrealized_pnl, 2),
-                                        "trading_enabled": bot_status.get("trading_enabled", False)
-                                    },
-                                    "positions_sample": [
-                                        {
-                                            "symbol": trade.asset.symbol if trade.asset else "UNKNOWN",
-                                            "side": trade.side,
-                                            "entry_time": trade.entry_time.isoformat() if trade.entry_time else None
-                                        }
-                                        for trade in open_trades[:3]  # Sample first 3
-                                    ],
                                     "update_available": True,
-                                    "refresh_recommended": True
+                                    "refresh_recommended": True,
+                                    "error": "Snapshot failed"
                                 }
                             }
-                            
-                            await manager.broadcast(broadcast_data, channel="trading_data", priority="normal")
+                            await manager.broadcast(fallback_data, channel="trading_data", priority="low")
                             last_broadcast_time = current_time
-                            logger.debug(f"Sent trading update to trading_data channel subscribers")
                     
                     except Exception as data_error:
                         logger.warning(f"Error getting trading data for broadcast: {data_error}")
