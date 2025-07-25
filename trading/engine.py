@@ -138,10 +138,19 @@ class TradingEngine:
                     logger.error(f"Missing required field in signal: {field}")
                     return None
             
-            # Validate signal strength
+            # Validate signal strength (with test mode adjustments)
             strength = Decimal(str(signal['strength']))
-            if strength < self.config.SIGNAL_THRESHOLDS['buy']:
-                logger.debug(f"Signal strength too low: {strength}")
+            threshold = self.config.SIGNAL_THRESHOLDS['buy']
+            
+            # In test mode, lower the threshold significantly to allow more trades
+            if is_test_mode_active():
+                test_config = get_test_mode_config()
+                if test_config.get('aggressive_mode', False):
+                    threshold = Decimal('0.1')  # Much lower threshold in test mode
+                    logger.warning(f"🧪 TEST MODE: Using lowered signal threshold {threshold} for {signal['symbol']}")
+            
+            if strength < threshold:
+                logger.debug(f"Signal strength too low: {strength} < {threshold}")
                 return None
             
             # Validate signal type
