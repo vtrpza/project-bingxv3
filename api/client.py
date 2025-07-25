@@ -43,6 +43,14 @@ class BingXClient:
     def __init__(self):
         self.exchange = None
         self._initialized = False
+        # Circuit breaker for rate limit protection
+        self._circuit_breaker = {
+            'is_open': False,
+            'failure_count': 0,
+            'failure_threshold': 3,
+            'recovery_time': 300,  # 5 minutes
+            'last_failure_time': 0
+        }
         # BingX strict rate limits - ULTRA CONSERVATIVE to prevent rate limiting
         # Market interfaces: 100 requests per 10 seconds per IP = 10 req/s theoretical max
         # Account interfaces: 1,000 requests per 10 seconds per IP
@@ -159,9 +167,42 @@ class BingXClient:
         # Record this request
         timestamps.append(current_time)
     
+    def _check_circuit_breaker(self):
+        """Check if circuit breaker should allow requests."""
+        current_time = time.time()
+        cb = self._circuit_breaker
+        
+        # If circuit is open, check if we can try to recover
+        if cb['is_open']:
+            if current_time - cb['last_failure_time'] > cb['recovery_time']:
+                logger.info("Circuit breaker attempting recovery...")
+                cb['is_open'] = False
+                cb['failure_count'] = 0
+            else:
+                remaining = cb['recovery_time'] - (current_time - cb['last_failure_time'])
+                raise RateLimitError(f"Circuit breaker open - retry in {remaining:.0f}s")
+    
+    def _record_success(self):
+        """Record successful request."""
+        if self._circuit_breaker['failure_count'] > 0:
+            self._circuit_breaker['failure_count'] = max(0, self._circuit_breaker['failure_count'] - 1)
+    
+    def _record_failure(self):
+        """Record failed request."""
+        cb = self._circuit_breaker
+        cb['failure_count'] += 1
+        cb['last_failure_time'] = time.time()
+        
+        if cb['failure_count'] >= cb['failure_threshold']:
+            cb['is_open'] = True
+            logger.warning(f"Circuit breaker opened after {cb['failure_count']} failures")
+
     async def _execute_with_retry(self, func: Callable, *args, max_retries: int = 5, 
                                  delay_factor: float = 2.0) -> Any:
-        """Execute function with retry logic and exponential backoff."""
+        """Execute function with retry logic, exponential backoff, and circuit breaker."""
+        # Check circuit breaker first
+        self._check_circuit_breaker()
+        
         last_exception = None
         
         for attempt in range(max_retries):

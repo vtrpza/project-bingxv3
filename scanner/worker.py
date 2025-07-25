@@ -104,18 +104,19 @@ class ScannerWorker:
                             signals_generated += 1
                             logger.info(f"🎯 Signal generated for {asset.symbol}: {result['type']}")
                     
-                    # Ultra-fast intelligent delay between batches
+                    # Conservative delay between batches to prevent rate limiting
                     if i + max_concurrent < len(valid_assets):
                         stats = self.rate_limiter.get_stats()
                         utilization = stats.get('market_data', {}).get('utilization_percent', 0)
                         
-                        if utilization < 70:
-                            delay = 0.05  # 50ms - Ultra fast
-                        elif utilization < 85:
-                            delay = 0.15  # 150ms - Fast
+                        if utilization < 50:
+                            delay = 2.0   # 2s - Conservative
+                        elif utilization < 70:
+                            delay = 3.0   # 3s - More conservative
                         else:
-                            delay = 0.25  # 250ms - Moderate
+                            delay = 5.0   # 5s - Very conservative
                             
+                        logger.debug(f"Rate limit utilization: {utilization:.1f}%, waiting {delay}s")
                         await asyncio.sleep(delay)
                 
                 session.commit()
