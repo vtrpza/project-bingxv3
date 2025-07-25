@@ -21,7 +21,12 @@
             constructor() {
                 this.ws = null;
                 this.reconnectInterval = 5000;
+                this.maxReconnectInterval = 30000; // Max 30 seconds
+                this.reconnectDecay = 1.5; // Exponential backoff
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 10;
                 this.reconnectTimer = null;
+                this.connectionTimeout = null;
                 this.isConnecting = false;
                 this.isConnected = false;
                 
@@ -39,12 +44,32 @@
                 this.updateConnectionStatus('Conectando...', 'connecting');
                 
                 try {
+                    // Add timeout for connection attempt
+                    this.connectionTimeout = setTimeout(() => {
+                        if (this.isConnecting) {
+                            console.warn('WebSocket connection timeout');
+                            this.isConnecting = false;
+                            this.updateConnectionStatus('Timeout de Conexão', 'error');
+                            this.scheduleReconnect();
+                        }
+                    }, 10000); // 10 second timeout
+                    
                     this.ws = new WebSocket(wsUrl);
                     
                     this.ws.onopen = (event) => {
                         console.log('WebSocket connected');
                         this.isConnected = true;
                         this.isConnecting = false;
+                        
+                        // Reset reconnection attempts on successful connection
+                        this.reconnectAttempts = 0;
+                        
+                        // Clear connection timeout
+                        if (this.connectionTimeout) {
+                            clearTimeout(this.connectionTimeout);
+                            this.connectionTimeout = null;
+                        }
+                        
                         this.updateConnectionStatus('Conectado', 'online');
                         
                         // Subscribe to trading data
@@ -79,13 +104,30 @@
                     this.ws.onerror = (error) => {
                         console.error('WebSocket error:', error);
                         this.isConnecting = false;
-                        this.updateConnectionStatus('Erro de Conexão', 'error');
+                        
+                        // Clear connection timeout
+                        if (this.connectionTimeout) {
+                            clearTimeout(this.connectionTimeout);
+                            this.connectionTimeout = null;
+                        }
+                        
+                        // Check if server might be down
+                        const errorMsg = error.type === 'error' && !this.isConnected ? 
+                            'Servidor Não Disponível' : 'Erro de Conexão';
+                        this.updateConnectionStatus(errorMsg, 'error');
                     };
                     
                 } catch (error) {
                     console.error('Error creating WebSocket:', error);
                     this.isConnecting = false;
-                    this.updateConnectionStatus('Erro de Conexão', 'error');
+                    
+                    // Clear connection timeout
+                    if (this.connectionTimeout) {
+                        clearTimeout(this.connectionTimeout);
+                        this.connectionTimeout = null;
+                    }
+                    
+                    this.updateConnectionStatus('Falha na Conexão', 'error');
                     this.scheduleReconnect();
                 }
             }
@@ -93,12 +135,28 @@
             scheduleReconnect() {
                 if (this.reconnectTimer) return;
                 
+                // Stop trying after max attempts
+                if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+                    console.error('Max reconnection attempts reached');
+                    this.updateConnectionStatus('Conexão Perdida', 'error');
+                    return;
+                }
+                
+                // Calculate next reconnect interval with exponential backoff
+                const timeout = Math.min(
+                    this.reconnectInterval * Math.pow(this.reconnectDecay, this.reconnectAttempts),
+                    this.maxReconnectInterval
+                );
+                
+                this.reconnectAttempts++;
+                console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${timeout}ms`);
+                
                 this.reconnectTimer = setTimeout(() => {
                     this.reconnectTimer = null;
                     if (!this.isConnected && !this.isConnecting) {
                         this.connect();
                     }
-                }, this.reconnectInterval);
+                }, timeout);
             }
             
             subscribe(channel) {
