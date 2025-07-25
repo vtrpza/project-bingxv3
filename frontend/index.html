@@ -197,6 +197,12 @@
                     case 'stop_loss_triggered':
                         this.handleStopLossTriggered(data.data);
                         break;
+                    case 'scanner_progress':
+                        this.handleScannerProgress(data.payload);
+                        break;
+                    case 'scanner_completion':
+                        this.handleScannerCompletion(data.payload);
+                        break;
                     case 'pong':
                         console.log('Pong received');
                         break;
@@ -356,6 +362,95 @@
                 if (window.refreshTradingDataFromWebSocket) {
                     window.refreshTradingDataFromWebSocket();
                 }
+            }
+            
+            handleScannerProgress(payload) {
+                console.log('Scanner progress:', payload);
+                
+                // Update basic progress elements
+                if (payload.progress_percentage !== undefined) {
+                    const progressBar = document.getElementById('progress-bar');
+                    const progressPercentage = document.getElementById('progress-percentage');
+                    
+                    if (progressBar) {
+                        progressBar.style.width = payload.progress_percentage + '%';
+                    }
+                    if (progressPercentage) {
+                        progressPercentage.textContent = Math.round(payload.progress_percentage) + '%';
+                    }
+                }
+                
+                // Update message
+                if (payload.message) {
+                    const subtitle = document.getElementById('progress-subtitle');
+                    const step = document.getElementById('progress-step');
+                    
+                    if (subtitle) subtitle.textContent = payload.message;
+                    if (step) step.textContent = payload.message;
+                }
+                
+                // Update ETA
+                if (payload.estimated_remaining_time_seconds) {
+                    const eta = document.getElementById('progress-eta');
+                    if (eta) {
+                        const minutes = Math.floor(payload.estimated_remaining_time_seconds / 60);
+                        const seconds = Math.round(payload.estimated_remaining_time_seconds % 60);
+                        eta.textContent = minutes > 0 ? `${minutes}m ${seconds}s restantes` : `${seconds}s restantes`;
+                    }
+                }
+                
+                // Show detailed progress for validation phase
+                if (payload.processed_count !== undefined) {
+                    const details = document.getElementById('progress-details');
+                    const processedCount = document.getElementById('processed-count');
+                    const totalCount = document.getElementById('total-count');
+                    
+                    if (details) details.style.display = 'block';
+                    if (processedCount) processedCount.textContent = payload.processed_count;
+                    if (totalCount) totalCount.textContent = payload.total_assets || 0;
+                    
+                    // Estimate valid count (we don't have this in real-time, so estimate)
+                    const validCount = document.getElementById('valid-count');
+                    if (validCount && payload.processed_count) {
+                        // Rough estimate: ~30% of assets are typically valid
+                        const estimatedValid = Math.round(payload.processed_count * 0.3);
+                        validCount.textContent = estimatedValid;
+                    }
+                }
+            }
+            
+            handleScannerCompletion(payload) {
+                console.log('Scanner completed:', payload);
+                
+                // Update final progress
+                this.handleScannerProgress({ 
+                    progress_percentage: 100, 
+                    message: 'Concluído!' 
+                });
+                
+                // Update final counts
+                const validCount = document.getElementById('valid-count');
+                const processedCount = document.getElementById('processed-count');
+                const totalCount = document.getElementById('total-count');
+                
+                if (validCount) validCount.textContent = payload.valid_assets_count || 0;
+                if (processedCount) processedCount.textContent = payload.total_assets || 0;
+                if (totalCount) totalCount.textContent = payload.total_assets || 0;
+                
+                // Hide loading overlay after a short delay
+                setTimeout(() => {
+                    const overlay = document.getElementById('loading-overlay');
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                    
+                    // Show success notification
+                    this.showNotification(
+                        'Scan Concluído', 
+                        `${payload.valid_assets_count} ativos válidos encontrados de ${payload.total_assets} analisados.`, 
+                        'success'
+                    );
+                }, 2000);
             }
             
             showNotification(title, message, type = 'info') {
@@ -768,6 +863,12 @@
                             <span id="auto-trade-status" class="status-indicator">🔴 Inativo</span>
                         </div>
                         <div class="control-group">
+                            <button id="test-connection-btn" class="control-btn info-btn" onclick="testAPIConnection()">
+                                🔍 Testar Conexão API
+                            </button>
+                            <span id="connection-status" class="status-indicator">❓ Não testado</span>
+                        </div>
+                        <div class="control-group">
                             <label>Max Trades Simultâneos:</label>
                             <input type="number" id="max-concurrent-trades" value="10" min="1" max="20">
                         </div>
@@ -978,8 +1079,40 @@
 
         <!-- Loading Overlay -->
         <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <p>Carregando dados...</p>
+            <div class="progress-container">
+                <div class="progress-header">
+                    <div class="progress-title">Inicializando Sistema</div>
+                    <div class="progress-subtitle" id="progress-subtitle">Carregando dados...</div>
+                </div>
+                
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                </div>
+                
+                <div class="progress-stats">
+                    <span class="progress-percentage" id="progress-percentage">0%</span>
+                    <span class="progress-eta" id="progress-eta">Calculando...</span>
+                </div>
+                
+                <div class="progress-details" id="progress-details" style="display: none;">
+                    <div class="progress-step" id="progress-step">Iniciando...</div>
+                    
+                    <div class="progress-counts" id="progress-counts">
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="processed-count">0</span>
+                            <span class="progress-count-label">Processados</span>
+                        </div>
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="valid-count">0</span>
+                            <span class="progress-count-label">Válidos</span>
+                        </div>
+                        <div class="progress-count-item">
+                            <span class="progress-count-value" id="total-count">0</span>
+                            <span class="progress-count-label">Total</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1417,36 +1550,109 @@
             if (btn.textContent.includes('Iniciar')) {
                 // Start auto trading
                 try {
-                    const response = await fetch('/api/trading/auto-trading/start', { method: 'POST' });
-                    const result = await response.json();
+                    console.log('Attempting to start auto trading...');
+                    const response = await fetch('/api/trading/auto-trading/start', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
                     
-                    if (response.ok) {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const textResponse = await response.text();
+                        console.error('Non-JSON response:', textResponse);
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    console.log('JSON response:', result);
+                    
+                    if (response.ok && result.success) {
                         btn.innerHTML = '⏹️ Parar Auto Trading';
                         btn.className = 'control-btn stop-btn';
                         status.innerHTML = '🟢 Ativo';
-                        showNotificationSafe('Sucesso', 'Auto Trading iniciado (VST Mode)!', 'success');
+                        showNotificationSafe('Sucesso', result.message || 'Auto Trading iniciado!', 'success');
                     } else {
-                        showNotificationSafe('Erro', 'Erro ao iniciar auto trading: ' + result.detail, 'error');
+                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
+                        showNotificationSafe('Erro', 'Erro ao iniciar auto trading: ' + errorMsg, 'error');
                     }
                 } catch (error) {
-                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                    console.error('Auto trading start error:', error);
+                    showNotificationSafe('Erro de Conexão', 
+                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
+                        'error');
                 }
             } else {
                 // Stop auto trading
                 try {
-                    const response = await fetch('/api/trading/auto-trading/stop', { method: 'POST' });
-                    const result = await response.json();
+                    console.log('Attempting to stop auto trading...');
+                    const response = await fetch('/api/trading/auto-trading/stop', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
                     
-                    if (response.ok) {
+                    console.log('Stop response status:', response.status);
+                    
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const textResponse = await response.text();
+                        console.error('Non-JSON response:', textResponse);
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Stop JSON response:', result);
+                    
+                    if (response.ok && result.success) {
                         btn.innerHTML = '🚀 Iniciar Auto Trading';
                         btn.className = 'control-btn start-btn';
                         status.innerHTML = '🔴 Inativo';
-                        showNotificationSafe('Aviso', 'Auto Trading parado!', 'warning');
+                        showNotificationSafe('Aviso', result.message || 'Auto Trading parado!', 'warning');
                     } else {
-                        showNotificationSafe('Erro', 'Erro ao parar auto trading: ' + result.detail, 'error');
+                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
+                        showNotificationSafe('Erro', 'Erro ao parar auto trading: ' + errorMsg, 'error');
                     }
                 } catch (error) {
-                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                    console.error('Auto trading stop error:', error);
+                    showNotificationSafe('Erro de Conexão', 
+                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
+                        'error');
                 }
             }
         }
