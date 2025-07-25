@@ -946,6 +946,270 @@ body {
     box-shadow: none;
 }
 
+/* ========== TRADING DATA TABLE STYLES ========== */
+
+.trading-data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.trading-data-table th {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.trading-data-table .timeframe-header {
+    border-left: 2px solid var(--border-color);
+}
+
+.trading-data-table .spot-header {
+    background: linear-gradient(135deg, var(--bg-tertiary), #1a4d1a);
+}
+
+.trading-data-table .tf-2h-header {
+    background: linear-gradient(135deg, var(--bg-tertiary), #1a3a4d);
+}
+
+.trading-data-table .tf-4h-header {
+    background: linear-gradient(135deg, var(--bg-tertiary), #4d1a3a);
+}
+
+.trading-data-table td {
+    padding: 8px 6px;
+    text-align: center;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.trading-data-table .asset-cell {
+    font-weight: 600;
+    text-align: left;
+    padding-left: 12px;
+    min-width: 100px;
+}
+
+.trading-data-table .datetime-cell {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 80px;
+}
+
+.trading-data-table .price-cell {
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+.trading-data-table .candle-cell {
+    font-size: 1.2rem;
+}
+
+.trading-data-table .rsi-cell {
+    font-weight: 500;
+}
+
+/* Signal styling */
+.signal-buy {
+    background: rgba(46, 160, 67, 0.1);
+}
+
+.signal-sell {
+    background: rgba(248, 81, 73, 0.1);
+}
+
+.signal-neutral {
+    background: rgba(110, 118, 129, 0.1);
+}
+
+.signal-badge {
+    padding: 2px 6px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.signal-buy .signal-badge {
+    background: var(--accent-buy);
+    color: white;
+}
+
+.signal-sell .signal-badge {
+    background: var(--accent-sell);
+    color: white;
+}
+
+.signal-neutral .signal-badge {
+    background: var(--accent-neutral);
+    color: white;
+}
+
+/* Position and P&L styling */
+.position-active {
+    color: var(--accent-buy);
+    font-weight: 600;
+}
+
+.position-none {
+    color: var(--text-muted);
+}
+
+.pnl-positive {
+    color: var(--accent-buy);
+    font-weight: 600;
+}
+
+.pnl-negative {
+    color: var(--accent-sell);
+    font-weight: 600;
+}
+
+/* Loading indicator styles */
+.loading-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    background: var(--bg-secondary);
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--accent-info);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-message {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+/* No data message */
+.no-data-message {
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Activity log improvements */
+.log-entry {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s;
+}
+
+.log-entry:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.log-entry.info {
+    border-left: 3px solid var(--accent-info);
+}
+
+.log-entry.success {
+    border-left: 3px solid var(--accent-buy);
+}
+
+.log-entry.warning {
+    border-left: 3px solid var(--accent-warning);
+}
+
+.log-entry.error {
+    border-left: 3px solid var(--accent-sell);
+}
+
+.log-time {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    min-width: 70px;
+    margin-right: 10px;
+}
+
+.log-icon {
+    font-size: 1rem;
+    margin-right: 10px;
+}
+
+.log-message {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+/* Summary value color coding */
+.summary-value.profit {
+    color: var(--accent-buy);
+    font-weight: 600;
+}
+
+.summary-value.loss {
+    color: var(--accent-sell);
+    font-weight: 600;
+}
+
+/* Responsive design for trading table */
+@media (max-width: 1200px) {
+    .trading-data-table {
+        font-size: 0.7rem;
+    }
+    
+    .trading-data-table th {
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+    
+    .trading-data-table td {
+        padding: 6px 4px;
+    }
+}
+
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .trading-data-table {
+        min-width: 1200px;
+    }
+    
+    .activity-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Scanner Grid */
 .scanner-grid {
     display: grid;
