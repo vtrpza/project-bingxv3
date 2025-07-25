@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script to verify WebSocket improvements and functionality
+Test script to validate WebSocket improvements
+Tests enhanced connection management, subscription system, and error handling
 """
 
 import asyncio
@@ -120,13 +121,20 @@ class WebSocketTester:
         try:
             uri = "ws://localhost:8000/ws"
             async with websockets.connect(uri) as websocket:
-                # Send subscription
+                # Wait for connection_established message
+                welcome_response = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                welcome_data = json.loads(welcome_response)
+                
+                if welcome_data.get("type") != "connection_established":
+                    logger.warning(f"⚠️ Expected welcome message, got: {welcome_data}")
+                
+                # Send subscription for valid channel
                 subscribe_message = {
                     "type": "subscribe",
-                    "data": {"channels": ["validation", "scanner", "trades"]}
+                    "data": {"channel": "trading_data"}
                 }
                 await websocket.send(json.dumps(subscribe_message))
-                logger.info("📤 Subscription sent")
+                logger.info("📤 Valid subscription sent")
                 
                 # Wait for confirmation
                 response = await asyncio.wait_for(websocket.recv(), timeout=5.0)
@@ -134,9 +142,28 @@ class WebSocketTester:
                 
                 if response_data.get("type") == "subscribed":
                     logger.info("✅ Subscription confirmed")
-                    logger.info(f"   Channels: {response_data.get('data', {}).get('channels', [])}")
-                    self.test_results.append("Subscription: PASS")
-                    return True
+                    channel = response_data.get('data', {}).get('channel', 'unknown')
+                    logger.info(f"   Channel: {channel}")
+                    
+                    # Test invalid subscription
+                    invalid_subscribe = {
+                        "type": "subscribe",
+                        "data": {"channel": "invalid_channel"}
+                    }
+                    await websocket.send(json.dumps(invalid_subscribe))
+                    
+                    # Should get error response
+                    error_response = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                    error_data = json.loads(error_response)
+                    
+                    if error_data.get("type") == "error":
+                        logger.info("✅ Invalid subscription properly rejected")
+                        self.test_results.append("Subscription: PASS")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Expected error for invalid subscription, got: {error_data}")
+                        self.test_results.append("Subscription: PARTIAL")
+                        return False
                 else:
                     logger.warning(f"⚠️ Unexpected subscription response: {response_data}")
                     self.test_results.append("Subscription: FAIL")
@@ -147,56 +174,52 @@ class WebSocketTester:
             self.test_results.append("Subscription: ERROR")
             return False
     
-    async def test_multiple_connections(self):
-        """Test multiple simultaneous connections"""
-        logger.info("Testing multiple WebSocket connections...")
+    async def test_enhanced_features(self):
+        """Test enhanced WebSocket features"""
+        logger.info("Testing enhanced WebSocket features...")
         
         try:
             uri = "ws://localhost:8000/ws"
-            connections = []
-            
-            # Create multiple connections
-            for i in range(3):
-                ws = await websockets.connect(uri)
-                connections.append(ws)
-                logger.info(f"Connection {i+1} established")
-            
-            # Send ping from each connection
-            for i, ws in enumerate(connections):
-                ping_message = {
-                    "type": "ping",
-                    "client_id": f"client_{i+1}"
-                }
-                await ws.send(json.dumps(ping_message))
-            
-            # Receive pongs
-            pongs_received = 0
-            for i, ws in enumerate(connections):
-                try:
-                    response = await asyncio.wait_for(ws.recv(), timeout=5.0)
-                    response_data = json.loads(response)
-                    if response_data.get("type") == "pong":
-                        pongs_received += 1
-                        logger.info(f"✅ Pong {i+1} received")
-                except:
-                    logger.warning(f"⚠️ No pong from connection {i+1}")
-            
-            # Close connections
-            for ws in connections:
-                await ws.close()
-            
-            if pongs_received == 3:
-                logger.info("✅ All multiple connections working")
-                self.test_results.append("Multiple Connections: PASS")
-                return True
-            else:
-                logger.warning(f"⚠️ Only {pongs_received}/3 connections responded")
-                self.test_results.append("Multiple Connections: PARTIAL")
-                return False
+            async with websockets.connect(uri) as websocket:
+                # Skip welcome message
+                welcome = await asyncio.wait_for(websocket.recv(), timeout=5.0)
                 
+                # Test stats request
+                stats_message = {"type": "get_stats"}
+                await websocket.send(json.dumps(stats_message))
+                logger.info("📤 Stats request sent")
+                
+                stats_response = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                stats_data = json.loads(stats_response)
+                
+                if stats_data.get("type") == "stats":
+                    logger.info("✅ Stats request successful")
+                    active_connections = stats_data.get('data', {}).get('active_connections', 0)
+                    logger.info(f"   Active connections: {active_connections}")
+                    
+                    # Test invalid message type
+                    invalid_message = {"type": "invalid_message_type", "data": {}}
+                    await websocket.send(json.dumps(invalid_message))
+                    
+                    error_response = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                    error_data = json.loads(error_response)
+                    
+                    if error_data.get("type") == "error" and error_data.get("error") == "unknown_message_type":
+                        logger.info("✅ Unknown message type properly handled")
+                        self.test_results.append("Enhanced Features: PASS")
+                        return True
+                    else:
+                        logger.warning(f"⚠️ Expected error response, got: {error_data}")
+                        self.test_results.append("Enhanced Features: PARTIAL")
+                        return False
+                else:
+                    logger.warning(f"⚠️ Expected stats response, got: {stats_data}")
+                    self.test_results.append("Enhanced Features: FAIL")
+                    return False
+                    
         except Exception as e:
-            logger.error(f"❌ Multiple connections error: {e}")
-            self.test_results.append("Multiple Connections: ERROR")
+            logger.error(f"❌ Enhanced features test error: {e}")
+            self.test_results.append("Enhanced Features: ERROR")
             return False
     
     async def test_reconnection_resilience(self):
@@ -286,8 +309,8 @@ class WebSocketTester:
             tests = [
                 ("Basic Connection", self.test_basic_connection),
                 ("Ping/Pong", self.test_ping_pong),
-                ("Subscription", self.test_subscription),
-                ("Multiple Connections", self.test_multiple_connections),
+                ("Subscription System", self.test_subscription),
+                ("Enhanced Features", self.test_enhanced_features),
                 ("Reconnection Resilience", self.test_reconnection_resilience),
             ]
             

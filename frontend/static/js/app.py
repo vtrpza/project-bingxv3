@@ -24,6 +24,61 @@ from pyodide.ffi import create_proxy
 from api_client import api_client
 from components import ui_components
 
+def convert_jsproxy_to_dict(data):
+    """
+    Utility function to convert JsProxy objects to Python dictionaries
+    """
+    try:
+        # If it's already a Python dict, return as-is
+        if isinstance(data, dict):
+            return data
+            
+        # If it's a string, try to parse as JSON
+        if isinstance(data, str):
+            import json
+            try:
+                return json.loads(data)
+            except json.JSONDecodeError:
+                console.error("Failed to parse string as JSON")
+                return None
+        
+        # If it has to_py method, use it
+        if hasattr(data, 'to_py'):
+            console.log("Converting JsProxy using to_py() method")
+            return data.to_py()
+            
+        # If it's a JsProxy object, try JSON.stringify conversion
+        if str(type(data)) == "<class 'pyodide.ffi.JsProxy'>":
+            console.log("Converting JsProxy using JSON.stringify")
+            try:
+                import json
+                return json.loads(js.JSON.stringify(data))
+            except Exception as e:
+                console.warn(f"JSON.stringify conversion failed: {e}")
+                
+                # Manual conversion as last resort
+                try:
+                    converted_data = {}
+                    for key in js.Object.keys(data):
+                        value = data[key]
+                        # Recursively convert nested objects
+                        if str(type(value)) == "<class 'pyodide.ffi.JsProxy'>":
+                            value = convert_jsproxy_to_dict(value)
+                        converted_data[key] = value
+                    console.log("Manual JsProxy conversion successful")
+                    return converted_data
+                except Exception as manual_err:
+                    console.error(f"Manual JsProxy conversion failed: {manual_err}")
+                    return None
+        
+        # If we can't convert, return None
+        console.error(f"Unable to convert data type: {type(data)}")
+        return None
+        
+    except Exception as e:
+        console.error(f"Error in convert_jsproxy_to_dict: {e}")
+        return None
+
 
 class TradingBotApp:
     def __init__(self):
@@ -775,6 +830,15 @@ class TradingBotApp:
         """
         console.log("Real-time update received...")
         try:
+            # Convert JsProxy data if needed
+            if data is not None:
+                converted_data = convert_jsproxy_to_dict(data)
+                if converted_data is not None:
+                    console.log(f"Real-time update data converted: {type(converted_data)}")
+                    # Could process the converted data here if needed
+                else:
+                    console.warn("Failed to convert real-time update data")
+            
             # Só atualiza se não há uma atualização em progresso
             if not self.update_in_progress:
                 console.log("Triggering debounced data refresh...")
@@ -802,9 +866,16 @@ class TradingBotApp:
     def handle_scanner_message(self, data):
         """Handle scanner-related WebSocket messages with UI updates"""
         try:
-            # Defensive check for data structure
+            # Convert JsProxy to Python dict using utility function
+            data = convert_jsproxy_to_dict(data)
+            
+            if data is None:
+                console.error("Failed to convert scanner message data to dict")
+                return
+            
+            # Defensive check for data structure after conversion
             if not isinstance(data, dict):
-                console.error(f"Expected dict, got {type(data)}: {data}")
+                console.error(f"Expected dict after conversion, got {type(data)}: {data}")
                 return
                 
             message_type = data.get("type")
@@ -816,6 +887,7 @@ class TradingBotApp:
                 
         except Exception as e:
             console.error(f"Error parsing scanner message data: {e}")
+            console.error(f"Data type: {type(data)}, Data: {data}")
             return
         
         if message_type == "scanner_progress":
@@ -1344,16 +1416,19 @@ def handleScannerWebSocketMessage(data):
         console.log(f"Handling scanner WebSocket message: {type(data)}")
         console.log(f"Data content: {data}")
         
-        # Ensure data is properly formatted
-        if isinstance(data, str):
-            import json
-            try:
-                data = json.loads(data)
-            except json.JSONDecodeError as json_err:
-                console.error(f"Failed to parse JSON data: {json_err}")
-                return
+        # Convert data using utility function
+        converted_data = convert_jsproxy_to_dict(data)
         
-        app.handle_scanner_message(data)
+        if converted_data is None:
+            console.error(f"Failed to convert scanner WebSocket message data: {type(data)}")
+            return
+        
+        # Final validation
+        if not isinstance(converted_data, dict):
+            console.error(f"Data is not a dict after conversion: {type(converted_data)}")
+            return
+            
+        app.handle_scanner_message(converted_data)
     except Exception as e:
         console.error(f"Error handling scanner WebSocket message: {e}")
         console.error(f"Error type: {type(e)}")

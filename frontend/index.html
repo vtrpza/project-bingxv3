@@ -34,20 +34,36 @@
             }
             
             connect() {
-                if (this.isConnecting || this.isConnected) return;
+                // Prevent multiple connection attempts
+                if (this.isConnecting) {
+                    console.log('🔄 Connection attempt already in progress - skipping');
+                    return;
+                }
+                
+                // Don't connect if already connected
+                if (this.isConnected) {
+                    console.log('✅ Already connected - skipping');
+                    return;
+                }
+                
+                // Clean up any existing connection before creating a new one
+                if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+                    console.log('🧹 Cleaning up existing WebSocket before reconnecting...');
+                    this.cleanup();
+                }
                 
                 this.isConnecting = true;
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const wsUrl = `${protocol}//${window.location.host}/ws`;
                 
-                console.log('Connecting to WebSocket:', wsUrl);
+                console.log(`🔗 Connecting to WebSocket: ${wsUrl} (attempt ${this.reconnectAttempts + 1})`);
                 this.updateConnectionStatus('Conectando...', 'connecting');
                 
                 try {
                     // Add timeout for connection attempt
                     this.connectionTimeout = setTimeout(() => {
                         if (this.isConnecting) {
-                            console.warn('WebSocket connection timeout');
+                            console.warn('⏰ WebSocket connection timeout');
                             this.isConnecting = false;
                             this.updateConnectionStatus('Timeout de Conexão', 'error');
                             this.scheduleReconnect();
@@ -57,7 +73,7 @@
                     this.ws = new WebSocket(wsUrl);
                     
                     this.ws.onopen = (event) => {
-                        console.log('WebSocket connected');
+                        console.log('✅ WebSocket connected successfully');
                         this.isConnected = true;
                         this.isConnecting = false;
                         
@@ -72,14 +88,28 @@
                         
                         this.updateConnectionStatus('Conectado', 'online');
                         
-                        // Subscribe to trading data
-                        this.subscribe('trading_data');
+                        // Subscribe to channels with delay to prevent DOM exceptions
+                        setTimeout(() => {
+                            if (this.isConnected && this.ws && this.ws.readyState === WebSocket.OPEN) {
+                                this.subscribe('trading_data');
+                                this.subscribe('scanner_status');
+                                this.subscribe('general');
+                            }
+                        }, 100); // Small delay to ensure connection is fully established
                         
                         // Clear reconnect timer
                         if (this.reconnectTimer) {
                             clearTimeout(this.reconnectTimer);
                             this.reconnectTimer = null;
                         }
+                        
+                        // Ensure status stays connected by refreshing it after a brief delay
+                        setTimeout(() => {
+                            if (this.isConnected) {
+                                this.updateConnectionStatus('Conectado', 'online');
+                                console.log('🔄 Refreshed connection status to ensure visibility');
+                            }
+                        }, 1000);
                     };
                     
                     this.ws.onmessage = (event) => {
@@ -133,7 +163,17 @@
             }
             
             scheduleReconnect() {
-                if (this.reconnectTimer) return;
+                // Prevent multiple reconnection timers
+                if (this.reconnectTimer) {
+                    console.log('Reconnection already scheduled - skipping');
+                    return;
+                }
+                
+                // Don't reconnect if already connected or connecting
+                if (this.isConnected || this.isConnecting) {
+                    console.log('Connection active or in progress - skipping reconnect');
+                    return;
+                }
                 
                 // Stop trying after max attempts
                 if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -149,24 +189,84 @@
                 );
                 
                 this.reconnectAttempts++;
-                console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${timeout}ms`);
+                console.log(`📅 Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${timeout}ms`);
+                this.updateConnectionStatus(`Reconectando em ${Math.round(timeout/1000)}s...`, 'connecting');
                 
                 this.reconnectTimer = setTimeout(() => {
                     this.reconnectTimer = null;
+                    // Double-check state before attempting reconnection
                     if (!this.isConnected && !this.isConnecting) {
+                        console.log(`🔄 Executing reconnect attempt ${this.reconnectAttempts}`);
                         this.connect();
+                    } else {
+                        console.log('Connection state changed - canceling reconnect');
                     }
                 }, timeout);
             }
             
+            cleanup() {
+                console.log('🧹 Cleaning up WebSocket resources...');
+                
+                // Clear all timers
+                if (this.connectionTimeout) {
+                    clearTimeout(this.connectionTimeout);
+                    this.connectionTimeout = null;
+                }
+                
+                if (this.reconnectTimer) {
+                    clearTimeout(this.reconnectTimer);
+                    this.reconnectTimer = null;
+                }
+                
+                // Reset connection state
+                this.isConnected = false;
+                this.isConnecting = false;
+                this.reconnectAttempts = 0;
+                
+                // Close WebSocket connection if it exists
+                if (this.ws) {
+                    try {
+                        // Remove event listeners to prevent triggering callbacks during cleanup
+                        this.ws.onopen = null;
+                        this.ws.onmessage = null;
+                        this.ws.onclose = null;
+                        this.ws.onerror = null;
+                        
+                        // Close connection if it's still open
+                        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+                            this.ws.close(1000, 'Client cleanup');
+                        }
+                    } catch (error) {
+                        console.warn('Error during WebSocket cleanup:', error);
+                    } finally {
+                        this.ws = null;
+                    }
+                }
+                
+                console.log('✅ WebSocket cleanup completed');
+            }
+            
             subscribe(channel) {
-                if (this.isConnected && this.ws) {
+                // Enhanced validation to prevent DOM exceptions
+                if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+                    console.warn(`⚠️ Cannot subscribe to ${channel} - WebSocket not ready`);
+                    return false;
+                }
+                
+                try {
                     const message = {
                         type: 'subscribe',
                         data: { channel: channel }
                     };
                     this.ws.send(JSON.stringify(message));
-                    console.log('Subscribed to channel:', channel);
+                    console.log(`✅ Subscribed to channel: ${channel}`);
+                    return true;
+                } catch (error) {
+                    console.error(`❌ Failed to subscribe to ${channel}:`, error);
+                    // If subscription fails, the connection might be broken
+                    this.isConnected = false;
+                    this.scheduleReconnect();
+                    return false;
                 }
             }
             
@@ -203,8 +303,19 @@
                     case 'scanner_completion':
                         this.handleScannerCompletion(data.payload);
                         break;
+                    case 'ping':
+                        console.log('🏓 Ping received from server - sending pong');
+                        // Send pong response
+                        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                            this.ws.send(JSON.stringify({
+                                type: 'pong',
+                                timestamp: new Date().toISOString(),
+                                server_timestamp: data.timestamp
+                            }));
+                        }
+                        break;
                     case 'pong':
-                        console.log('Pong received');
+                        console.log('🏓 Pong received from server');
                         break;
                     case 'scanner_started':
                         console.log('🚀 Scanner iniciado:', data.payload);
@@ -260,8 +371,27 @@
                             setTimeout(() => window.refreshScannerStatus(), 500);
                         }
                         break;
+                    case 'trading_data_snapshot':
+                        console.log('📊 Trading data snapshot received:', data.data);
+                        // Handle trading data snapshot
+                        if (window.updateTradingDataFromSnapshot) {
+                            try {
+                                window.updateTradingDataFromSnapshot(data.data);
+                            } catch (error) {
+                                console.error('Error processing trading data snapshot:', error);
+                            }
+                        }
+                        break;
+                        
                     default:
-                        console.log('Unknown message type:', data.type);
+                        // Handle broadcast messages with broadcast_info
+                        if (data.broadcast_info) {
+                            const channel = data.broadcast_info.channel || 'unknown';
+                            const priority = data.broadcast_info.priority || 'normal';
+                            console.log(`📡 Broadcast on ${channel} (${priority}):`, data.type);
+                        } else {
+                            console.log('📨 Unknown message type:', data.type, data);
+                        }
                 }
             }
             
@@ -416,6 +546,23 @@
                     }
                     if (textElement) {
                         textElement.textContent = text;
+                    }
+                    
+                    // Log status update for debugging
+                    console.log(`🔗 JavaScript WebSocket status: ${text} (${status})`);
+                }
+            }
+            
+            // Add method to check and correct status if needed
+            ensureCorrectStatus() {
+                if (this.isConnected) {
+                    // Check if status display is incorrect
+                    const statusElement = document.getElementById('connection-status');
+                    const textElement = statusElement ? statusElement.querySelector('span:last-child') : null;
+                    
+                    if (textElement && textElement.textContent !== 'Conectado') {
+                        console.log('🔧 Correcting connection status display');
+                        this.updateConnectionStatus('Conectado', 'online');
                     }
                 }
             }
@@ -614,13 +761,46 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             tradingWS = new TradingWebSocket();
+            window.tradingWebSocket = tradingWS;  // Make globally accessible
             
-            // Send ping every 30 seconds to keep connection alive
+            // Send ping every 30 seconds to keep connection alive and ensure correct status
             setInterval(() => {
-                if (tradingWS) {
+                if (tradingWS && tradingWS.isConnected) {
                     tradingWS.ping();
+                    // Ensure status display is correct
+                    tradingWS.ensureCorrectStatus();
                 }
             }, 30000);
+            
+            // Also check status every 5 seconds to catch any incorrect changes quickly
+            setInterval(() => {
+                if (tradingWS && tradingWS.isConnected) {
+                    tradingWS.ensureCorrectStatus();
+                }
+            }, 5000);
+        });
+        
+        // Cleanup on page unload/reload
+        window.addEventListener('beforeunload', () => {
+            console.log('🚪 Page unloading - cleaning up WebSocket...');
+            if (window.tradingWebSocket) {
+                window.tradingWebSocket.cleanup();
+            }
+        });
+        
+        // Also cleanup on visibility change (when tab becomes hidden)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('👁️ Tab hidden - reducing WebSocket activity');
+                // Could implement reduced activity here if needed
+            } else {
+                console.log('👁️ Tab visible - resuming WebSocket activity');
+                // Ensure connection is still active when tab becomes visible
+                if (window.tradingWebSocket && !window.tradingWebSocket.isConnected) {
+                    console.log('🔄 Reconnecting after tab visibility change...');
+                    window.tradingWebSocket.connect();
+                }
+            }
         });
         
         // Make WebSocket available globally
