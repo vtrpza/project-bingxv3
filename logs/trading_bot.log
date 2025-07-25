@@ -396,3 +396,42 @@
 2025-07-25 15:54:37,441 - database.connection - INFO - Using DATABASE_URL from environment
 2025-07-25 15:54:37,441 - database.connection - INFO - Using SQLite database
 2025-07-25 15:54:37,442 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:54:42,940 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:54:42,941 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:54:42,941 - database.connection - INFO - Using SQLite database
+2025-07-25 15:54:42,942 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:54:42,946 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:54:44,067 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:54:44,067 - database.connection - INFO - Using SQLite database
+2025-07-25 15:54:44,068 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:54:52,329 - api.web_api - WARNING - Unknown message type 'pong' from conn_1_1753469636
+2025-07-25 15:54:53,989 - api.web_api - INFO - Asset validation table requested - page: 1, per_page: 25, sort: symbol asc
+2025-07-25 15:54:53,989 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:54:53,989 - database.connection - INFO - Using SQLite database
+2025-07-25 15:54:53,990 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:54:53,994 - api.web_api - INFO - Fetched 1 assets (total: 1, page: 1/1)
+2025-07-25 15:54:57,075 - api.web_api - ERROR - Error receiving message from conn_1_1753469636: (1012, None)
+2025-07-25 15:54:57,075 - api.web_api - INFO - WebSocket disconnected: conn_1_1753469636 | Host: 127.0.0.1 | Reason: final_cleanup* | Duration: 60.3s | Messages: 7 | Failures: 0 | Bytes sent: 8079 | Remaining: 0
+2025-07-25 15:54:57,176 - api.web_api - INFO - FastAPI server shutting down
+2025-07-25 15:54:57,177 - api.web_api - INFO - WebSocket heartbeat task cancelled
+2025-07-25 15:54:57,177 - api.web_api - INFO - Scanner status broadcast task cancelled
+2025-07-25 15:56:54,552 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-25 15:56:54,552 - config.settings - INFO - Settings loaded - Environment: development, Debug: True
+2025-07-25 15:56:54,779 - api.web_api - INFO - BingX client initialized successfully
+2025-07-25 15:56:54,800 - api.web_api - INFO - FastAPI server starting - health check will be available immediately
+2025-07-25 15:56:54,800 - api.web_api - INFO - FastAPI startup completed - health check ready
+2025-07-25 15:56:54,800 - api.web_api - INFO - Database initialization starting with 0.15s delay...
+2025-07-25 15:56:54,952 - api.web_api - INFO - Initializing database with 30s timeout...
+2025-07-25 15:56:54,952 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:56:54,952 - database.connection - INFO - Using SQLite database
+2025-07-25 15:56:55,006 - database.connection - INFO - Database connection established successfully
+2025-07-25 15:56:55,006 - api.web_api - INFO - Creating database tables (skipping drop for faster startup)...
+2025-07-25 15:56:55,008 - database.connection - INFO - Database tables created successfully
+2025-07-25 15:56:55,008 - api.web_api - INFO - Database initialization completed successfully
+2025-07-25 15:56:55,803 - api.web_api - INFO - Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat
+2025-07-25 15:56:55,804 - api.web_api - INFO - Starting automated risk management task
+2025-07-25 15:56:55,804 - api.web_api - INFO - Starting scanner status broadcast task
+2025-07-25 15:56:55,804 - api.web_api - INFO - Starting WebSocket heartbeat task
+2025-07-25 15:56:56,428 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-25 15:56:56,428 - database.connection - INFO - Using SQLite database
+2025-07-25 15:56:56,429 - database.connection - INFO - Database connection established successfully

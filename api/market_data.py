@@ -67,6 +67,8 @@ class MarketDataAPI:
             
         except Exception as e:
             logger.error(f"Error fetching valid symbols: {e}")
+            logger.warning("API ERROR: Falling back to limited symbol list. This should not happen in production!")
+            logger.warning(f"Exception details: {type(e).__name__}: {str(e)}")
             # Return common symbols as fallback
             return [
                 'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'DOT/USDT',
