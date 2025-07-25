@@ -156,8 +156,18 @@ class AnalysisWorker:
                     }
                 )
                 
-                # Wait before next cycle
-                sleep_time = max(0, self.config.SCAN_INTERVAL_SECONDS - cycle_duration)
+                # Wait before next cycle (with test mode adjustments)
+                base_interval = self.config.SCAN_INTERVAL_SECONDS
+                
+                # In test mode, run analysis cycles more frequently
+                if is_test_mode_active():
+                    test_config = get_test_mode_config()
+                    # Reduce interval to 30% of normal in aggressive test mode
+                    if test_config.get('aggressive_mode', False):
+                        base_interval = int(base_interval * 0.3)
+                        logger.info(f"🧪 TEST MODE: Reduced scan interval to {base_interval}s for aggressive testing")
+                
+                sleep_time = max(0, base_interval - cycle_duration)
                 if sleep_time > 0:
                     await asyncio.sleep(sleep_time)
                 
