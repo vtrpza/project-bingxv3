@@ -2123,9 +2123,110 @@
     function initializeRobotDashboard() {
         console.log('🤖 Inicializando Robot Dashboard...');
         
+        // ====== AUTO-REFRESH AND REAL-TIME UPDATES ======
+        
+        // Auto-refresh interval for trading data
+        let tradingDataRefreshInterval = null;
+        
+        // Start auto-refresh for trading data
+        function startTradingDataAutoRefresh(intervalMs = 30000) { // 30 seconds default
+            stopTradingDataAutoRefresh(); // Clear any existing interval
+            
+            // Initial refresh
+            refreshTradingData();
+            
+            // Set up periodic refresh
+            tradingDataRefreshInterval = setInterval(() => {
+                if (document.querySelector('.tab-button.active')?.textContent?.includes('Trading')) {
+                    refreshTradingData();
+                }
+            }, intervalMs);
+            
+            addActivityLog('🔄', `Auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
+        }
+        
+        // Stop auto-refresh
+        function stopTradingDataAutoRefresh() {
+            if (tradingDataRefreshInterval) {
+                clearInterval(tradingDataRefreshInterval);
+                tradingDataRefreshInterval = null;
+                addActivityLog('⏹️', 'Auto-refresh desativado');
+            }
+        }
+        
+        // Enhanced tab switching with auto-refresh management  
+        const originalShowTab = window.showTab;
+        window.showTab = function(tabName) {
+            // Call original function if it exists
+            if (originalShowTab) originalShowTab(tabName);
+            
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName + '-tab');
+            if (selectedTab) selectedTab.classList.add('active');
+            
+            // Update active button
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            const activeButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+            if (activeButton) activeButton.classList.add('active');
+            
+            // Handle tab-specific logic
+            if (tabName === 'trading') {
+                // Start auto-refresh for trading tab
+                startTradingDataAutoRefresh(30000); // 30 seconds
+                
+                // Initial data load
+                refreshTradingData();
+                addActivityLog('📊', 'Aba de Trading ativada - carregando dados...');
+            } else {
+                // Stop auto-refresh when switching away from trading tab
+                stopTradingDataAutoRefresh();
+            }
+        };
+        
+        // Position management functions
+        async function closePosition(positionId) {
+            try {
+                showLoadingIndicator('Fechando posição...');
+                
+                const response = await fetch(`/api/trading/positions/${positionId}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    addActivityLog('✅', `Posição fechada: ${result.symbol || positionId}`);
+                    showNotificationSafe('Sucesso', 'Posição fechada com sucesso!', 'success');
+                    
+                    // Refresh trading data
+                    setTimeout(refreshTradingData, 1000);
+                } else {
+                    throw new Error(result.detail || 'Erro ao fechar posição');
+                }
+                
+            } catch (error) {
+                console.error('Error closing position:', error);
+                showNotificationSafe('Erro', `Erro ao fechar posição: ${error.message}`, 'error');
+            } finally {
+                hideLoadingIndicator();
+            }
+        }
+        
+        // Make functions globally available
+        window.closePosition = closePosition;
+        window.startTradingDataAutoRefresh = startTradingDataAutoRefresh;
+        window.stopTradingDataAutoRefresh = stopTradingDataAutoRefresh;
+        
         // Set initial state
         updateRobotStatus('active', 'Sistema Iniciando', 25);
-        addActivityLog('system', 'Dashboard inicializado - Robô conectando à API', '🤖');
+        addActivityLog('🤖', 'Dashboard inicializado - Sistema de trading carregado');
         
         // Initialize scanner activity
         updateScannerActivity({ 
