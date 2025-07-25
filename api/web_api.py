@@ -1593,16 +1593,31 @@ async def get_dashboard_init_data(
         }
 
 # Trading live data endpoint - REFACTORED for direct CCXT calls
+# Global cache for trading live data
+trading_data_cache = {}
+trading_cache_timestamps = {}
+TRADING_CACHE_TTL = 30  # Cache for 30 seconds
+
 @app.get("/api/trading/live-data")
 async def get_trading_live_data(
-    limit: int = 50,
+    limit: int = 20,  # Reduced default limit
     symbols: str = None,  # Optional comma-separated list of symbols
     db: Session = Depends(get_db),
     trade_repo: TradeRepository = Depends(get_trade_repo)
 ):
-    """Get real-time trading data using direct CCXT calls (not database scan data)"""
+    """Get real-time trading data using optimized CCXT calls with caching and parallelization"""
     try:
         logger.info(f"Trading live data requested - symbols: {symbols}, limit: {limit}")
+        
+        # Check cache first
+        cache_key = f"trading_live_{symbols or 'default'}_{limit}"
+        current_time = utc_now().timestamp()
+        
+        if (cache_key in trading_data_cache and 
+            cache_key in trading_cache_timestamps and
+            current_time - trading_cache_timestamps[cache_key] < TRADING_CACHE_TTL):
+            logger.info(f"Returning cached trading data for {cache_key}")
+            return trading_data_cache[cache_key]
         
         # Ensure database is initialized (in case position tracking is needed)
         from database.connection import init_database
@@ -1629,12 +1644,32 @@ async def get_trading_live_data(
             symbol_list = [s.strip().upper() for s in symbols.split(',')]
             logger.info(f"Using provided symbols: {symbol_list}")
         else:
-            # Fallback to a default set of major trading pairs for direct trading
-            symbol_list = [
-                'BTC/USDT', 'ETH/USDT', 'BNB/USDT', 'ADA/USDT', 'SOL/USDT',
-                'DOT/USDT', 'MATIC/USDT', 'AVAX/USDT', 'ATOM/USDT', 'NEAR/USDT'
-            ][:limit]
-            logger.info(f"Using default major trading pairs: {symbol_list}")
+            # First try: Get valid symbols from database
+            try:
+                from database.repository import AssetRepository
+                asset_repo = AssetRepository()
+                
+                with get_session() as session:
+                    valid_assets = asset_repo.get_valid_assets(session, limit=limit)
+                    if valid_assets and len(valid_assets) > 0:
+                        symbol_list = [asset.symbol for asset in valid_assets]
+                        logger.info(f"Using {len(symbol_list)} valid symbols from database: {symbol_list}")
+                    else:
+                        raise Exception("No valid assets in database - scan required")
+                        
+            except Exception as db_error:
+                logger.warning(f"No valid symbols in database: {db_error}")
+                
+                # If no valid symbols, return error indicating scan is needed
+                raise HTTPException(
+                    status_code=424,  # Failed Dependency
+                    detail={
+                        "error": "no_valid_symbols",
+                        "message": "Nenhum ativo válido encontrado no banco de dados. Execute o scan inicial primeiro.",
+                        "action_required": "initial_scan",
+                        "suggestion": "Clique em 'Executar Scan Inicial' na aba Scanner para descobrir ativos válidos."
+                    }
+                )
         
         # Helper function to safely get candle color
         def get_candle_color(candles):
@@ -1675,36 +1710,94 @@ async def get_trading_live_data(
         
         trading_data = []
         
-        # Process each symbol with direct CCXT calls
-        for symbol in symbol_list:
-            try:
-                logger.debug(f"Processing symbol: {symbol}")
-                
-                # Get real-time market data directly from BingX
-                ticker = await client.fetch_ticker(symbol)
-                if not ticker or not ticker.get('last'):
-                    logger.warning(f"Symbol {symbol} returned empty/invalid ticker - skipping")
-                    continue
-                    
-                # Extract price and volume data
-                current_price = float(ticker['last']) if ticker.get('last') else 0.0
-                volume_24h = float(ticker['quoteVolume']) if ticker.get('quoteVolume') else 0.0
-                
-                logger.debug(f"Symbol {symbol}: price={current_price}, volume={volume_24h}")
-                
-                # Get OHLCV data for analysis (direct from exchange)
-                candles_1h = []
-                candles_2h = []
-                candles_4h = []
-                
+        # Process symbols in parallel with semaphore for rate limiting
+        import asyncio
+        semaphore = asyncio.Semaphore(5)  # Limit to 5 concurrent requests
+        
+        async def fetch_symbol_data(symbol: str):
+            """Fetch all data for a single symbol with rate limiting."""
+            async with semaphore:
                 try:
-                    candles_1h = await client.fetch_ohlcv(symbol, '1h', 21)  # For MM indicators
-                    candles_2h = await client.fetch_ohlcv(symbol, '2h', 21)
-                    candles_4h = await client.fetch_ohlcv(symbol, '4h', 21)
+                    logger.debug(f"Processing symbol: {symbol}")
+                    
+                    # Parallel fetch of ticker and OHLCV data
+                    tasks = [
+                        client.fetch_ticker(symbol),
+                        client.fetch_ohlcv(symbol, '1h', 21),
+                        client.fetch_ohlcv(symbol, '2h', 21),
+                        client.fetch_ohlcv(symbol, '4h', 21)
+                    ]
+                    
+                    # Execute all API calls in parallel for this symbol
+                    ticker, candles_1h, candles_2h, candles_4h = await asyncio.gather(
+                        *tasks, return_exceptions=True
+                    )
+                    
+                    # Validate ticker data
+                    if isinstance(ticker, Exception) or not ticker or not ticker.get('last'):
+                        logger.warning(f"Symbol {symbol} returned invalid ticker: {ticker}")
+                        return None
+                        
+                    # Extract price and volume data
+                    current_price = float(ticker['last']) if ticker.get('last') else 0.0
+                    volume_24h = float(ticker['quoteVolume']) if ticker.get('quoteVolume') else 0.0
+                    
+                    logger.debug(f"Symbol {symbol}: price={current_price}, volume={volume_24h}")
+                    
+                    # Handle OHLCV data (set to empty if failed)
+                    if isinstance(candles_1h, Exception):
+                        logger.debug(f"Failed to fetch 1h candles for {symbol}: {candles_1h}")
+                        candles_1h = []
+                    if isinstance(candles_2h, Exception):
+                        logger.debug(f"Failed to fetch 2h candles for {symbol}: {candles_2h}")
+                        candles_2h = []
+                    if isinstance(candles_4h, Exception):
+                        logger.debug(f"Failed to fetch 4h candles for {symbol}: {candles_4h}")
+                        candles_4h = []
+                    
                     logger.debug(f"Fetched candles for {symbol}: 1h={len(candles_1h)}, 2h={len(candles_2h)}, 4h={len(candles_4h)}")
+                    
+                    return {
+                        'symbol': symbol,
+                        'ticker': ticker,
+                        'current_price': current_price,
+                        'volume_24h': volume_24h,
+                        'candles_1h': candles_1h,
+                        'candles_2h': candles_2h,
+                        'candles_4h': candles_4h
+                    }
+                    
                 except Exception as e:
-                    logger.warning(f"Failed to fetch candle data for {symbol}: {e}")
-                    # Continue with available data
+                    logger.error(f"Error processing symbol {symbol}: {type(e).__name__}: {e}")
+                    return None
+        
+        # Fetch all symbol data in parallel
+        logger.info(f"Fetching data for {len(symbol_list)} symbols in parallel...")
+        start_time = utc_now()
+        
+        symbol_data_results = await asyncio.gather(
+            *[fetch_symbol_data(symbol) for symbol in symbol_list],
+            return_exceptions=True
+        )
+        
+        fetch_duration = (utc_now() - start_time).total_seconds()
+        logger.info(f"Parallel data fetch completed in {fetch_duration:.2f}s")
+        
+        # Process results
+        for result in symbol_data_results:
+            if isinstance(result, Exception):
+                logger.error(f"Symbol fetch failed with exception: {result}")
+                continue
+            if not result:
+                continue
+                
+            try:
+                symbol = result['symbol']
+                current_price = result['current_price']
+                volume_24h = result['volume_24h']
+                candles_1h = result['candles_1h']
+                candles_2h = result['candles_2h']
+                candles_4h = result['candles_4h']
                 
                 candle_2h_color = get_candle_color(candles_2h)
                 candle_4h_color = get_candle_color(candles_4h)
@@ -1774,19 +1867,30 @@ async def get_trading_live_data(
         
         logger.info(f"Trading live data prepared for {len(trading_data)} symbols using direct CCXT")
         
-        return {
+        # Prepare response with performance metrics
+        response_data = {
             "trading_data": trading_data,
             "total_symbols": len(trading_data),
             "requested_symbols": len(symbol_list),
             "timestamp": utc_now().isoformat(),
             "metadata": {
-                "endpoint_version": "2.0_direct_ccxt",
+                "endpoint_version": "2.1_parallel_optimized",
                 "data_source": "direct_bingx_api",
                 "data_type": "real_time_trading",
                 "update_interval": "real_time",
-                "symbols_requested": symbol_list
+                "symbols_requested": symbol_list,
+                "fetch_duration_seconds": fetch_duration,
+                "cache_enabled": True,
+                "cache_ttl_seconds": TRADING_CACHE_TTL
             }
         }
+        
+        # Store in cache for future requests
+        trading_data_cache[cache_key] = response_data
+        trading_cache_timestamps[cache_key] = current_time
+        logger.debug(f"Cached trading data for key: {cache_key}")
+        
+        return response_data
         
     except Exception as e:
         logger.error(f"Error fetching trading live data: {e}")
