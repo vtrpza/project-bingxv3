@@ -336,6 +336,16 @@ def create_tables() -> bool:
 
 def get_db():
     """Dependency function to get database session (for FastAPI)."""
+    # Try to initialize database if not already done
+    if not db_manager._initialized:
+        try:
+            db_manager.initialize()
+            db_manager.create_tables()
+        except Exception as e:
+            logger.warning(f"Database auto-initialization failed: {e}")
+            # Create a mock session that raises clear errors
+            raise RuntimeError(f"Database not available: {e}")
+    
     with db_manager.get_session() as session:
         yield session
 

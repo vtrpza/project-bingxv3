@@ -209,15 +209,27 @@
                     case 'scanner_started':
                         console.log('🚀 Scanner iniciado:', data.payload);
                         this.updateScanProgress('started', data.payload);
+                        // Also call PyScript handler if available
+                        if (window.handleScannerWebSocketMessage) {
+                            window.handleScannerWebSocketMessage(data);
+                        }
                         break;
                     case 'scanner_progress':
                         console.log('📊 Progresso do scanner:', data.payload);
                         this.updateScanProgress('progress', data.payload);
+                        // Also call PyScript handler if available
+                        if (window.handleScannerWebSocketMessage) {
+                            window.handleScannerWebSocketMessage(data);
+                        }
                         break;
                     case 'scanner_completion':
                     case 'scanner_completed':
                         console.log('✅ Scanner concluído:', data.payload);
                         this.updateScanProgress('completed', data.payload);
+                        // Also call PyScript handler if available
+                        if (window.handleScannerWebSocketMessage) {
+                            window.handleScannerWebSocketMessage(data);
+                        }
                         // Refresh validation table
                         if (window.refreshValidationTable) {
                             setTimeout(() => window.refreshValidationTable(), 1000);
@@ -226,6 +238,10 @@
                     case 'scanner_error':
                         console.error('❌ Erro no scanner:', data.payload);
                         this.updateScanProgress('error', data.payload);
+                        // Also call PyScript handler if available
+                        if (window.handleScannerWebSocketMessage) {
+                            window.handleScannerWebSocketMessage(data);
+                        }
                         break;
                     case 'scanner_status_update':
                         console.log('🔍 Scanner status update:', data.payload);
@@ -251,17 +267,48 @@
             
             updateScanProgress(status, payload) {
                 const btn = document.querySelector('[onclick="startInitialScan()"]');
+                const overlay = document.getElementById('loading-overlay');
+                const progressBar = document.getElementById('progress-bar');
+                const progressPercentage = document.getElementById('progress-percentage');
+                const progressSubtitle = document.getElementById('progress-subtitle');
                 
                 if (status === 'started') {
                     if (btn) {
                         btn.disabled = true;
-                        btn.innerHTML = '⏳ Escaneando...';
+                        btn.innerHTML = '⏳ Inicializando...';
+                    }
+                    if (overlay) {
+                        overlay.style.display = 'flex';
+                    }
+                    if (progressSubtitle) {
+                        progressSubtitle.textContent = 'Iniciando scan completo...';
+                    }
+                    if (progressBar) {
+                        progressBar.style.width = '0%';
+                    }
+                    if (progressPercentage) {
+                        progressPercentage.textContent = '0%';
                     }
                     showNotificationSafe('Scan Inicial', 'Scan inicial iniciado! Aguarde...', 'info');
+                    
                 } else if (status === 'progress') {
-                    if (btn && payload.progress_percent) {
-                        btn.innerHTML = `⏳ ${payload.progress_percent.toFixed(1)}% (${payload.processed_count}/${payload.total_assets})`;
+                    const progress = payload.progress_percentage || payload.progress_percent || 0;
+                    const processed = payload.processed_count || 0;
+                    const total = payload.total_assets || 0;
+                    
+                    if (btn) {
+                        btn.innerHTML = `⏳ ${progress.toFixed(1)}% (${processed}/${total})`;
                     }
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                    }
+                    if (progressPercentage) {
+                        progressPercentage.textContent = Math.round(progress) + '%';
+                    }
+                    if (progressSubtitle && payload.message) {
+                        progressSubtitle.textContent = payload.message;
+                    }
+                    
                 } else if (status === 'completed') {
                     if (btn) {
                         btn.innerHTML = '✅ Concluído!';
@@ -270,9 +317,27 @@
                             btn.innerHTML = '🚀 Scan Completo';
                         }, 3000);
                     }
+                    if (progressBar) {
+                        progressBar.style.width = '100%';
+                    }
+                    if (progressPercentage) {
+                        progressPercentage.textContent = '100%';
+                    }
+                    if (progressSubtitle) {
+                        progressSubtitle.textContent = 'Scan concluído com sucesso!';
+                    }
+                    
                     const valid = payload.valid_assets || payload.valid_assets_count || 0;
                     const total = payload.total_assets || 0;
                     showNotificationSafe('Scan Completo', `Scan concluído! ${valid}/${total} ativos válidos`, 'success');
+                    
+                    // Hide overlay after showing completion
+                    setTimeout(() => {
+                        if (overlay) {
+                            overlay.style.display = 'none';
+                        }
+                    }, 2000);
+                    
                 } else if (status === 'error') {
                     if (btn) {
                         btn.innerHTML = '❌ Erro';
@@ -281,7 +346,17 @@
                             btn.innerHTML = '🚀 Scan Completo';
                         }, 3000);
                     }
+                    if (progressSubtitle) {
+                        progressSubtitle.textContent = `Erro: ${payload.message || 'Erro desconhecido'}`;
+                    }
                     showNotificationSafe('Erro no Scan', `Erro no scan: ${payload.message || 'Erro desconhecido'}`, 'error');
+                    
+                    // Hide overlay on error
+                    setTimeout(() => {
+                        if (overlay) {
+                            overlay.style.display = 'none';
+                        }
+                    }, 3000);
                 }
             }
             
@@ -510,6 +585,32 @@
         
         // Initialize WebSocket connection when page loads
         let tradingWS = null;
+        
+        // Safe notification function that checks if PyScript is available
+        function showNotificationSafe(title, message, type) {
+            try {
+                if (window.showNotification) {
+                    window.showNotification(title, message, type);
+                } else {
+                    console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+                }
+            } catch (error) {
+                console.log(`${type.toUpperCase()}: ${title} - ${message}`);
+            }
+        }
+        
+        // Force hide loading function for timeout
+        function forceHideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                showNotificationSafe('Timeout', 'Carregamento demorou mais que esperado', 'warning');
+            }
+        }
+        
+        // Make functions globally available
+        window.showNotificationSafe = showNotificationSafe;
+        window.forceHideLoading = forceHideLoading;
         
         document.addEventListener('DOMContentLoaded', function() {
             tradingWS = new TradingWebSocket();
@@ -1359,14 +1460,44 @@
         async function startInitialScan() {
             try {
                 const btn = document.querySelector('[onclick="startInitialScan()"]');
+                const overlay = document.getElementById('loading-overlay');
+                const progressBar = document.getElementById('progress-bar');
+                const progressPercentage = document.getElementById('progress-percentage');
+                const progressSubtitle = document.getElementById('progress-subtitle');
+                const progressDetails = document.getElementById('progress-details');
+                
+                // Initialize UI state
                 if (btn) {
                     btn.disabled = true;
                     btn.innerHTML = '⏳ Iniciando...';
                 }
+                
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                }
+                
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+                
+                if (progressPercentage) {
+                    progressPercentage.textContent = '0%';
+                }
+                
+                if (progressSubtitle) {
+                    progressSubtitle.textContent = 'Iniciando scan completo de todos os ativos...';
+                }
+                
+                if (progressDetails) {
+                    progressDetails.style.display = 'block';
+                }
 
                 console.log('🚀 Starting complete initial scan...');
                 
-                // Chamar o novo endpoint para scan inicial completo
+                // Show notification
+                showNotificationSafe('Scan Inicial', 'Iniciando scan completo de todos os ativos...', 'info');
+                
+                // Call the initial scan endpoint
                 const response = await fetch('/api/scanner/initial-scan', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
@@ -1376,30 +1507,64 @@
                     const result = await response.json();
                     console.log('✅ Initial scan started:', result);
                     
-                    // Aguardar progresso via WebSocket
-                    // O WebSocket já está configurado para receber mensagens do tipo:
+                    // Update initial progress
+                    if (progressSubtitle) {
+                        progressSubtitle.textContent = 'Scan iniciado, aguardando progresso...';
+                    }
+                    
+                    // Progress will be updated via WebSocket messages:
                     // - scanner_started
                     // - scanner_progress  
                     // - scanner_completed
                     // - scanner_error
                     
                 } else {
-                    console.error('❌ Failed to start initial scan');
-                    alert('Erro ao iniciar scan inicial');
-                }
-
-            } catch (error) {
-                console.error('Error starting initial scan:', error);
-                alert('Erro ao iniciar scan inicial: ' + error.message);
-            } finally {
-                // Reset button after 5 seconds
-                setTimeout(() => {
-                    const btn = document.querySelector('[onclick="startInitialScan()"]');
+                    const errorData = await response.text();
+                    console.error('❌ Failed to start initial scan:', errorData);
+                    
+                    if (progressSubtitle) {
+                        progressSubtitle.textContent = 'Erro ao iniciar scan';
+                    }
+                    
+                    showNotificationSafe('Erro', 'Erro ao iniciar scan inicial: ' + errorData, 'error');
+                    
+                    // Reset button and hide overlay on API error
                     if (btn) {
                         btn.disabled = false;
                         btn.innerHTML = '🚀 Scan Completo';
                     }
-                }, 5000);
+                    
+                    setTimeout(() => {
+                        if (overlay) {
+                            overlay.style.display = 'none';
+                        }
+                    }, 3000);
+                }
+
+            } catch (error) {
+                console.error('Error starting initial scan:', error);
+                
+                const progressSubtitle = document.getElementById('progress-subtitle');
+                if (progressSubtitle) {
+                    progressSubtitle.textContent = 'Erro crítico ao iniciar scan';
+                }
+                
+                showNotificationSafe('Erro Crítico', 'Erro ao iniciar scan inicial: ' + error.message, 'error');
+                
+                // Reset UI state on error
+                const btn = document.querySelector('[onclick="startInitialScan()"]');
+                const overlay = document.getElementById('loading-overlay');
+                
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🚀 Scan Completo';
+                }
+                
+                setTimeout(() => {
+                    if (overlay) {
+                        overlay.style.display = 'none';
+                    }
+                }, 3000);
             }
         }
 

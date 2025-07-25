@@ -6,7 +6,18 @@ Coordinates all frontend functionality and real-time updates
 import asyncio
 import json
 from datetime import datetime, timedelta
-from js import document, console, setInterval, clearInterval, setTimeout, window
+try:
+    from js import document, console, setInterval, clearInterval, setTimeout, window
+    import js
+except ImportError:
+    # Fallback for testing or other environments
+    js = None
+    document = None
+    console = None
+    setInterval = None
+    clearInterval = None
+    setTimeout = None
+    window = None
 from pyodide.ffi import create_proxy
 
 # Import our modules
@@ -59,79 +70,112 @@ class TradingBotApp:
         console.log("Dashboard initialized successfully")
     
     async def load_initial_data(self):
-        """Load initial dashboard data with timeout protection"""
+        """Load initial dashboard data with proper progress tracking"""
         loading_overlay = document.getElementById("loading-overlay")
+        progress_bar = document.getElementById("progress-bar")
+        progress_percentage = document.getElementById("progress-percentage")
+        progress_subtitle = document.getElementById("progress-subtitle")
+        
         loading_overlay.style.display = "flex"
+        
+        # Initialize progress tracking
+        total_steps = 5
+        current_step = 0
+        
+        def update_progress(step, message):
+            nonlocal current_step
+            current_step = step
+            progress = (current_step / total_steps) * 100
+            progress_bar.style.width = f"{progress}%"
+            progress_percentage.textContent = f"{progress:.0f}%"
+            progress_subtitle.textContent = message
+            console.log(f"Loading progress: {progress:.0f}% - {message}")
         
         # Set maximum loading time of 15 seconds
         loading_timeout = None
         try:
-            loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
+            if js:
+                loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
         except:
             # Fallback if setTimeout not available
-            console.warn("setTimeout not available, using manual timeout")
+            if console:
+                console.warn("setTimeout not available, using manual timeout")
         
         try:
-            # Load data with individual error handling (non-blocking)
-            tasks = []
-            
-            # Dashboard summary (critical)
+            # Step 1: Dashboard summary (critical)
+            update_progress(1, "Carregando resumo do dashboard...")
             try:
                 await self.update_dashboard_summary()
                 console.log("✅ Dashboard summary loaded")
             except Exception as e:
                 console.error(f"❌ Dashboard summary failed: {e}")
             
-            # Validation table (critical)
+            # Step 2: Validation table (critical)
+            update_progress(2, "Carregando tabela de validação...")
             try:
                 await self.update_validation_table()
                 console.log("✅ Validation table loaded")
             except Exception as e:
                 console.error(f"❌ Validation table failed: {e}")
             
-            # Scanner data (non-critical)
+            # Step 3: Scanner data (non-critical)
+            update_progress(3, "Carregando dados do scanner...")
             try:
                 await self.update_scanner_data()
                 console.log("✅ Scanner data loaded")
             except Exception as e:
                 console.error(f"⚠️ Scanner data failed: {e}")
             
-            # Trading data (non-critical)
+            # Step 4: Trading data (non-critical)
+            update_progress(4, "Carregando dados de trading...")
             try:
                 await self.update_trading_data()
                 console.log("✅ Trading data loaded")
             except Exception as e:
                 console.error(f"⚠️ Trading data failed: {e}")
             
-            # Positions data (non-critical)
+            # Step 5: Positions data (non-critical)
+            update_progress(5, "Finalizando carregamento...")
             try:
                 await self.update_positions_data()
                 console.log("✅ Positions data loaded")
             except Exception as e:
                 console.error(f"⚠️ Positions data failed: {e}")
             
+            # Complete loading
+            update_progress(5, "Dados carregados com sucesso!")
             ui_components.show_notification(
                 "Dashboard", 
-                "Dados carregados", 
+                "Sistema inicializado com sucesso", 
                 "success"
             )
             
         except Exception as e:
             console.error(f"Critical error loading initial data: {str(e)}")
+            progress_subtitle.textContent = "Erro ao carregar dados"
             ui_components.show_notification(
                 "Erro", 
                 "Falha crítica ao carregar dados", 
                 "error"
             )
         finally:
-            # Clear timeout and hide loading
-            if loading_timeout:
+            # Clear timeout and hide loading after a short delay to show completion
+            if loading_timeout and js:
                 try:
                     js.clearTimeout(loading_timeout)
                 except:
                     pass
-            loading_overlay.style.display = "none"
-            console.log("Loading completed - overlay hidden")
+            
+            # Show completion for 1 second before hiding
+            try:
+                if js:
+                    js.setTimeout(js.Function.fromString("() => { document.getElementById('loading-overlay').style.display = 'none'; }"), 1000)
+                else:
+                    loading_overlay.style.display = "none"
+            except:
+                loading_overlay.style.display = "none"
+            
+            console.log("Loading completed - overlay will hide shortly")
     
     def _force_hide_loading(self):
         """Force hide loading overlay after timeout"""
@@ -721,30 +765,82 @@ class TradingBotApp:
         pass
     
     def handle_scanner_message(self, data):
-        """Handle scanner-related WebSocket messages"""
+        """Handle scanner-related WebSocket messages with UI updates"""
         message_type = data.get("type")
         payload = data.get("payload", {})
         
         if message_type == "scanner_progress":
             processed = payload.get("processed_count", 0)
             total = payload.get("total_assets", 0)
-            progress_percent = payload.get("progress_percent", 0)
+            progress_percent = payload.get("progress_percentage", 0)
             eta = payload.get("estimated_remaining_time_seconds", 0)
+            message = payload.get("message", "Processando...")
             
-            ui_components.show_notification(
-                "Scanner",
-                f"Processando: {processed}/{total} ({progress_percent:.1f}%) - ETA: {eta:.0f}s",
-                "info",
-                duration=2000 # Short duration for progress updates
-            )
+            # Update scan progress UI elements if they exist
+            try:
+                progress_bar = document.getElementById("progress-bar")
+                progress_percentage_elem = document.getElementById("progress-percentage")
+                progress_subtitle = document.getElementById("progress-subtitle")
+                progress_eta = document.getElementById("progress-eta")
+                processed_count_elem = document.getElementById("processed-count")
+                total_count_elem = document.getElementById("total-count")
+                
+                if progress_bar:
+                    progress_bar.style.width = f"{progress_percent}%"
+                if progress_percentage_elem:
+                    progress_percentage_elem.textContent = f"{progress_percent:.1f}%"
+                if progress_subtitle:
+                    progress_subtitle.textContent = message
+                if progress_eta and eta > 0:
+                    minutes = int(eta // 60)
+                    seconds = int(eta % 60)
+                    eta_text = f"{minutes}m {seconds}s restantes" if minutes > 0 else f"{seconds}s restantes"
+                    progress_eta.textContent = eta_text
+                if processed_count_elem:
+                    processed_count_elem.textContent = str(processed)
+                if total_count_elem:
+                    total_count_elem.textContent = str(total)
+                    
+                # Show progress details
+                progress_details = document.getElementById("progress-details")
+                if progress_details:
+                    progress_details.style.display = "block"
+                    
+            except Exception as e:
+                console.error(f"Error updating scanner progress UI: {e}")
             
-            # Update UI elements for progress bar/text if they exist
-            # Example: document.getElementById("scanner-progress-text").textContent = f"..."
+            # Show notification for major progress milestones
+            if processed % 100 == 0 or progress_percent >= 100:
+                ui_components.show_notification(
+                    "Scanner",
+                    f"Processando: {processed}/{total} ({progress_percent:.1f}%)",
+                    "info",
+                    duration=2000
+                )
             
         elif message_type == "scanner_completion":
             valid_assets = payload.get("valid_assets_count", 0)
             total_assets = payload.get("total_assets", 0)
             scan_duration = payload.get("scan_duration_seconds", 0)
+            
+            # Update final progress state
+            try:
+                progress_bar = document.getElementById("progress-bar")
+                progress_percentage_elem = document.getElementById("progress-percentage")
+                progress_subtitle = document.getElementById("progress-subtitle")
+                valid_count_elem = document.getElementById("valid-count")
+                
+                if progress_bar:
+                    progress_bar.style.width = "100%"
+                if progress_percentage_elem:
+                    progress_percentage_elem.textContent = "100%"
+                if progress_subtitle:
+                    progress_subtitle.textContent = "Scan concluído com sucesso!"
+                if valid_count_elem:
+                    valid_count_elem.textContent = str(valid_assets)
+                    
+            except Exception as e:
+                console.error(f"Error updating scanner completion UI: {e}")
             
             ui_components.show_notification(
                 "Scanner Concluído",
@@ -752,17 +848,41 @@ class TradingBotApp:
                 "success",
                 duration=5000
             )
+            
+            # Hide loading overlay after completion
+            try:
+                if js:
+                    js.setTimeout(js.Function.fromString("() => { document.getElementById('loading-overlay').style.display = 'none'; }"), 2000)
+            except:
+                pass
+                
             # Refresh validation table after completion
             asyncio.create_task(self.update_validation_table())
             
         elif message_type == "scanner_error":
             error_message = payload.get("message", "Erro desconhecido no scanner")
+            
+            # Update error state in UI
+            try:
+                progress_subtitle = document.getElementById("progress-subtitle")
+                if progress_subtitle:
+                    progress_subtitle.textContent = f"Erro: {error_message}"
+            except Exception as e:
+                console.error(f"Error updating scanner error UI: {e}")
+                
             ui_components.show_notification(
                 "Erro no Scanner",
                 f"Ocorreu um erro durante o scan: {error_message}",
                 "error",
                 duration=8000
             )
+            
+            # Hide loading overlay on error
+            try:
+                if js:
+                    js.setTimeout(js.Function.fromString("() => { document.getElementById('loading-overlay').style.display = 'none'; }"), 3000)
+            except:
+                pass
 
     def setup_auto_refresh(self):
         """Set up automatic data refresh"""
@@ -787,7 +907,13 @@ class TradingBotApp:
     async def refresh_current_tab(self):
         """Refresh data for current active tab with debounce"""
         # Prevent recursive calls with timestamp-based debounce
-        current_time = js.Date.now()
+        try:
+            current_time = js.Date.now()
+        except NameError:
+            # Fallback if js is not available
+            import time
+            current_time = int(time.time() * 1000)
+        
         if hasattr(self, '_last_refresh_time') and (current_time - self._last_refresh_time) < 1000:
             console.log("Refresh called too soon, debouncing...")
             return
@@ -1160,5 +1286,15 @@ window.refreshTradingData = create_proxy(refreshTradingData)
 window.executeSignalTrade = create_proxy(executeSignalTrade)
 window.handleScannerMessage = create_proxy(app.handle_scanner_message)
 # Removed toggleAutoTrading from window proxy to avoid conflicts
+
+# Global function to handle scanner WebSocket messages from JavaScript
+def handleScannerWebSocketMessage(data):
+    """Global function to handle scanner messages from JavaScript WebSocket"""
+    try:
+        app.handle_scanner_message(data)
+    except Exception as e:
+        console.error(f"Error handling scanner WebSocket message: {e}")
+
+window.handleScannerWebSocketMessage = create_proxy(handleScannerWebSocketMessage)
 
 console.log("BingX Trading Bot Dashboard loaded successfully!")
