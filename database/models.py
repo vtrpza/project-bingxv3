@@ -138,7 +138,7 @@ class Indicator(Base):
     mm1 = Column(Numeric(20, 8))  # Fast EMA (9 periods)
     center = Column(Numeric(20, 8))  # Slow EMA (21 periods)
     rsi = Column(Numeric(5, 2))  # RSI (14 periods)
-    volume_sma = Column(Numeric(20, 8))  # Volume SMA
+    volume_sma = Column(Numeric(30, 8))  # Volume SMA - increased precision for large volumes
     additional_data = Column(JSONType)  # For extra indicators
     
     # Timestamp

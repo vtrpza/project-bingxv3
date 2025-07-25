@@ -13324,3 +13324,41 @@ WHERE indicators.asset_id = ? AND indicators.timeframe = ? AND indicators.timest
 [parameters: [{}]]
 2025-07-24 18:56:03,324 - __main__ - INFO - Analysis cycle complete: 1/1 successful, 0 signals generated
 2025-07-24 18:56:03,324 - performance.performance - INFO - Operation timing: analysis_cycle
+2025-07-24 21:02:30,024 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:02:30,025 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:02:30,757 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:02:31,413 - __main__ - INFO - === Testing Scanner Worker Coroutine Fix ===
+2025-07-24 21:02:31,413 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 21:02:31,413 - database.connection - INFO - Using SQLite database
+2025-07-24 21:02:31,438 - database.connection - INFO - Database connection established successfully
+2025-07-24 21:02:32,363 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:02:32,366 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:02:32,366 - __main__ - INFO - Running a single scan cycle to test for coroutine errors...
+2025-07-24 21:02:32,366 - scanner.worker - INFO - 🔄 Starting optimized scan cycle...
+2025-07-24 21:02:32,380 - scanner.worker - INFO - 📊 Scanning 1 valid assets concurrently...
+2025-07-24 21:02:32,380 - analysis.indicators - ERROR - Error calculating indicators: 'coroutine' object is not iterable
+2025-07-24 21:02:32,380 - analysis.indicators - ERROR - Error calculating indicators: 'coroutine' object is not iterable
+2025-07-24 21:02:32,384 - scanner.worker - ERROR - Error checking signals for BTC/USDT: 'coroutine' object is not subscriptable
+2025-07-24 21:02:32,390 - scanner.worker - INFO - ✅ Optimized scan cycle completed - 0 signals generated
+2025-07-24 21:02:32,390 - scanner.worker - INFO - Cache hit rate: 0.0%
+2025-07-24 21:02:32,390 - scanner.worker - INFO - Rate limiter utilization: 0.0%
+2025-07-24 21:02:32,390 - __main__ - INFO - ✅ Scan cycle completed without coroutine errors!
+2025-07-24 21:02:32,390 - __main__ - INFO - ✅ All tests passed! The coroutine issue has been fixed.
+2025-07-24 21:02:50,852 - config.settings - INFO - Logging configured - Level: INFO, File: logs/trading_bot.log
+2025-07-24 21:02:50,853 - config.settings - INFO - Settings loaded - Environment: development, Debug: False
+2025-07-24 21:02:51,437 - api.web_api - INFO - BingX client initialized successfully
+2025-07-24 21:02:51,731 - __main__ - INFO - === Testing Scanner Worker Coroutine Fix ===
+2025-07-24 21:02:51,732 - database.connection - INFO - Using DATABASE_URL from environment
+2025-07-24 21:02:51,732 - database.connection - INFO - Using SQLite database
+2025-07-24 21:02:51,741 - database.connection - INFO - Database connection established successfully
+2025-07-24 21:02:53,850 - api.client - INFO - BingX API connection test successful - found 2247 markets
+2025-07-24 21:02:53,852 - api.client - INFO - BingX client initialized successfully (Testnet: True)
+2025-07-24 21:02:53,852 - __main__ - INFO - Running a single scan cycle to test for coroutine errors...
+2025-07-24 21:02:53,852 - scanner.worker - INFO - 🔄 Starting optimized scan cycle...
+2025-07-24 21:02:53,866 - scanner.worker - INFO - 📊 Scanning 1 valid assets concurrently...
+2025-07-24 21:02:58,614 - scanner.worker - INFO - 🎯 Signal generated for BTC/USDT: BUY
+2025-07-24 21:02:58,619 - scanner.worker - INFO - ✅ Optimized scan cycle completed - 1 signals generated
+2025-07-24 21:02:58,619 - scanner.worker - INFO - Cache hit rate: 0%
+2025-07-24 21:02:58,619 - scanner.worker - INFO - Rate limiter utilization: 3.2%
+2025-07-24 21:02:58,619 - __main__ - INFO - ✅ Scan cycle completed without coroutine errors!
+2025-07-24 21:02:58,619 - __main__ - INFO - ✅ All tests passed! The coroutine issue has been fixed.
