@@ -61,6 +61,9 @@
                         this.isConnected = true;
                         this.isConnecting = false;
                         
+                        // Reset reconnection attempts on successful connection
+                        this.reconnectAttempts = 0;
+                        
                         // Clear connection timeout
                         if (this.connectionTimeout) {
                             clearTimeout(this.connectionTimeout);
