@@ -179,7 +179,8 @@ class ScannerWorker:
         return await client.fetch_ticker(symbol)
     
     async def _fetch_ohlcv_with_rate_limit(self, client, symbol, timeframe, limit):
-        """Fetch OHLCV data with rate limiting."""
+        """Fetch OHLCV data with rate limiting and coordination."""
+        await self.coordinator.request_api_permission(self.worker_id, 'market_data')
         await self.rate_limiter.acquire('market_data')
         return await client.fetch_ohlcv(symbol, timeframe, limit)
     
