@@ -455,6 +455,12 @@ class AnalysisWorker:
                         'analysis_metadata': {
                             'analysis_duration': result.get('analysis_duration_seconds'),
                             'candles_analyzed': result.get('candles_count', {}),
+                        },
+                        'test_mode_data': {
+                            'is_test_mode': is_test_mode,
+                            'forced_signal': signal_data.get('test_mode_forced', False),
+                            'boosted_confidence': is_test_mode and signal_data.get('confidence', 0) > 0,
+                            'test_config': get_test_mode_config() if is_test_mode else {}
                         }
                     }
                 )
