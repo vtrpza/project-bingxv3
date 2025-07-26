@@ -16,7 +16,7 @@ from utils.logger import get_logger, trading_logger
 from utils.datetime_utils import utc_now, safe_datetime_subtract
 from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
-from utils.json_utils import clean_for_json_serialization
+from utils.converters import convert_decimals
 from api.web_api import manager as connection_manager
 from scanner.symbol_cache import get_symbol_cache, SymbolData
 
