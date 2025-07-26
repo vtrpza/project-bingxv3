@@ -824,6 +824,37 @@ body {
     margin: 0 auto;
 }
 
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.refresh-button {
+    background: var(--accent-info);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.refresh-button:hover:not(:disabled) {
+    background: #1f6feb;
+    transform: translateY(-1px);
+}
+
+.refresh-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .header h1 {
     font-size: 1.8rem;
     font-weight: 600;
@@ -1017,20 +1048,6 @@ body {
     background: #1a5cc6;
 }
 
-.revalidate-btn {
-    background: var(--accent-warning);
-    color: white;
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: var(--transition);
-}
-
-.revalidate-btn:hover {
-    background: #d47534;
-}
 
 .initial-scan-btn {
     background: var(--accent-buy);
@@ -1590,6 +1607,121 @@ body {
     border-left: 3px solid var(--accent-info);
 }
 
+/* ========== REAL-TIME SIGNAL UPDATE STYLES ========== */
+
+/* Signal update animation */
+.signal-updated {
+    background: linear-gradient(90deg, 
+        rgba(35, 134, 54, 0.2), 
+        rgba(35, 134, 54, 0.1), 
+        transparent) !important;
+    border-left: 3px solid var(--accent-buy) !important;
+    animation: signal-pulse 3s ease-out;
+}
+
+@keyframes signal-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(35, 134, 54, 0.4);
+        background: rgba(35, 134, 54, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(35, 134, 54, 0);
+        background: rgba(35, 134, 54, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(35, 134, 54, 0);
+        background: rgba(35, 134, 54, 0.1);
+    }
+}
+
+/* Enhanced signal indicator styles */
+.signal-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.signal-icon {
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.signal-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.signal-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    opacity: 0.8;
+}
+
+.signal-meta small {
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+/* Signal type specific styles */
+.signal-buy .signal-icon {
+    color: var(--accent-buy);
+    animation: signal-buy-glow 2s ease-in-out infinite alternate;
+}
+
+.signal-sell .signal-icon {
+    color: var(--accent-sell);
+    animation: signal-sell-glow 2s ease-in-out infinite alternate;
+}
+
+.signal-neutral .signal-icon {
+    color: var(--text-muted);
+}
+
+@keyframes signal-buy-glow {
+    from {
+        text-shadow: 0 0 2px var(--accent-buy);
+    }
+    to {
+        text-shadow: 0 0 8px var(--accent-buy), 0 0 12px var(--accent-buy);
+    }
+}
+
+@keyframes signal-sell-glow {
+    from {
+        text-shadow: 0 0 2px var(--accent-sell);
+    }
+    to {
+        text-shadow: 0 0 8px var(--accent-sell), 0 0 12px var(--accent-sell);
+    }
+}
+
+/* Real-time signal notification styles */
+.signal-notification {
+    border-left: 4px solid var(--accent-info);
+    background: linear-gradient(90deg, 
+        rgba(31, 111, 235, 0.1), 
+        transparent);
+}
+
+.signal-notification.signal-buy {
+    border-left-color: var(--accent-buy);
+    background: linear-gradient(90deg, 
+        rgba(35, 134, 54, 0.1), 
+        transparent);
+}
+
+.signal-notification.signal-sell {
+    border-left-color: var(--accent-sell);
+    background: linear-gradient(90deg, 
+        rgba(248, 81, 73, 0.1), 
+        transparent);
+}
+
 /* Export button */
 .export-btn {
     background: var(--accent-buy);
@@ -1794,6 +1926,35 @@ body {
     z-index: 2000;
 }
 
+.skip-loading-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.skip-loading-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+.progress-header {
+    position: relative;
+}
+
 .loading-spinner {
     width: 40px;
     height: 40px;
@@ -1851,9 +2012,186 @@ body {
     }
 }
 
+/* Signals Display Styles */
+.signals-section {
+    margin: 2rem 0;
+}
+
+.signals-container {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.signals-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.signals-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.refresh-signals-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.refresh-signals-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.active-signals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.signal-card {
+    background: var(--card-bg);
+    border-radius: 10px;
+    padding: 1rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.signal-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.signal-card.signal-buy {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(40, 167, 69, 0.02));
+}
+
+.signal-card.signal-sell {
+    border-color: var(--danger-color);
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.02));
+}
+
+.signal-card.signal-neutral {
+    border-color: var(--secondary-color);
+    background: linear-gradient(135deg, rgba(108, 117, 125, 0.05), rgba(108, 117, 125, 0.02));
+}
+
+.signal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.signal-symbol {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.signal-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-family: monospace;
+}
+
+.signal-content {
+    margin-bottom: 1rem;
+}
+
+.signal-type {
+    font-weight: bold;
+    font-size: 1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+}
+
+.signal-type.buy {
+    background: var(--success-color);
+    color: white;
+}
+
+.signal-type.sell {
+    background: var(--danger-color);
+    color: white;
+}
+
+.signal-type.neutral {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.signal-strength, .signal-rules {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0.25rem 0;
+}
+
+.signal-actions {
+    text-align: center;
+}
+
+.signal-execute-btn {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.signal-execute-btn:hover {
+    background: linear-gradient(135deg, #0056b3, #004085);
+    transform: translateY(-1px);
+}
+
+.no-signals-message {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.no-signals-message small {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
 @media (max-width: 480px) {
     .stats-row, .summary-row, .stats-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .active-signals-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .signals-header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
     }
     
     .trades-table {

@@ -2,7 +2,7 @@
 """Repository pattern implementation for database operations."""
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime, timedelta
 from decimal import Decimal
 from sqlalchemy.orm import Session
@@ -111,10 +111,13 @@ class AssetRepository(BaseRepository):
             logger.error(f"Error getting asset by symbol {symbol}: {e}")
             return None
     
-    def get_valid_assets(self, session: Session) -> List[Asset]:
+    def get_valid_assets(self, session: Session, limit: int = None) -> List[Asset]:
         """Get all valid assets."""
         try:
-            return session.query(Asset).filter(Asset.is_valid == True).all()
+            query = session.query(Asset).filter(Asset.is_valid == True)
+            if limit is not None:
+                query = query.limit(limit)
+            return query.all()
         except SQLAlchemyError as e:
             logger.error(f"Error getting valid assets: {e}")
             return []
@@ -288,11 +291,17 @@ class MarketDataRepository(BaseRepository):
         super().__init__(MarketData)
     
     def get_latest_data(self, session: Session, asset_id: str, timeframe: str, limit: int = 100) -> List[MarketData]:
-        """Get latest market data for asset and timeframe."""
+        """Get latest market data for asset and timeframe with optimized query."""
         try:
-            return (session.query(MarketData)
-                   .filter(and_(MarketData.asset_id == asset_id, MarketData.timeframe == timeframe))
-                   .order_by(desc(MarketData.timestamp))
+            # Use index hint for PostgreSQL and optimized filtering
+            query = (session.query(MarketData)
+                   .filter(MarketData.asset_id == asset_id)
+                   .filter(MarketData.timeframe == timeframe))
+            
+            # Add execution options for better performance
+            query = query.execution_options(compiled_cache={})
+            
+            return (query.order_by(desc(MarketData.timestamp))
                    .limit(limit)
                    .all())
         except SQLAlchemyError as e:
@@ -791,14 +800,17 @@ class SignalRepository(BaseRepository):
             logger.error(f"Error creating signal: {e}")
             return None
     
-    def get_recent_signals(self, session: Session, hours: int = 24, asset_id: str = None) -> List[Signal]:
+    def get_recent_signals(self, session: Session, hours: int = 24, asset_id: str = None, limit: int = None) -> List[Signal]:
         """Get recent signals within specified hours."""
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=hours)
             query = session.query(Signal).filter(Signal.timestamp >= cutoff_time)
             if asset_id:
                 query = query.filter(Signal.asset_id == asset_id)
-            return query.order_by(desc(Signal.timestamp)).all()
+            query = query.order_by(desc(Signal.timestamp))
+            if limit is not None:
+                query = query.limit(limit)
+            return query.all()
         except SQLAlchemyError as e:
             logger.error(f"Error getting recent signals: {e}")
             return []
@@ -942,3 +954,190 @@ class SystemConfigRepository(BaseRepository):
         except SQLAlchemyError as e:
             logger.error(f"Error setting config {key}: {e}")
             return None
+
+
+class BatchOperationMixin:
+    """Mixin for optimized batch database operations."""
+    
+    def batch_insert(self, session: Session, items: List[Dict], batch_size: int = 100) -> int:
+        """Perform optimized batch insert with chunking."""
+        try:
+            if not items:
+                return 0
+            
+            total_inserted = 0
+            # Process in chunks to avoid memory issues and improve performance
+            for i in range(0, len(items), batch_size):
+                chunk = items[i:i + batch_size]
+                objects = [self.model_class(**item) for item in chunk]
+                session.add_all(objects)
+                session.flush()  # Flush each batch
+                total_inserted += len(chunk)
+                
+                # Clear session cache periodically to prevent memory buildup
+                if i > 0 and i % (batch_size * 10) == 0:
+                    session.expunge_all()
+            
+            return total_inserted
+        except SQLAlchemyError as e:
+            logger.error(f"Error in batch insert: {e}")
+            session.rollback()
+            return 0
+    
+    def batch_update(self, session: Session, updates: List[Tuple[str, Dict]], batch_size: int = 50) -> int:
+        """Perform optimized batch updates."""
+        try:
+            if not updates:
+                return 0
+            
+            total_updated = 0
+            # Process in chunks
+            for i in range(0, len(updates), batch_size):
+                chunk = updates[i:i + batch_size]
+                
+                for item_id, update_data in chunk:
+                    session.query(self.model_class).filter(
+                        self.model_class.id == item_id
+                    ).update(update_data, synchronize_session=False)
+                
+                session.flush()
+                total_updated += len(chunk)
+            
+            return total_updated
+        except SQLAlchemyError as e:
+            logger.error(f"Error in batch update: {e}")
+            session.rollback()
+            return 0
+    
+    def bulk_upsert(self, session: Session, items: List[Dict], conflict_columns: List[str], 
+                   update_columns: List[str] = None, batch_size: int = 100) -> int:
+        """PostgreSQL-specific bulk upsert operation using ON CONFLICT."""
+        try:
+            if not items or not hasattr(session.get_bind(), 'dialect') or 'postgresql' not in str(session.get_bind().dialect.name):
+                # Fallback to regular batch operations for non-PostgreSQL
+                return self.batch_insert(session, items, batch_size)
+            
+            from sqlalchemy.dialects.postgresql import insert
+            
+            total_upserted = 0
+            for i in range(0, len(items), batch_size):
+                chunk = items[i:i + batch_size]
+                
+                stmt = insert(self.model_class.__table__).values(chunk)
+                
+                # Create ON CONFLICT DO UPDATE clause
+                if update_columns:
+                    update_dict = {col: stmt.excluded[col] for col in update_columns}
+                    stmt = stmt.on_conflict_do_update(
+                        index_elements=conflict_columns,
+                        set_=update_dict
+                    )
+                else:
+                    stmt = stmt.on_conflict_do_nothing(index_elements=conflict_columns)
+                
+                result = session.execute(stmt)
+                total_upserted += result.rowcount
+                session.flush()
+            
+            return total_upserted
+        except Exception as e:
+            logger.error(f"Error in bulk upsert: {e}")
+            session.rollback()
+            return 0
+
+
+# Enhanced repository classes with batch operations
+class OptimizedAssetRepository(AssetRepository, BatchOperationMixin):
+    """Asset repository with batch operation optimizations."""
+    
+    def bulk_update_validation_status(self, session: Session, 
+                                     validations: List[Tuple[str, bool, Dict]], 
+                                     batch_size: int = 50) -> int:
+        """Bulk update validation status for multiple assets."""
+        try:
+            total_updated = 0
+            for i in range(0, len(validations), batch_size):
+                chunk = validations[i:i + batch_size]
+                
+                for symbol, is_valid, validation_data in chunk:
+                    # Use merge for efficient upsert
+                    asset = session.merge(Asset(
+                        symbol=symbol.upper(),
+                        is_valid=is_valid,
+                        validation_data=validation_data,
+                        last_validation=datetime.utcnow()
+                    ))
+                    session.add(asset)
+                
+                session.flush()
+                total_updated += len(chunk)
+            
+            return total_updated
+        except SQLAlchemyError as e:
+            logger.error(f"Error in bulk validation update: {e}")
+            session.rollback()
+            return 0
+
+
+class OptimizedMarketDataRepository(MarketDataRepository, BatchOperationMixin):
+    """Market data repository with batch optimizations."""
+    
+    def bulk_insert_candles(self, session: Session, candles_data: List[Dict], 
+                           batch_size: int = 200) -> int:
+        """Efficiently insert multiple candles with conflict handling."""
+        try:
+            if not candles_data:
+                return 0
+            
+            # Use PostgreSQL-specific upsert if available
+            if hasattr(session.get_bind(), 'dialect') and 'postgresql' in str(session.get_bind().dialect.name):
+                return self.bulk_upsert(
+                    session, candles_data,
+                    conflict_columns=['asset_id', 'timestamp', 'timeframe'],
+                    update_columns=['open', 'high', 'low', 'close', 'volume'],
+                    batch_size=batch_size
+                )
+            else:
+                # Fallback for other databases
+                return self.batch_insert(session, candles_data, batch_size)
+                
+        except Exception as e:
+            logger.error(f"Error in bulk candle insert: {e}")
+            session.rollback()
+            return 0
+
+
+class OptimizedIndicatorRepository(IndicatorRepository, BatchOperationMixin):
+    """Indicator repository with batch optimizations."""
+    
+    def bulk_insert_indicators(self, session: Session, indicators_data: List[Dict], 
+                              batch_size: int = 150) -> int:
+        """Efficiently insert multiple indicators with conflict handling."""
+        try:
+            if not indicators_data:
+                return 0
+            
+            # Validate and clean data before bulk insert
+            cleaned_data = []
+            for data in indicators_data:
+                # Handle volume_sma overflow (from original code)
+                if 'volume_sma' in data and data['volume_sma'] is not None:
+                    if abs(data['volume_sma']) >= Decimal('10') ** 22:
+                        data['volume_sma'] = Decimal('10') ** 21 if data['volume_sma'] > 0 else -(Decimal('10') ** 21)
+                cleaned_data.append(data)
+            
+            # Use PostgreSQL-specific upsert if available
+            if hasattr(session.get_bind(), 'dialect') and 'postgresql' in str(session.get_bind().dialect.name):
+                return self.bulk_upsert(
+                    session, cleaned_data,
+                    conflict_columns=['asset_id', 'timestamp', 'timeframe'],
+                    update_columns=['mm1', 'center', 'rsi', 'volume_sma', 'additional_data'],
+                    batch_size=batch_size
+                )
+            else:
+                return self.batch_insert(session, cleaned_data, batch_size)
+                
+        except Exception as e:
+            logger.error(f"Error in bulk indicator insert: {e}")
+            session.rollback()
+            return 0

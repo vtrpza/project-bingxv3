@@ -146,11 +146,11 @@ class TradingBotApp:
             progress_subtitle.textContent = message
             console.log(f"Loading progress: {progress:.0f}% - {message}")
         
-        # Set maximum loading time of 15 seconds
+        # Set maximum loading time of 5 seconds (reduced from 15)
         loading_timeout = None
         try:
             if js:
-                loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 15000)
+                loading_timeout = js.setTimeout(js.Function.fromString("() => { window.forceHideLoading(); }"), 5000)
         except:
             # Fallback if setTimeout not available
             if console:
@@ -214,23 +214,24 @@ class TradingBotApp:
                 "error"
             )
         finally:
-            # Clear timeout and hide loading after a short delay to show completion
+            # Clear timeout and hide loading immediately on success
             if loading_timeout and js:
                 try:
                     js.clearTimeout(loading_timeout)
                 except:
                     pass
             
-            # Show completion for 1 second before hiding
+            # Hide loading overlay immediately on completion
             try:
-                if js:
-                    js.setTimeout(js.Function.fromString("() => { document.getElementById('loading-overlay').style.display = 'none'; }"), 1000)
-                else:
-                    loading_overlay.style.display = "none"
-            except:
                 loading_overlay.style.display = "none"
-            
-            console.log("Loading completed - overlay will hide shortly")
+                console.log("✅ Loading completed - overlay hidden immediately")
+            except:
+                # Fallback with minimal delay
+                if js:
+                    try:
+                        js.setTimeout(js.Function.fromString("() => { document.getElementById('loading-overlay').style.display = 'none'; }"), 100)
+                    except:
+                        pass
     
     def _force_hide_loading(self):
         """Force hide loading overlay after timeout"""
@@ -312,16 +313,144 @@ class TradingBotApp:
             console.error(f"Error updating mode indicator: {e}")
 
     async def update_dashboard_summary(self):
-        """Update dashboard summary statistics"""
+        """Update dashboard summary statistics with comprehensive real data"""
         try:
             # Check scanning status first
             await self.check_scanning_status()
             
             summary_data = await api_client.get_dashboard_summary()
             if summary_data:
+                # Update comprehensive dashboard data
+                self.update_comprehensive_dashboard(summary_data)
                 ui_components.update_stats_cards(summary_data)
         except Exception as e:
             console.error(f"Error updating dashboard summary: {str(e)}")
+    
+    def update_comprehensive_dashboard(self, data):
+        """Update all dashboard sections with real trading data"""
+        try:
+            # === P&L TOTAL SECTION ===
+            total_pnl_elem = document.getElementById("total-pnl")
+            pnl_percentage_elem = document.getElementById("pnl-percentage")
+            pnl_detail_elem = document.getElementById("pnl-detail")
+            
+            if total_pnl_elem:
+                total_pnl = data.get("total_pnl", 0)
+                pnl_percentage = data.get("pnl_percentage", 0)
+                unrealized_pnl = data.get("total_unrealized_pnl", 0)
+                
+                # Update P&L display
+                total_pnl_elem.textContent = f"${total_pnl:.2f}"
+                total_pnl_elem.className = f"total-pnl {'profit' if total_pnl > 0 else 'loss' if total_pnl < 0 else 'neutral'}"
+                
+                if pnl_percentage_elem:
+                    pnl_percentage_elem.textContent = f"({pnl_percentage:.2f}%)"
+                
+                if pnl_detail_elem:
+                    daily_pnl = data.get("daily_pnl", 0)
+                    pnl_detail_elem.textContent = f"Hoje: ${daily_pnl:.2f} | Não Realizado: ${unrealized_pnl:.2f}"
+            
+            # === TRADES HOJE SECTION ===
+            trades_today_elem = document.getElementById("trades-today")
+            win_rate_elem = document.getElementById("win-rate")
+            wins_elem = document.getElementById("wins")
+            losses_elem = document.getElementById("losses")
+            
+            if trades_today_elem:
+                trades_count = data.get("trades_today", 0)
+                win_rate = data.get("win_rate", 0)
+                wins = data.get("wins", 0)
+                losses = data.get("losses", 0)
+                
+                trades_today_elem.textContent = str(trades_count)
+                
+                if win_rate_elem:
+                    win_rate_elem.textContent = f"{win_rate:.1f}%"
+                
+                if wins_elem:
+                    wins_elem.textContent = f"{wins} vitórias"
+                
+                if losses_elem:
+                    losses_elem.textContent = f"{losses} derrotas"
+            
+            # === SCANNER STATUS ===
+            monitored_assets_elem = document.getElementById("monitored-assets")
+            signals_detected_elem = document.getElementById("signals-detected")
+            scanner_status_elem = document.getElementById("scanner-status")
+            
+            if monitored_assets_elem:
+                monitored_assets_elem.textContent = str(data.get("monitored_assets", 0))
+            
+            if signals_detected_elem:
+                signals_detected_elem.textContent = str(data.get("symbols_with_signals", 0))
+            
+            if scanner_status_elem:
+                scanner_active = data.get("scanner_active", False)
+                scanner_status_elem.textContent = "ATIVO" if scanner_active else "INATIVO"
+                scanner_status_elem.className = f"card-status {'active' if scanner_active else 'inactive'}"
+            
+            # === POSITIONS SECTION ===
+            open_positions_elem = document.getElementById("open-positions")
+            total_position_value_elem = document.getElementById("total-position-value")
+            margin_used_elem = document.getElementById("margin-used")
+            positions_status_elem = document.getElementById("positions-status")
+            
+            if open_positions_elem:
+                open_positions = data.get("open_positions", 0)
+                open_positions_elem.textContent = str(open_positions)
+                
+                if positions_status_elem:
+                    positions_status_elem.textContent = f"{open_positions} ATIVAS"
+            
+            if total_position_value_elem:
+                position_value = data.get("total_position_value", 0)
+                total_position_value_elem.textContent = f"${position_value:.2f}"
+            
+            if margin_used_elem:
+                margin_used = data.get("margin_used", 0)
+                account_balance = data.get("account_balance", 1)
+                margin_percent = (margin_used / account_balance * 100) if account_balance > 0 else 0
+                margin_used_elem.textContent = f"{margin_percent:.1f}%"
+            
+            # === ALERTS SECTION ===
+            alerts_count_elem = document.getElementById("alerts-count")
+            alerts_list_elem = document.getElementById("alerts-list")
+            
+            if alerts_count_elem:
+                alerts_count = data.get("alerts_count", 0)
+                alerts_count_elem.textContent = str(alerts_count)
+                
+                if alerts_list_elem:
+                    if alerts_count > 0:
+                        alerts_list_elem.innerHTML = f'<div class="alert-item">🔔 {alerts_count} sinais ativos detectados</div>'
+                    else:
+                        alerts_list_elem.innerHTML = '<div class="no-alerts">Nenhum alerta ativo</div>'
+            
+            # === ROBOT STATUS ===
+            robot_state_elem = document.getElementById("robot-state")
+            if robot_state_elem:
+                robot_status = data.get("robot_state", "Status desconhecido")
+                state_text = robot_state_elem.querySelector(".state-text")
+                if state_text:
+                    state_text.textContent = robot_status
+            
+            # === SUMMARY CARDS (multiple locations) ===
+            summary_cards = [
+                {"id": "total-pnl", "value": f"${data.get('total_pnl', 0):.2f}"},
+                {"id": "open-positions", "value": str(data.get("open_positions", 0))},
+                {"id": "active-signals-count", "value": str(data.get("symbols_with_signals", 0))},
+                {"id": "trades-today", "value": str(data.get("trades_today", 0))}
+            ]
+            
+            for card in summary_cards:
+                elem = document.getElementById(card["id"])
+                if elem:
+                    elem.textContent = card["value"]
+            
+            console.log(f"✅ Dashboard updated: {data.get('monitored_assets', 0)} assets, {data.get('open_positions', 0)} positions, P&L: ${data.get('total_pnl', 0):.2f}")
+            
+        except Exception as e:
+            console.error(f"Error updating comprehensive dashboard: {e}")
     
     async def update_validation_table(self, page=1):
         """Update asset validation table - ALWAYS use server-side logic"""
@@ -656,23 +785,311 @@ class TradingBotApp:
             console.error(f"Error updating trading tab data: {str(e)}")
     
     async def update_trading_data(self):
-        """Update trading data table with real-time information"""
+        """Update trading data table with comprehensive real-time information"""
         try:
-            trading_data = await api_client.get_trading_live_data()
-            if trading_data:
-                ui_components.update_trading_data_table(trading_data)
-                console.log("Trading data table updated successfully")
+            # Update trading live data
+            trading_data = await api_client.get_trading_live_data(limit=20)
+            if trading_data and trading_data.get("success"):
+                # Extract trading_data array from response
+                assets = trading_data.get("trading_data", [])
+                if assets and len(assets) > 0:
+                    # Call JavaScript function to update table with proper data mapping
+                    try:
+                        if hasattr(document.defaultView, 'updateTradingTable'):
+                            document.defaultView.updateTradingTable(assets)
+                            console.log(f"Trading data table updated with {len(assets)} assets")
+                        else:
+                            console.warn("updateTradingTable function not available - using fallback")
+                            # Fallback to PyScript method
+                            self.update_realtime_trading_table(trading_data)
+                    except Exception as js_error:
+                        console.error(f"Error calling JavaScript updateTradingTable: {js_error}")
+                        # Fallback to PyScript method  
+                        self.update_realtime_trading_table(trading_data)
+                else:
+                    self.show_empty_trading_table()
             else:
                 console.warn("No trading data received from API")
+                # Show empty state in table
+                self.show_empty_trading_table()
                 # Check if we should show scan required notification
                 ui_components.show_notification(
                     "🔍 Scan Inicial", 
                     "Nenhum dado de trading disponível - execute o scan inicial", 
                     "warning"
                 )
+            
+            # Update active signals from signal processor
+            await self.update_active_signals()
+            
         except Exception as e:
             error_msg = str(e)
             console.error(f"Error updating trading data: {error_msg}")
+            self.show_error_trading_table(error_msg)
+    
+    async def update_active_signals(self):
+        """Update active trading signals from signal processor"""
+        try:
+            # Get active signals from the signal processor
+            signals_data = await api_client.get("/signals/active")
+            if signals_data and signals_data.get("success"):
+                signals = signals_data.get("signals", [])
+                self.update_signals_display(signals)
+                console.log(f"Active signals updated: {len(signals)} signals")
+            else:
+                self.show_empty_signals_display()
+        except Exception as e:
+            console.error(f"Error updating active signals: {e}")
+    
+    def update_signals_display(self, signals):
+        """Update the active signals display section"""
+        try:
+            signals_container = document.getElementById("active-signals-container")
+            if not signals_container:
+                console.warn("Active signals container not found")
+                return
+            
+            if not signals or len(signals) == 0:
+                self.show_empty_signals_display()
+                return
+            
+            # Build signals HTML
+            signals_html = ""
+            for signal in signals:
+                symbol = signal.get("symbol", "N/A")
+                signal_type = signal.get("signal_type", "NEUTRAL")
+                strength = signal.get("strength", 0)
+                rules = signal.get("rules_triggered", [])
+                timestamp = signal.get("timestamp", "")
+                
+                # Format timestamp
+                formatted_time = timestamp.split("T")[1][:8] if "T" in timestamp else timestamp
+                
+                # Determine signal class
+                signal_class = "buy" if signal_type == "BUY" else "sell" if signal_type == "SELL" else "neutral"
+                
+                # Format strength as percentage
+                strength_percent = f"{float(strength) * 100:.1f}%"
+                
+                # Join rules
+                rules_text = ", ".join(rules) if rules else "N/A"
+                
+                signal_html = f'''
+                    <div class="signal-card signal-{signal_class}">
+                        <div class="signal-header">
+                            <span class="signal-symbol">{symbol}</span>
+                            <span class="signal-time">{formatted_time}</span>
+                        </div>
+                        <div class="signal-content">
+                            <div class="signal-type {signal_class}">{signal_type}</div>
+                            <div class="signal-strength">Força: {strength_percent}</div>
+                            <div class="signal-rules">Regras: {rules_text}</div>
+                        </div>
+                        <div class="signal-actions">
+                            <button onclick="executeSignalTrade('{symbol}', '{signal_type}', {{}})" 
+                                    class="signal-execute-btn">
+                                📈 Executar Trade
+                            </button>
+                        </div>
+                    </div>
+                '''
+                signals_html += signal_html
+            
+            signals_container.innerHTML = signals_html
+            console.log(f"✅ Signals display updated with {len(signals)} active signals")
+            
+        except Exception as e:
+            console.error(f"Error updating signals display: {e}")
+    
+    def show_empty_signals_display(self):
+        """Show empty state in signals display"""
+        try:
+            signals_container = document.getElementById("active-signals-container")
+            if signals_container:
+                signals_container.innerHTML = '''
+                    <div class="no-signals-message">
+                        📭 Nenhum sinal ativo no momento<br>
+                        <small>Os sinais de trading aparecerão aqui quando detectados</small>
+                    </div>
+                '''
+        except Exception as e:
+            console.error(f"Error showing empty signals display: {e}")
+    
+    def update_realtime_trading_table(self, trading_response):
+        """Update the real-time trading data table with comprehensive market data"""
+        try:
+            if not trading_response.get("success"):
+                console.error("Trading data response was not successful")
+                return
+            
+            trading_data = trading_response.get("trading_data", [])
+            tbody = document.getElementById("trading-data-tbody")
+            
+            if not tbody:
+                console.error("Trading data table body not found")
+                return
+            
+            if not trading_data:
+                self.show_empty_trading_table()
+                return
+            
+            # Build table rows
+            rows_html = ""
+            for item in trading_data:
+                symbol = item.get("symbol", "N/A")
+                timestamp = item.get("timestamp", "")
+                
+                # Format timestamp
+                formatted_time = timestamp.split("T")[1][:8] if "T" in timestamp else timestamp
+                
+                # Spot data
+                spot_price = item.get("spot_price", 0)
+                spot_mm1 = item.get("spot_mm1", 0)  
+                spot_center = item.get("spot_center", 0)
+                spot_rsi = item.get("spot_rsi", 0)
+                spot_volume = item.get("spot_volume", 0)
+                
+                # 2H data
+                price_2h = item.get("price_2h", 0)
+                mm1_2h = item.get("mm1_2h", 0)
+                center_2h = item.get("center_2h", 0)
+                rsi_2h = item.get("rsi_2h", 0)
+                volume_2h = item.get("volume_2h", 0)
+                candle_2h = item.get("candle_2h", "🔴")
+                signal_2h = item.get("signal_2h", "NEUTRAL")
+                
+                # 4H data
+                price_4h = item.get("price_4h", 0)
+                mm1_4h = item.get("mm1_4h", 0)
+                center_4h = item.get("center_4h", 0)
+                rsi_4h = item.get("rsi_4h", 0)
+                volume_4h = item.get("volume_4h", 0)
+                candle_4h = item.get("candle_4h", "🔴")
+                signal_4h = item.get("signal_4h", "NEUTRAL")
+                
+                # Overall signal and position
+                overall_signal = signal_2h if signal_2h != "NEUTRAL" else signal_4h
+                signal_class = "buy" if overall_signal == "BUY" else "sell" if overall_signal == "SELL" else "neutral"
+                
+                # Position info
+                position_info = item.get("position", "Sem posição")
+                pnl_info = item.get("pnl", "N/A")
+                
+                # Format numbers safely
+                def format_price(value):
+                    try:
+                        return f"${float(value):.4f}" if value and value != 0 else "-"
+                    except:
+                        return "-"
+                
+                def format_rsi(value):
+                    try:
+                        return f"{float(value):.1f}" if value and value != 0 else "-"
+                    except:
+                        return "-"
+                
+                def format_volume(value):
+                    try:
+                        vol = float(value)
+                        if vol >= 1000000:
+                            return f"{vol/1000000:.1f}M"
+                        elif vol >= 1000:
+                            return f"{vol/1000:.1f}K"
+                        else:
+                            return f"{vol:.0f}"
+                    except:
+                        return "-"
+                
+                row_html = f'''
+                    <tr class="trading-row {signal_class}">
+                        <td class="symbol-cell"><strong>{symbol}</strong></td>
+                        <td class="datetime-cell">{formatted_time}</td>
+                        
+                        <!-- SPOT columns -->
+                        <td class="price-cell">{format_price(spot_price)}</td>
+                        <td class="mm1-cell">{format_price(spot_mm1)}</td>
+                        <td class="center-cell">{format_price(spot_center)}</td>
+                        <td class="rsi-cell">{format_rsi(spot_rsi)}</td>
+                        <td class="volume-cell">{format_volume(spot_volume)}</td>
+                        
+                        <!-- 2H columns -->
+                        <td class="candle-cell">{candle_2h}</td>
+                        <td class="price-cell">{format_price(price_2h)}</td>
+                        <td class="mm1-cell">{format_price(mm1_2h)}</td>
+                        <td class="center-cell">{format_price(center_2h)}</td>
+                        <td class="rsi-cell">{format_rsi(rsi_2h)}</td>
+                        <td class="volume-cell">{format_volume(volume_2h)}</td>
+                        
+                        <!-- 4H columns -->
+                        <td class="candle-cell">{candle_4h}</td>
+                        <td class="price-cell">{format_price(price_4h)}</td>
+                        <td class="mm1-cell">{format_price(mm1_4h)}</td>
+                        <td class="center-cell">{format_price(center_4h)}</td>
+                        <td class="rsi-cell">{format_rsi(rsi_4h)}</td>
+                        <td class="volume-cell">{format_volume(volume_4h)}</td>
+                        
+                        <!-- Signal, Position, P&L -->
+                        <td class="signal-cell signal-{signal_class}">{overall_signal}</td>
+                        <td class="position-cell">{position_info}</td>
+                        <td class="pnl-cell">{pnl_info}</td>
+                    </tr>
+                '''
+                rows_html += row_html
+            
+            # Update table
+            tbody.innerHTML = rows_html
+            
+            # Update last update time
+            update_elem = document.getElementById("trading-last-update")
+            if update_elem:
+                try:
+                    current_time = js.Date().toLocaleTimeString()
+                    update_elem.textContent = f"Última atualização: {current_time}"
+                except:
+                    # Fallback without js
+                    update_elem.textContent = "Última atualização: agora"
+            
+            console.log(f"✅ Real-time trading table updated with {len(trading_data)} assets")
+            
+        except Exception as e:
+            console.error(f"Error updating real-time trading table: {e}")
+            self.show_error_trading_table(str(e))
+    
+    def show_empty_trading_table(self):
+        """Show empty state in trading table"""
+        try:
+            tbody = document.getElementById("trading-data-tbody")
+            if tbody:
+                tbody.innerHTML = '''
+                    <tr>
+                        <td colspan="22" style="text-align: center; padding: 20px;">
+                            <div class="no-data-message">
+                                📭 Nenhum dado de trading disponível no momento<br>
+                                <small>Execute o scan inicial para começar o monitoramento</small>
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing empty trading table: {e}")
+    
+    def show_error_trading_table(self, error_msg):
+        """Show error state in trading table"""
+        try:
+            tbody = document.getElementById("trading-data-tbody")
+            if tbody:
+                tbody.innerHTML = f'''
+                    <tr>
+                        <td colspan="22" style="text-align: center; padding: 20px; color: #f85149;">
+                            <div class="error-message">
+                                ❌ Erro ao carregar dados: {error_msg}<br>
+                                <small>Verifique a conexão e tente novamente</small>
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing error in trading table: {e}")
             
             # Check if error indicates scan is required (specific exception from api_client)
             if error_msg.startswith("SCAN_REQUIRED:"):
@@ -718,9 +1135,14 @@ class TradingBotApp:
         try:
             await self.update_trading_data()
             await self.update_positions_data()
+            await self.update_trades_history()
             
             # Update last refresh timestamp
-            current_time = datetime.now().strftime("%H:%M:%S")
+            try:
+                current_time = js.Date().toLocaleTimeString()
+            except:
+                current_time = "agora"
+                
             last_update_element = document.getElementById("trading-last-update")
             if last_update_element:
                 last_update_element.textContent = f"Última atualização: {current_time}"
@@ -747,6 +1169,237 @@ class TradingBotApp:
                     "Falha ao atualizar dados de trading", 
                     "error"
                 )
+    
+    async def update_positions_data(self):
+        """Update active positions table with real-time data"""
+        try:
+            # Get positions data from the enhanced dashboard summary
+            summary_data = await api_client.get_dashboard_summary()
+            if not summary_data:
+                self.show_empty_positions_table()
+                return
+            
+            # Try to get detailed positions from a positions endpoint if available
+            try:
+                positions_data = await api_client.get("/positions?active_only=true")
+                if positions_data and positions_data.get("success"):
+                    self.update_positions_table(positions_data.get("positions", []))
+                else:
+                    # Show empty positions
+                    self.show_empty_positions_table()
+            except:
+                # Fallback to summary data
+                self.show_empty_positions_table()
+                
+        except Exception as e:
+            console.error(f"Error updating positions data: {e}")
+            self.show_error_positions_table(str(e))
+    
+    def update_positions_table(self, positions):
+        """Update the positions table with real trading positions"""
+        try:
+            tbody = document.getElementById("positions-tbody")
+            if not tbody:
+                console.error("Positions table body not found")
+                return
+            
+            if not positions or len(positions) == 0:
+                self.show_empty_positions_table()
+                return
+            
+            rows_html = ""
+            for position in positions:
+                symbol = position.get("symbol", "N/A")
+                side = position.get("side", "N/A")
+                entry_price = position.get("entry_price", 0)
+                current_price = position.get("current_price", 0)
+                pnl = position.get("unrealized_pnl", 0)
+                pnl_percent = position.get("unrealized_pnl_percent", 0)
+                stop_loss = position.get("stop_loss", 0)
+                take_profit = position.get("take_profit", 0)
+                duration = position.get("duration_hours", 0)
+                
+                # Determine P&L class
+                pnl_class = "profit" if pnl > 0 else "loss" if pnl < 0 else "neutral"
+                side_class = "buy" if side == "BUY" else "sell"
+                
+                # Format stop loss display
+                stop_loss_display = f"${float(stop_loss):.4f}" if stop_loss else "-"
+                take_profit_display = f"${float(take_profit):.4f}" if take_profit else "Próximo: +3%"
+                
+                row_html = f'''
+                    <tr class="position-row">
+                        <td class="symbol-cell"><strong>{symbol}</strong></td>
+                        <td class="side-cell {side_class}">{side}</td>
+                        <td class="price-cell">${float(entry_price):.4f}</td>
+                        <td class="price-cell">${float(current_price):.4f}</td>
+                        <td class="pnl-cell {pnl_class}">
+                            ${float(pnl):.2f}<br>
+                            <small>({float(pnl_percent):.2f}%)</small>
+                        </td>
+                        <td class="stop-loss-cell">{stop_loss_display}</td>
+                        <td class="trailing-cell">
+                            {"🟢 Ativo" if pnl > 0 else "⏸️ Inativo"}
+                        </td>
+                        <td class="tp-cell">{take_profit_display}</td>
+                        <td class="duration-cell">{float(duration):.1f}h</td>
+                        <td class="status-cell">
+                            {"📈 Em alta" if pnl > 0 else "📉 Em baixa" if pnl < 0 else "⚖️ Neutro"}
+                        </td>
+                        <td class="actions-cell">
+                            <button onclick="closePosition('{position.get('trade_id', '')}')" class="close-btn">Fechar</button>
+                        </td>
+                    </tr>
+                '''
+                rows_html += row_html
+            
+            tbody.innerHTML = rows_html
+            console.log(f"✅ Positions table updated with {len(positions)} active positions")
+            
+        except Exception as e:
+            console.error(f"Error updating positions table: {e}")
+            self.show_error_positions_table(str(e))
+    
+    def show_empty_positions_table(self):
+        """Show empty state in positions table"""
+        try:
+            tbody = document.getElementById("positions-tbody")
+            if tbody:
+                tbody.innerHTML = '''
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 20px;">
+                            <div class="no-data-message">
+                                📭 Nenhuma posição ativa no momento<br>
+                                <small>As posições abertas aparecerão aqui automaticamente</small>
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing empty positions table: {e}")
+    
+    def show_error_positions_table(self, error_msg):
+        """Show error state in positions table"""
+        try:
+            tbody = document.getElementById("positions-tbody")
+            if tbody:
+                tbody.innerHTML = f'''
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 20px; color: #f85149;">
+                            <div class="error-message">
+                                ❌ Erro ao carregar posições: {error_msg}
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing error in positions table: {e}")
+    
+    async def update_trades_history(self):
+        """Update trades history table with recent trading activity"""
+        try:
+            # Get trades history
+            trades_data = await api_client.get("/trades?limit=20")
+            if trades_data and trades_data.get("success"):
+                self.update_trades_table(trades_data.get("trades", []))
+            else:
+                self.show_empty_trades_table()
+                
+        except Exception as e:
+            console.error(f"Error updating trades history: {e}")
+            self.show_error_trades_table(str(e))
+    
+    def update_trades_table(self, trades):
+        """Update the trades history table"""
+        try:
+            tbody = document.getElementById("trades-tbody")
+            if not tbody:
+                console.error("Trades table body not found")
+                return
+            
+            if not trades or len(trades) == 0:
+                self.show_empty_trades_table()
+                return
+            
+            rows_html = ""
+            for trade in trades:
+                entry_time = trade.get("entry_time", "")
+                symbol = trade.get("symbol", "N/A")
+                side = trade.get("side", "N/A")
+                quantity = trade.get("quantity", 0)
+                price = trade.get("entry_price", 0)
+                status = trade.get("status", "N/A")
+                
+                # Format timestamp
+                formatted_time = ""
+                if entry_time:
+                    try:
+                        # Parse ISO timestamp and format
+                        if "T" in entry_time:
+                            date_part = entry_time.split("T")[0]
+                            time_part = entry_time.split("T")[1][:8]
+                            formatted_time = f"{date_part} {time_part}"
+                        else:
+                            formatted_time = entry_time
+                    except:
+                        formatted_time = entry_time
+                
+                side_class = "buy" if side == "BUY" else "sell"
+                status_class = "completed" if status == "CLOSED" else "active" if status == "OPEN" else "pending"
+                
+                row_html = f'''
+                    <tr class="trade-row">
+                        <td class="datetime-cell">{formatted_time}</td>
+                        <td class="symbol-cell"><strong>{symbol}</strong></td>
+                        <td class="side-cell {side_class}">{side}</td>
+                        <td class="quantity-cell">{float(quantity):.4f}</td>
+                        <td class="price-cell">${float(price):.4f}</td>
+                        <td class="status-cell {status_class}">{status}</td>
+                    </tr>
+                '''
+                rows_html += row_html
+            
+            tbody.innerHTML = rows_html
+            console.log(f"✅ Trades history updated with {len(trades)} trades")
+            
+        except Exception as e:
+            console.error(f"Error updating trades table: {e}")
+            self.show_error_trades_table(str(e))
+    
+    def show_empty_trades_table(self):
+        """Show empty state in trades table"""
+        try:
+            tbody = document.getElementById("trades-tbody")
+            if tbody:
+                tbody.innerHTML = '''
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px;">
+                            <div class="no-data-message">
+                                📭 Nenhum histórico de trades disponível<br>
+                                <small>Os trades executados aparecerão aqui</small>
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing empty trades table: {e}")
+    
+    def show_error_trades_table(self, error_msg):
+        """Show error state in trades table"""
+        try:
+            tbody = document.getElementById("trades-tbody")
+            if tbody:
+                tbody.innerHTML = f'''
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #f85149;">
+                            <div class="error-message">
+                                ❌ Erro ao carregar histórico: {error_msg}
+                            </div>
+                        </td>
+                    </tr>
+                '''
+        except Exception as e:
+            console.error(f"Error showing error in trades table: {e}")
     
     async def execute_auto_trade(self, symbol, signal_type, signal_data):
         """Execute automatic trade when signal is detected"""
@@ -1019,11 +1672,12 @@ class TradingBotApp:
                 except Exception as e:
                     console.error(f"Error in refresh task: {e}")
         
-        # Create interval for auto refresh
-        self.update_interval = setInterval(
-            create_proxy(refresh_task), 
-            self.refresh_rate
-        )
+        # Enable auto-refresh for both scanner and trading tabs
+        if self.current_tab in ["scanner", "trading"]:
+            self.update_interval = setInterval(
+                create_proxy(refresh_task), 
+                self.refresh_rate
+            )
     
     async def refresh_current_tab(self):
         """Refresh data for current active tab with debounce"""
@@ -1054,8 +1708,9 @@ class TradingBotApp:
                 await self.update_validation_table()
                 await self.update_scanner_data()
             elif self.current_tab == "trading":
+                # Auto-refresh enabled for trading tab
+                console.log("Trading tab - auto-refresh enabled, updating data...")
                 await self.update_trading_data()
-                await self.update_trading_tab_data()
             
             # Always update summary (but only if validation isn't updating)
             if not self.update_in_progress:
@@ -1106,10 +1761,14 @@ class TradingBotApp:
                 
                 # Only refresh if tab actually changed and not in progress
                 if self.current_tab != previous_tab and not getattr(self, 'update_in_progress', False):
-                    try:
-                        asyncio.create_task(self.refresh_current_tab())
-                    except Exception as e:
-                        console.error(f"Error refreshing tab: {e}")
+                    # Don't auto-refresh trading tab
+                    if self.current_tab != "trading":
+                        try:
+                            asyncio.create_task(self.refresh_current_tab())
+                        except Exception as e:
+                            console.error(f"Error refreshing tab: {e}")
+                    else:
+                        console.log("Trading tab selected - use manual refresh button")
             
             button.addEventListener("click", create_proxy(on_tab_click))
         
@@ -1369,9 +2028,28 @@ document.refreshValidationTable = create_proxy(refreshValidationTable)
 document.exportTableData = create_proxy(exportTableData)
 document.sortTable = create_proxy(sortTable)
 document.previousPage = create_proxy(previousPage)
+
+# Bridge function for JavaScript to send trading data to PyScript
+def updateTradingDataFromAPI(trading_data):
+    """Bridge function to receive data from JavaScript API call"""
+    try:
+        console.log(f"🌉 Bridge: Received {len(trading_data)} items from JavaScript")
+        
+        if app and hasattr(app, 'update_trading_table_with_api_data'):
+            app.update_trading_table_with_api_data(trading_data)
+        else:
+            # Direct update if method doesn't exist
+            ui_components.update_trading_table(trading_data)
+            
+        console.log("✅ Trading table updated via bridge")
+    except Exception as e:
+        console.error(f"❌ Bridge error: {e}")
+
+# Make bridge function available to JavaScript
+window.updateTradingDataFromAPI = create_proxy(updateTradingDataFromAPI)
 document.nextPage = create_proxy(nextPage)
 document.closePosition = create_proxy(closePosition)
-document.forceRevalidation = create_proxy(forceRevalidation)
+# document.forceRevalidation = create_proxy(forceRevalidation)  # Removed - button no longer exists
 document.filterValidationTable = create_proxy(filterValidationTable)
 document.searchAssets = create_proxy(searchAssets)
 document.clearSearch = create_proxy(clearSearch)
@@ -1391,7 +2069,7 @@ document.executeSignalTrade = create_proxy(executeSignalTrade)
 
 # Also make all functions available on window object for JavaScript compatibility
 window.showNotification = create_proxy(ui_components.show_notification)
-window.forceRevalidation = create_proxy(forceRevalidation)
+# window.forceRevalidation = create_proxy(forceRevalidation)  # Removed - button no longer exists
 window.refreshValidationTable = create_proxy(refreshValidationTable)
 window.exportTableData = create_proxy(exportTableData)
 window.sortTable = create_proxy(sortTable)

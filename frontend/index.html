@@ -17,6 +17,22 @@
     
     <!-- WebSocket Connection Script -->
     <script>
+        // Global function - Scan Inicial Completo
+        window.startInitialScan = async function() {
+            try {
+                console.log("🚀 Starting initial scan...");
+                const response = await fetch('/api/scanner/initial-scan', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                console.log("Scan result:", result);
+                alert(`Scan iniciado: ${result.message}`);
+            } catch (error) {
+                console.error("Scan error:", error);
+                alert(`Erro no scan: ${error.message}`);
+            }
+        };
+
         class TradingWebSocket {
             constructor() {
                 this.ws = null;
@@ -286,7 +302,10 @@
                         this.handleTradingUpdate(data.data);
                         break;
                     case 'trading_data_snapshot':
-                        this.handleTradingSnapshot(data.data);
+                        this.handleTradingDataSnapshot(data);
+                        break;
+                    case 'trading_signals_snapshot':
+                        this.handleTradingSignalsSnapshot(data);
                         break;
                     case 'positions_update':
                         this.handlePositionsUpdate(data.data);
@@ -505,6 +524,38 @@
                 }
             }
             
+            handleTradingDataSnapshot(data) {
+                console.log('Trading data snapshot received:', data);
+                
+                // Update comprehensive trading dashboard
+                if (data.data && data.data.summary) {
+                    this.updateTradingDashboard(data.data);
+                }
+                
+                // Update positions table if available
+                if (data.data && data.data.positions) {
+                    this.updatePositionsTable(data.data.positions);
+                }
+                
+                // Update recent signals display
+                if (data.data && data.data.recent_signals) {
+                    this.updateRecentSignalsDisplay(data.data.recent_signals);
+                }
+                
+                // Update trading symbols status
+                if (data.data && data.data.cache_stats) {
+                    this.updateTradingSymbolsStatus(data.data.cache_stats);
+                }
+            }
+            
+            handleTradingSignalsSnapshot(data) {
+                console.log('Trading signals snapshot received:', data);
+                
+                if (data.data && data.data.signals) {
+                    this.updateActiveSignalsDisplay(data.data.signals);
+                }
+            }
+            
             handleTradingSnapshot(data) {
                 console.log('Trading snapshot received:', data);
                 this.updatePositionsTable(data.positions);
@@ -593,6 +644,257 @@
                 // This will be called by PyScript to update the positions table
                 if (window.updatePositionsFromWebSocket) {
                     window.updatePositionsFromWebSocket(positions);
+                }
+                
+                // Also update the HTML table directly for better real-time experience
+                this.updatePositionsTableDirect(positions);
+            }
+            
+            updateTradingDashboard(data) {
+                console.log('Updating trading dashboard with comprehensive data:', data);
+                
+                const summary = data.summary;
+                
+                // Update main P&L display
+                const totalPnlEl = document.getElementById('total-pnl');
+                const pnlPercentageEl = document.getElementById('pnl-percentage');
+                if (totalPnlEl && summary.total_unrealized_pnl !== undefined) {
+                    totalPnlEl.textContent = `$${summary.total_unrealized_pnl.toFixed(2)}`;
+                    totalPnlEl.className = `total-pnl ${summary.total_unrealized_pnl >= 0 ? 'profit' : 'loss'}`;
+                    
+                    if (pnlPercentageEl) {
+                        const percentage = summary.total_unrealized_pnl >= 0 ? '+' : '';
+                        pnlPercentageEl.textContent = `(${percentage}${(summary.total_unrealized_pnl / 1000 * 100).toFixed(2)}%)`;
+                    }
+                }
+                
+                // Update trading status indicators
+                const robotStateEl = document.getElementById('robot-state');
+                if (robotStateEl && summary.trading_enabled !== undefined) {
+                    const stateText = robotStateEl.querySelector('.state-text');
+                    if (stateText) {
+                        stateText.textContent = summary.trading_enabled ? 
+                            `Monitoring ${summary.selected_symbols || 0} symbols` : 
+                            'Trading Pausado';
+                    }
+                }
+                
+                // Update monitored assets count
+                const monitoredAssetsEl = document.getElementById('monitored-assets');
+                if (monitoredAssetsEl && summary.selected_symbols !== undefined) {
+                    monitoredAssetsEl.textContent = summary.selected_symbols;
+                }
+                
+                // Update signals detected count
+                const signalsDetectedEl = document.getElementById('signals-detected');
+                if (signalsDetectedEl && summary.symbols_with_signals !== undefined) {
+                    signalsDetectedEl.textContent = summary.symbols_with_signals;
+                }
+                
+                // Update positions count
+                const openPositionsEl = document.getElementById('open-positions');
+                if (openPositionsEl && summary.open_positions !== undefined) {
+                    openPositionsEl.textContent = summary.open_positions;
+                }
+                
+                // Update active signals count
+                const activeSignalsEl = document.getElementById('active-signals-count');
+                if (activeSignalsEl && summary.symbols_with_signals !== undefined) {
+                    activeSignalsEl.textContent = summary.symbols_with_signals;
+                }
+                
+                // Update last action timestamp
+                const lastActionEl = document.getElementById('last-action');
+                if (lastActionEl) {
+                    const now = new Date();
+                    lastActionEl.textContent = `Última ação: Dashboard atualizado - ${now.toLocaleTimeString()}`;
+                }
+            }
+            
+            updatePositionsTableDirect(positions) {
+                console.log('Updating positions table directly:', positions);
+                
+                const tbody = document.getElementById('positions-table')?.querySelector('tbody');
+                if (!tbody) return;
+                
+                if (!positions || positions.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 20px;">
+                                📊 Nenhuma posição aberta no momento
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = positions.map(position => {
+                    const pnlClass = position.unrealized_pnl >= 0 ? 'profit' : 'loss';
+                    const sideClass = position.side === 'BUY' ? 'buy' : 'sell';
+                    const duration = this.calculateDuration(position.entry_time);
+                    
+                    return `
+                        <tr style="animation: fadeIn 0.3s ease-in;">
+                            <td><strong>${position.symbol}</strong></td>
+                            <td><span class="side ${sideClass}" style="padding: 2px 6px; border-radius: 3px; ${position.side === 'BUY' ? 'background-color: #d4edda; color: #155724;' : 'background-color: #f8d7da; color: #721c24;'}">${position.side}</span></td>
+                            <td>$${position.entry_price.toFixed(2)}</td>
+                            <td style="font-weight: bold;">$${position.current_price.toFixed(2)}</td>
+                            <td class="${pnlClass}" style="font-weight: bold; ${position.unrealized_pnl >= 0 ? 'color: #28a745;' : 'color: #dc3545;'}">
+                                $${position.unrealized_pnl.toFixed(2)}
+                                <br><small>(${position.pnl_percentage.toFixed(2)}%)</small>
+                            </td>
+                            <td>${position.stop_loss ? '$' + position.stop_loss.toFixed(2) : 'N/A'}</td>
+                            <td style="color: #6c757d;">-</td>
+                            <td>${position.take_profit ? '$' + position.take_profit.toFixed(2) : 'N/A'}</td>
+                            <td style="color: #6c757d;">${duration}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            updateRecentSignalsDisplay(signals) {
+                console.log('Updating recent signals:', signals);
+                
+                // Update signals count in dashboard
+                const signalsDetectedEl = document.getElementById('signals-detected');
+                if (signalsDetectedEl) {
+                    signalsDetectedEl.textContent = signals.length;
+                }
+                
+                // You can add a dedicated signals display area here if needed
+                // For now, just log the signals for debugging
+                if (signals.length > 0) {
+                    console.log(`Latest signal: ${signals[0].symbol} - ${signals[0].signal_type} (${signals[0].strength})`);
+                }
+            }
+            
+            updateActiveSignalsDisplay(signals) {
+                console.log('Updating active signals:', signals);
+                
+                // Update active signals count
+                const activeSignalsEl = document.getElementById('active-signals-count');
+                if (activeSignalsEl) {
+                    activeSignalsEl.textContent = signals.length;
+                }
+                
+                // Update scanner status with visual feedback
+                const scannerStatusEl = document.getElementById('scanner-status');
+                if (scannerStatusEl) {
+                    scannerStatusEl.textContent = signals.length > 0 ? 'SINAIS DETECTADOS' : 'MONITORANDO';
+                    scannerStatusEl.className = 'card-status ' + (signals.length > 0 ? 'signals-detected' : 'monitoring');
+                    
+                    // Add visual styling
+                    if (signals.length > 0) {
+                        scannerStatusEl.style.backgroundColor = '#d4edda';
+                        scannerStatusEl.style.color = '#155724';
+                        scannerStatusEl.style.fontWeight = 'bold';
+                        scannerStatusEl.style.animation = 'pulse 1s ease-in-out';
+                    } else {
+                        scannerStatusEl.style.backgroundColor = '#f8f9fa';
+                        scannerStatusEl.style.color = '#6c757d';
+                        scannerStatusEl.style.fontWeight = 'normal';
+                        scannerStatusEl.style.animation = 'none';
+                    }
+                }
+                
+                // Find or create active signals container
+                let signalsContainer = document.getElementById('active-signals-container');
+                if (!signalsContainer) {
+                    // Create signals container if it doesn't exist
+                    const tradingTab = document.getElementById('trading-tab');
+                    if (tradingTab) {
+                        const signalsSection = document.createElement('div');
+                        signalsSection.className = 'dashboard-section signals-section';
+                        signalsSection.innerHTML = `
+                            <h3>🎯 Sinais Ativos de Trading</h3>
+                            <div class="signals-container">
+                                <div class="signals-header">
+                                    <span class="signals-info">Sinais gerados pela análise técnica em tempo real</span>
+                                    <button class="refresh-signals-btn" onclick="refreshTradingData()">🔄 Atualizar</button>
+                                </div>
+                                <div id="active-signals-container" class="active-signals-grid"></div>
+                            </div>
+                        `;
+                        // Insert before the trading data table
+                        const tradingDataSection = tradingTab.querySelector('.trading-data-section');
+                        if (tradingDataSection) {
+                            tradingTab.insertBefore(signalsSection, tradingDataSection);
+                        } else {
+                            tradingTab.appendChild(signalsSection);
+                        }
+                        signalsContainer = document.getElementById('active-signals-container');
+                    }
+                }
+                
+                if (signalsContainer) {
+                    if (signals.length === 0) {
+                        signalsContainer.innerHTML = `
+                            <div class="no-signals-message">
+                                📭 Nenhum sinal ativo no momento<br>
+                                <small>Os sinais de trading aparecerão aqui quando detectados</small>
+                            </div>
+                        `;
+                    } else {
+                        // Build signals HTML
+                        let signalsHTML = '';
+                        signals.forEach(signal => {
+                            const signalClass = signal.signal_type === 'BUY' ? 'buy' : signal.signal_type === 'SELL' ? 'sell' : 'neutral';
+                            const strengthPercent = (signal.strength * 100).toFixed(1);
+                            const rulesText = signal.rules_triggered ? signal.rules_triggered.join(', ') : 'N/A';
+                            const timestamp = signal.timestamp ? new Date(signal.timestamp).toLocaleTimeString() : 'N/A';
+                            
+                            signalsHTML += `
+                                <div class="signal-card signal-${signalClass}">
+                                    <div class="signal-header">
+                                        <span class="signal-symbol">${signal.symbol}</span>
+                                        <span class="signal-time">${timestamp}</span>
+                                    </div>
+                                    <div class="signal-content">
+                                        <div class="signal-type ${signalClass}">${signal.signal_type}</div>
+                                        <div class="signal-strength">Força: ${strengthPercent}%</div>
+                                        <div class="signal-rules">Regras: ${rulesText}</div>
+                                    </div>
+                                    <div class="signal-actions">
+                                        <button onclick="executeSignalTrade('${signal.symbol}', '${signal.signal_type}', {})" 
+                                                class="signal-execute-btn">
+                                            📈 Executar Trade
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        signalsContainer.innerHTML = signalsHTML;
+                        console.log(`✅ Active signals display updated with ${signals.length} signals`);
+                    }
+                }
+            }
+            
+            updateTradingSymbolsStatus(cacheStats) {
+                console.log('Updating trading symbols status:', cacheStats);
+                
+                // Update next scan time (estimate)
+                const nextScanEl = document.getElementById('next-scan');
+                if (nextScanEl && cacheStats.selection_age_minutes !== undefined) {
+                    const nextUpdate = 60 - (cacheStats.selection_age_minutes % 60); // Symbols refresh every hour
+                    const nextTime = new Date(Date.now() + nextUpdate * 60000);
+                    nextScanEl.textContent = nextTime.toLocaleTimeString();
+                }
+            }
+            
+            calculateDuration(entryTime) {
+                if (!entryTime) return '-';
+                
+                const now = new Date();
+                const entry = new Date(entryTime);
+                const diffMs = now - entry;
+                
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                } else {
+                    return `${minutes}m`;
                 }
             }
             
@@ -823,9 +1125,14 @@
         <header class="header">
             <div class="header-content">
                 <h1>🤖 BingX Trading Bot</h1>
-                <div class="connection-status" id="connection-status">
-                    <span class="status-indicator offline"></span>
-                    <span>Conectando...</span>
+                <div class="header-controls">
+                    <button id="refresh-btn" onclick="refreshDashboard()" class="refresh-button">
+                        🔄 Atualizar
+                    </button>
+                    <div class="connection-status" id="connection-status">
+                        <span class="status-indicator offline"></span>
+                        <span>Manual</span>
+                    </div>
                 </div>
             </div>
         </header>
@@ -865,27 +1172,7 @@
                     </div>
                 </div> -->
 
-                <div class="dashboard-section">
-                    <h2>📋 Validação de Ativos</h2>
-                    <div class="stats-row" id="validation-stats">
-                        <div class="stat-card">
-                            <h3>Total Símbolos</h3>
-                            <span class="stat-value" id="total-symbols-count">-</span>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Ativos Válidos</h3>
-                            <span class="stat-value" id="valid-assets-count">-</span>
-                        </div>
-                        <!-- <div class="stat-card">
-                            <h3>Com Sinais</h3>
-                            <span class="stat-value" id="assets-with-signals-count">-</span>
-                        </div> -->
-                        <div class="stat-card">
-                            <h3>Última Atualização</h3>
-                            <span class="stat-value" id="last-update">-</span>
-                        </div>
-                    </div>
-                </div>
+                <!-- Stats section removed - only table matters -->
 
                 <div class="dashboard-section">
                     <h2>📊 Tabela de Todos os Símbolos</h2>
@@ -1186,7 +1473,7 @@
                     <h2>📊 Dados de Trading em Tempo Real</h2>
                     <div class="trading-data-controls">
                         <div class="refresh-controls">
-                            <button onclick="refreshTradingData()" class="refresh-btn">🔄 Atualizar</button>
+                            <button onclick="window.refreshTradingData()" class="refresh-btn">🔄 Atualizar</button>
                             <span id="trading-last-update">Última atualização: -</span>
                         </div>
                         <div class="filter-controls">
@@ -1387,6 +1674,7 @@
                 <div class="progress-header">
                     <div class="progress-title">Inicializando Sistema</div>
                     <div class="progress-subtitle" id="progress-subtitle">Carregando dados...</div>
+                    <button onclick="forceHideLoading()" class="skip-loading-btn" title="Pular inicialização">✕</button>
                 </div>
                 
                 <div class="progress-bar-wrapper">
@@ -1432,10 +1720,16 @@
             buttons.forEach(button => button.classList.remove('active'));
             
             // Show selected tab
-            document.getElementById(tabName + '-tab').classList.add('active');
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
             
-            // Activate selected button
-            event.target.classList.add('active');
+            // Activate selected button by finding the button for this tab
+            const targetButton = document.querySelector(`[onclick*="showTab('${tabName}')"]`);
+            if (targetButton) {
+                targetButton.classList.add('active');
+            }
         }
 
         function refreshData() {
@@ -1445,6 +1739,373 @@
                 document.getElementById('loading-overlay').style.display = 'none';
             }, 1000);
         }
+        
+        function forceHideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+                console.log('⚡ Loading overlay hidden by user');
+            }
+        }
+        
+        // Add escape key listener to hide overlay
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                forceHideLoading();
+            }
+        });
+        
+        // ====== GLOBAL FUNCTION DEFINITIONS ======
+        // Define functions globally so they're accessible to onclick handlers
+        
+        async function toggleAutoTradingJS() {
+            const btn = document.getElementById('auto-trade-btn');
+            const status = document.getElementById('auto-trade-status');
+            
+            if (btn.textContent.includes('Iniciar')) {
+                // Start auto trading
+                try {
+                    console.log('Attempting to start auto trading...');
+                    const response = await fetch('/api/trading/auto-trading/start', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const textResponse = await response.text();
+                        console.error('Non-JSON response:', textResponse);
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    console.log('JSON response:', result);
+                    
+                    if (response.ok && result.success) {
+                        btn.innerHTML = '⏹️ Parar Auto Trading';
+                        btn.className = 'control-btn stop-btn';
+                        status.innerHTML = '🟢 Ativo';
+                        showNotificationSafe('Sucesso', result.message || 'Auto Trading iniciado!', 'success');
+                    } else {
+                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
+                        showNotificationSafe('Erro', 'Erro ao iniciar auto trading: ' + errorMsg, 'error');
+                    }
+                } catch (error) {
+                    console.error('Auto trading start error:', error);
+                    showNotificationSafe('Erro de Conexão', 
+                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
+                        'error');
+                }
+            } else {
+                // Stop auto trading
+                try {
+                    console.log('Attempting to stop auto trading...');
+                    const response = await fetch('/api/trading/auto-trading/stop', { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    console.log('Stop response status:', response.status);
+                    
+                    // Check if response is actually JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        const textResponse = await response.text();
+                        console.error('Non-JSON response:', textResponse);
+                        
+                        // Provide specific error messages based on status
+                        let errorMessage = '';
+                        if (response.status === 404) {
+                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
+                        } else if (response.status === 500) {
+                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
+                        } else if (response.status === 502 || response.status === 503) {
+                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
+                        } else {
+                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
+                        }
+                        
+                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
+                        return;
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Stop JSON response:', result);
+                    
+                    if (response.ok && result.success) {
+                        btn.innerHTML = '🚀 Iniciar Auto Trading';
+                        btn.className = 'control-btn start-btn';
+                        status.innerHTML = '🔴 Inativo';
+                        showNotificationSafe('Aviso', result.message || 'Auto Trading parado!', 'warning');
+                    } else {
+                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
+                        showNotificationSafe('Erro', 'Erro ao parar auto trading: ' + errorMsg, 'error');
+                    }
+                } catch (error) {
+                    console.error('Auto trading stop error:', error);
+                    showNotificationSafe('Erro de Conexão', 
+                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
+                        'error');
+                }
+            }
+        }
+
+        async function activateTestMode() {
+            const btn = document.getElementById('test-mode-btn');
+            const status = document.getElementById('test-mode-status');
+            
+            // Confirm activation
+            if (!confirm('⚠️ ATENÇÃO: O Modo Teste irá executar operações de trading agressivas para testar todo o fluxo do sistema, incluindo stop loss, break even e take profit. Deseja continuar?')) {
+                return;
+            }
+            
+            try {
+                // Disable button and show loading state
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Ativando...';
+                status.innerHTML = '🔄 Ativando';
+                
+                // Make API call to activate test mode
+                const response = await fetch('/api/trading/test-mode/start', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        aggressive_mode: true,
+                        test_all_flows: true,
+                        force_signals: true
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = '🧪 ATIVO';
+                    btn.innerHTML = '🔥 MODO TESTE ATIVO';
+                    btn.classList.remove('test-btn');
+                    btn.classList.add('stop-btn');
+                    btn.onclick = deactivateTestMode;
+                    
+                    showNotificationSafe(
+                        'Modo Teste Ativado', 
+                        `Sistema em modo agressivo. ${result.message || 'Testando fluxo completo de trading.'}`, 
+                        'warning'
+                    );
+                    
+                    // Auto-refresh trading data more frequently during test mode
+                    if (window.testModeRefreshInterval) {
+                        clearInterval(window.testModeRefreshInterval);
+                    }
+                    window.testModeRefreshInterval = setInterval(refreshTradingData, 5000);
+                    
+                } else {
+                    throw new Error(result.error || 'Falha na ativação do modo teste');
+                }
+                
+            } catch (error) {
+                status.innerHTML = '❌ Erro';
+                showNotificationSafe('Erro no Modo Teste', `Falha ao ativar: ${error.message}`, 'error');
+                console.error('Test mode activation failed:', error);
+                
+                // Reset button state
+                btn.innerHTML = '🧪 MODO TESTE';
+                btn.classList.remove('stop-btn');
+                btn.classList.add('test-btn');
+                btn.onclick = activateTestMode;
+                
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function deactivateTestMode() {
+            const btn = document.getElementById('test-mode-btn');
+            const status = document.getElementById('test-mode-status');
+            
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '⏳ Desativando...';
+                status.innerHTML = '🔄 Desativando';
+                
+                const response = await fetch('/api/trading/test-mode/stop', { 
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = '🔴 INATIVO';
+                    btn.innerHTML = '🧪 MODO TESTE';
+                    btn.classList.remove('stop-btn');
+                    btn.classList.add('test-btn');
+                    btn.onclick = activateTestMode;
+                    
+                    showNotificationSafe('Modo Teste Desativado', 
+                        result.message || 'Sistema voltou ao modo normal.', 'info');
+                    
+                    // Clear test mode refresh interval
+                    if (window.testModeRefreshInterval) {
+                        clearInterval(window.testModeRefreshInterval);
+                    }
+                } else {
+                    throw new Error(result.error || 'Falha na desativação do modo teste');
+                }
+                
+            } catch (error) {
+                status.innerHTML = '❌ Erro';
+                showNotificationSafe('Erro no Modo Teste', `Falha ao desativar: ${error.message}`, 'error');
+                console.error('Test mode deactivation failed:', error);
+                
+                // Keep current state if deactivation fails
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Global variables for auto-refresh intervals
+        let tradingDataRefreshInterval = null;
+        let scannerStatusRefreshInterval = null;
+
+        // Global trading data refresh function
+        async function refreshTradingData() {
+            try {
+                console.log('🔄 Fetching trading data...');
+                
+                // Simple fetch from our API
+                const response = await fetch('/api/assets/trading-data?limit=20');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Data received:', data);
+                    
+                    if (data.success && data.trading_data) {
+                        // Simple table update
+                        if (typeof updateTradingTable === 'function') {
+                            updateTradingTable(data.trading_data);
+                        }
+                        
+                        // Update timestamp
+                        const now = new Date();
+                        const timestampElement = document.getElementById('trading-last-update');
+                        if (timestampElement) {
+                            timestampElement.textContent = `Última atualização: ${now.toLocaleTimeString()}`;
+                        }
+                    }
+                } else {
+                    console.error('❌ API error:', response.status);
+                    if (typeof showNotificationSafe === 'function') {
+                        showNotificationSafe('Erro API', `Erro ${response.status} ao buscar dados`, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error:', error);
+                if (typeof showNotificationSafe === 'function') {
+                    showNotificationSafe('Erro de Conexão', error.message, 'error');
+                }
+            }
+        }
+
+        // Auto-refresh functions
+        function startTradingDataAutoRefresh(intervalMs = 30000) {
+            stopTradingDataAutoRefresh(); // Clear any existing interval
+            
+            // Initial refresh
+            refreshTradingData();
+            
+            // Set up periodic refresh
+            tradingDataRefreshInterval = setInterval(() => {
+                if (document.querySelector('.tab-button.active')?.textContent?.includes('Trading')) {
+                    refreshTradingData();
+                }
+            }, intervalMs);
+            
+            if (typeof addActivityLog === 'function') {
+                addActivityLog('🔄', `Auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
+            }
+        }
+
+        function stopTradingDataAutoRefresh() {
+            if (tradingDataRefreshInterval) {
+                clearInterval(tradingDataRefreshInterval);
+                tradingDataRefreshInterval = null;
+                if (typeof addActivityLog === 'function') {
+                    addActivityLog('⏹️', 'Auto-refresh desativado');
+                }
+            }
+        }
+
+        function startScannerStatusAutoRefresh(intervalMs = 15000) {
+            stopScannerStatusAutoRefresh(); // Clear any existing interval
+            
+            // Initial refresh
+            if (typeof refreshScannerStatus === 'function') {
+                refreshScannerStatus();
+            }
+            
+            // Set up periodic refresh
+            scannerStatusRefreshInterval = setInterval(() => {
+                if (typeof refreshScannerStatus === 'function') {
+                    refreshScannerStatus();
+                }
+            }, intervalMs);
+            
+            console.log(`🔍 Scanner auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
+        }
+
+        function stopScannerStatusAutoRefresh() {
+            if (scannerStatusRefreshInterval) {
+                clearInterval(scannerStatusRefreshInterval);
+                scannerStatusRefreshInterval = null;
+                console.log('🔍 Scanner auto-refresh desativado');
+            }
+        }
+        
+        // Make functions globally available immediately
+        window.toggleAutoTradingJS = toggleAutoTradingJS;
+        window.activateTestMode = activateTestMode;
+        window.deactivateTestMode = deactivateTestMode;
+        window.refreshTradingData = refreshTradingData;
+        window.startTradingDataAutoRefresh = startTradingDataAutoRefresh;
+        window.stopTradingDataAutoRefresh = stopTradingDataAutoRefresh;
+        window.startScannerStatusAutoRefresh = startScannerStatusAutoRefresh;
+        window.stopScannerStatusAutoRefresh = stopScannerStatusAutoRefresh;
+        window.showTab = showTab;
         
         // Add event listener for sortable headers
         document.addEventListener('DOMContentLoaded', function() {
@@ -1637,7 +2298,7 @@
         };
 
         // Função para Scan Inicial Completo - TODOS os ativos
-        async function startInitialScan() {
+        window.startInitialScan = async function startInitialScan() {
             try {
                 const btn = document.querySelector('[onclick="startInitialScan()"]');
                 const overlay = document.getElementById('loading-overlay');
@@ -1747,9 +2408,6 @@
                 }, 3000);
             }
         }
-
-        // Tornar função global
-        window.startInitialScan = startInitialScan;
 
         // Force Revalidation Function - Using Optimized Scanner
         async function forceRevalidation() {
@@ -1879,7 +2537,7 @@
             }
         }
         
-        // Activity log function
+        // Enhanced activity log function for trading robot
         function addActivityLog(icon, message, type = 'info') {
             try {
                 const logContainer = document.getElementById('activities-log');
@@ -1891,11 +2549,57 @@
                     placeholder.remove();
                 }
                 
-                // Create new log entry
+                // Create new log entry with timestamp
                 const logEntry = document.createElement('div');
                 logEntry.className = `log-entry ${type}`;
                 
                 const now = new Date();
+                const timeStr = now.toLocaleTimeString('pt-BR');
+                
+                logEntry.innerHTML = `
+                    <div class="log-time">${timeStr}</div>
+                    <div class="log-icon">${icon}</div>
+                    <div class="log-message">${message}</div>
+                `;
+                
+                // Add to beginning of log (most recent first)
+                logContainer.insertBefore(logEntry, logContainer.firstChild);
+                
+                // Keep only last 20 entries to avoid memory issues
+                const entries = logContainer.querySelectorAll('.log-entry');
+                if (entries.length > 20) {
+                    entries[entries.length - 1].remove();
+                }
+                
+                console.log(`📝 Activity logged: ${icon} ${message}`);
+                
+            } catch (error) {
+                console.error('Error adding activity log:', error);
+            }
+        }
+
+        // Trading-specific activity logging functions
+        function logTradingActivity(symbol, action, details = '') {
+            const icon = action === 'BUY' ? '📈' : action === 'SELL' ? '📉' : '🔄';
+            const message = `${action} ${symbol} ${details}`.trim();
+            addActivityLog(icon, message, 'trading');
+        }
+
+        function logSystemActivity(message, level = 'info') {
+            const icons = {
+                'info': 'ℹ️',
+                'success': '✅', 
+                'warning': '⚠️',
+                'error': '❌',
+                'signal': '🎯'
+            };
+            addActivityLog(icons[level] || 'ℹ️', message, level);
+        }
+
+        function logRiskManagement(symbol, action, oldValue, newValue) {
+            const message = `${symbol}: ${action} ${oldValue} → ${newValue}`;
+            addActivityLog('🛡️', message, 'risk');
+        }
                 logEntry.innerHTML = `
                     <div class="log-time">${now.toLocaleTimeString('pt-BR')}</div>
                     <div class="log-icon">${icon}</div>
@@ -1938,120 +2642,7 @@
         window.clearActivityLog = clearActivityLog;
         window.addActivityLog = addActivityLog;
         
-        // Trading Tab Functions
-        async function toggleAutoTradingJS() {
-            const btn = document.getElementById('auto-trade-btn');
-            const status = document.getElementById('auto-trade-status');
-            
-            if (btn.textContent.includes('Iniciar')) {
-                // Start auto trading
-                try {
-                    console.log('Attempting to start auto trading...');
-                    const response = await fetch('/api/trading/auto-trading/start', { 
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    
-                    console.log('Response status:', response.status);
-                    console.log('Response headers:', response.headers);
-                    
-                    // Check if response is actually JSON
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const textResponse = await response.text();
-                        console.error('Non-JSON response:', textResponse);
-                        
-                        // Provide specific error messages based on status
-                        let errorMessage = '';
-                        if (response.status === 404) {
-                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
-                        } else if (response.status === 500) {
-                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
-                        } else if (response.status === 502 || response.status === 503) {
-                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
-                        } else {
-                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
-                        }
-                        
-                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
-                        return;
-                    }
-                    
-                    const result = await response.json();
-                    console.log('JSON response:', result);
-                    
-                    if (response.ok && result.success) {
-                        btn.innerHTML = '⏹️ Parar Auto Trading';
-                        btn.className = 'control-btn stop-btn';
-                        status.innerHTML = '🟢 Ativo';
-                        showNotificationSafe('Sucesso', result.message || 'Auto Trading iniciado!', 'success');
-                    } else {
-                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
-                        showNotificationSafe('Erro', 'Erro ao iniciar auto trading: ' + errorMsg, 'error');
-                    }
-                } catch (error) {
-                    console.error('Auto trading start error:', error);
-                    showNotificationSafe('Erro de Conexão', 
-                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
-                        'error');
-                }
-            } else {
-                // Stop auto trading
-                try {
-                    console.log('Attempting to stop auto trading...');
-                    const response = await fetch('/api/trading/auto-trading/stop', { 
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
-                    
-                    console.log('Stop response status:', response.status);
-                    
-                    // Check if response is actually JSON
-                    const contentType = response.headers.get('content-type');
-                    if (!contentType || !contentType.includes('application/json')) {
-                        const textResponse = await response.text();
-                        console.error('Non-JSON response:', textResponse);
-                        
-                        // Provide specific error messages based on status
-                        let errorMessage = '';
-                        if (response.status === 404) {
-                            errorMessage = 'Endpoint não encontrado. Verifique se o backend está atualizado.';
-                        } else if (response.status === 500) {
-                            errorMessage = 'Erro interno do servidor. Verifique os logs do backend.';
-                        } else if (response.status === 502 || response.status === 503) {
-                            errorMessage = 'Servidor temporariamente indisponível. Tente novamente em alguns segundos.';
-                        } else {
-                            errorMessage = `Resposta inválida do servidor. Status: ${response.status}`;
-                        }
-                        
-                        showNotificationSafe('Erro de Servidor', errorMessage, 'error');
-                        return;
-                    }
-                    
-                    const result = await response.json();
-                    console.log('Stop JSON response:', result);
-                    
-                    if (response.ok && result.success) {
-                        btn.innerHTML = '🚀 Iniciar Auto Trading';
-                        btn.className = 'control-btn start-btn';
-                        status.innerHTML = '🔴 Inativo';
-                        showNotificationSafe('Aviso', result.message || 'Auto Trading parado!', 'warning');
-                    } else {
-                        const errorMsg = result.detail || result.message || 'Erro desconhecido';
-                        showNotificationSafe('Erro', 'Erro ao parar auto trading: ' + errorMsg, 'error');
-                    }
-                } catch (error) {
-                    console.error('Auto trading stop error:', error);
-                    showNotificationSafe('Erro de Conexão', 
-                        `Falha na conexão com o servidor: ${error.message}. Verifique se o backend está rodando.`, 
-                        'error');
-                }
-            }
-        }
+        // Trading Tab Functions - moved to global scope above
         
         async function testAPIConnection() {
             const statusSpan = document.getElementById('connection-status');
@@ -2122,7 +2713,7 @@
             }
         }
         
-        // ====== TEST MODE ACTIVATION ======
+        // ====== TEST MODE ACTIVATION - moved to global scope above ======
         
         async function activateTestMode() {
             const btn = document.getElementById('test-mode-btn');
@@ -2247,115 +2838,10 @@
             }
         }
         
-        // ====== COMPREHENSIVE TRADING DATA INTEGRATION ======
+        // ====== SIMPLE TRADING DATA UPDATE - KISS PRINCIPLE ======
+        // refreshTradingData function moved to global scope above
         
-        async function refreshTradingData() {
-            try {
-                showLoadingIndicator('Atualizando dados de trading...');
-                
-                // Fetch multiple data sources concurrently for comprehensive update
-                const [liveDataResponse, summaryResponse, positionsResponse] = await Promise.all([
-                    fetch('/api/trading/live-data?limit=50'),
-                    fetch('/api/trading/summary'),
-                    fetch('/api/trading/positions')
-                ]).catch(error => {
-                    console.error('Error fetching trading data:', error);
-                    return [null, null, null];
-                });
-                
-                let hasData = false;
-                
-                // Process live trading data
-                if (liveDataResponse && liveDataResponse.ok) {
-                    const liveData = await liveDataResponse.json();
-                    if (liveData.success && liveData.trading_data) {
-                        updateTradingTable(liveData.trading_data);
-                        hasData = true;
-                    }
-                } else if (liveDataResponse && (liveDataResponse.status === 424 || liveDataResponse.status === 500)) {
-                    // Handle 424 Failed Dependency or 500 - scan required
-                    const errorData = await liveDataResponse.json();
-                    console.warn('Trading data requires initial scan:', errorData);
-                    
-                    // Check if it's the specific "no_valid_symbols" error
-                    let detail = errorData.detail || errorData;
-                    if (typeof detail === 'string' && detail.includes('no_valid_symbols')) {
-                        // Parse the nested error structure
-                        try {
-                            const match = detail.match(/\{"error":\s*"no_valid_symbols"[^}]+\}/);
-                            if (match) {
-                                const parsedError = JSON.parse(match[0]);
-                                detail = parsedError;
-                            }
-                        } catch (e) {
-                            console.warn('Could not parse nested error:', e);
-                        }
-                    }
-                    
-                    // Show prominent notification
-                    showNotificationSafe(
-                        '🔍 Scan Inicial Necessário', 
-                        'Os dados de trading não estão disponíveis. Execute o scan inicial para descobrir ativos válidos.', 
-                        'warning'
-                    );
-                    
-                    // Show user-friendly message in table
-                    updateTradingTableWithScanRequired(detail);
-                    return; // Don't proceed with other data
-                }
-                
-                // Process trading summary
-                if (summaryResponse && summaryResponse.ok) {
-                    const summaryData = await summaryResponse.json();
-                    if (summaryData.success) {
-                        updateTradingSummary(summaryData.summary);
-                        hasData = true;
-                    }
-                }
-                
-                // Process positions data
-                if (positionsResponse && positionsResponse.ok) {
-                    const positionsData = await positionsResponse.json();
-                    if (positionsData.success) {
-                        updatePositionsDisplay(positionsData.positions);
-                        hasData = true;
-                    }
-                }
-                
-                // Update timestamp and show success message
-                const now = new Date();
-                document.getElementById('trading-last-update').textContent = 
-                    `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
-                
-                if (hasData) {
-                    showNotificationSafe('Sucesso', 'Dados de trading atualizados!', 'success');
-                } else {
-                    showNotificationSafe('Aviso', 'Nenhum dado de trading disponível', 'warning');
-                }
-                
-                hideLoadingIndicator();
-                
-            } catch (error) {
-                console.error('Error refreshing trading data:', error);
-                
-                // Check if error message contains scan requirement info
-                if (error.message && error.message.includes('no_valid_symbols')) {
-                    showNotificationSafe(
-                        '🔍 Scan Inicial Necessário', 
-                        'Falha ao carregar dados - execute o scan inicial primeiro.', 
-                        'warning'
-                    );
-                    updateTradingTableWithScanRequired({ 
-                        message: 'Erro de conexão - possivelmente scan inicial necessário',
-                        suggestion: 'Verifique se o servidor está rodando e execute o scan inicial.'
-                    });
-                } else {
-                    showNotificationSafe('Erro de Conexão', error.message, 'error');
-                }
-                
-                hideLoadingIndicator();
-            }
-        }
+        // Duplicate function definition removed - using global definition
         
         // ====== TRADING DATA DISPLAY FUNCTIONS ======
         
@@ -2381,8 +2867,31 @@
                 // Clear existing data
                 tbody.innerHTML = '';
                 
-                // Populate table with trading data
-                tradingData.forEach(asset => {
+                // Transform API data to expected format and populate table
+                tradingData.forEach(apiAsset => {
+                    // Map API response format to expected frontend format
+                    const asset = {
+                        symbol: apiAsset.symbol,
+                        timestamp: apiAsset.timestamp,
+                        timeframe_2h: {
+                            rsi: apiAsset.rsi_2h,
+                            mm1: apiAsset.mm1_2h,
+                            center: apiAsset.center_2h,
+                            candle: apiAsset.ma_direction_2h === 'ABOVE' ? '🟢' : '🔴'
+                        },
+                        timeframe_4h: {
+                            rsi: apiAsset.rsi_4h,
+                            mm1: apiAsset.mm1_4h,
+                            center: apiAsset.center_4h,
+                            candle: apiAsset.ma_direction_4h === 'ABOVE' ? '🟢' : '🔴'
+                        },
+                        signal: apiAsset.signal_2h === 'BUY' ? 'COMPRA' : 
+                               apiAsset.signal_2h === 'SELL' ? 'VENDA' : 'NEUTRO',
+                        signal_strength: apiAsset.signal_strength,
+                        rules_triggered: apiAsset.rules_triggered,
+                        last_signal_time: apiAsset.last_signal_time
+                    };
+                    
                     const row = createTradingDataRow(asset);
                     tbody.appendChild(row);
                 });
@@ -2646,23 +3155,134 @@
         // Risk Management Functions
         async function updateAllRiskManagement() {
             try {
-                const response = await fetch('/api/trading/risk-management/update-all', { method: 'POST' });
-                const result = await response.json();
+                console.log('🔄 Updating risk management and positions...');
+                
+                // Get positions data from the correct endpoint
+                const response = await fetch('/api/positions?limit=20');
                 
                 if (response.ok) {
+                    const positionsData = await response.json();
+                    console.log('✅ Positions data loaded:', positionsData);
+                    
+                    // Update positions table
+                    updatePositionsTable(positionsData);
+                    
                     const now = new Date();
                     document.getElementById('last-risk-update').textContent = 
                         `Última atualização: ${now.toLocaleTimeString('pt-BR')}`;
                     
-                    showNotificationSafe('Risk Management', result.message, 'success');
+                    addActivityLog('📈', `${positionsData.data?.length || 0} posições ativas carregadas`);
                     
-                    // Refresh positions table
-                    refreshTradingData();
+                    showNotificationSafe('Posições', 'Dados de posições atualizados com sucesso', 'success');
                 } else {
-                    showNotificationSafe('Erro', 'Erro ao atualizar risk management: ' + result.detail, 'error');
+                    console.error('Failed to fetch positions:', response.status);
+                    showNotificationSafe('Erro', 'Erro ao carregar posições ativas', 'error');
                 }
             } catch (error) {
+                console.error('Error updating risk management:', error);
                 showNotificationSafe('Erro de Conexão', error.message, 'error');
+            }
+        }
+
+        // Update positions table with data from /api/positions
+        function updatePositionsTable(positionsData) {
+            try {
+                const positionsTable = document.getElementById('positions-table');
+                const tbody = positionsTable ? positionsTable.querySelector('tbody') : null;
+                
+                if (!tbody) {
+                    console.warn('Positions table tbody not found');
+                    return;
+                }
+
+                // Clear existing rows
+                tbody.innerHTML = '';
+
+                // Check if we have position data
+                const positions = positionsData.data || [];
+                
+                if (positions.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" style="text-align: center; padding: 20px;">
+                                <div class="empty-state">
+                                    📊 Nenhuma posição ativa no momento
+                                    <br><small>As posições abertas aparecerão aqui automaticamente</small>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Populate table with positions
+                positions.forEach(position => {
+                    const row = document.createElement('tr');
+                    row.setAttribute('data-position-id', position.id || 'unknown');
+                    
+                    // Calculate P&L
+                    const pnl = position.unrealized_pnl || 0;
+                    const pnlPercentage = position.pnl_percentage || 0;
+                    const pnlClass = pnl >= 0 ? 'profit' : 'loss';
+                    const pnlIcon = pnl >= 0 ? '📈' : '📉';
+
+                    // Format values
+                    const entryPrice = position.entry_price ? `$${parseFloat(position.entry_price).toFixed(2)}` : '-';
+                    const currentPrice = position.current_price ? `$${parseFloat(position.current_price).toFixed(2)}` : '-';
+                    const stopLoss = position.stop_loss ? `$${parseFloat(position.stop_loss).toFixed(2)}` : '-';
+                    const quantity = position.quantity ? parseFloat(position.quantity).toFixed(4) : '0';
+
+                    row.innerHTML = `
+                        <td class="asset-cell">
+                            <strong>${position.symbol || 'N/A'}</strong>
+                        </td>
+                        <td class="side-cell ${position.side?.toLowerCase() || 'neutral'}">
+                            ${position.side || 'N/A'}
+                        </td>
+                        <td class="price-cell">${entryPrice}</td>
+                        <td class="price-cell">${currentPrice}</td>
+                        <td class="pnl-cell ${pnlClass}">
+                            ${pnlIcon} $${pnl.toFixed(2)} (${pnlPercentage.toFixed(1)}%)
+                        </td>
+                        <td class="stop-loss-cell">${stopLoss}</td>
+                        <td class="sl-status-cell">
+                            <span class="sl-status ${position.sl_status?.toLowerCase() || 'active'}">${position.sl_status || 'ATIVO'}</span>
+                        </td>
+                        <td class="quantity-cell">${quantity}</td>
+                        <td class="duration-cell">${position.duration || '-'}</td>
+                        <td class="actions-cell">
+                            <div class="action-buttons">
+                                <button onclick="closePosition('${position.id}')" class="btn-close" title="Fechar Posição">
+                                    ❌
+                                </button>
+                                <button onclick="adjustStopLoss('${position.id}')" class="btn-adjust" title="Ajustar Stop Loss">
+                                    🎯
+                                </button>
+                                <button onclick="executeTakeProfit('${position.id}')" class="btn-profit" title="Take Profit">
+                                    💰
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(row);
+                });
+
+                // Update summary info
+                const totalPnl = positions.reduce((sum, pos) => sum + (pos.unrealized_pnl || 0), 0);
+                const activeCount = positions.length;
+                
+                // Update dashboard cards if they exist
+                const openPositionsEl = document.getElementById('open-positions');
+                const totalPnlEl = document.getElementById('total-pnl');
+                
+                if (openPositionsEl) openPositionsEl.textContent = activeCount;
+                if (totalPnlEl) totalPnlEl.textContent = `$${totalPnl.toFixed(2)}`;
+
+                console.log(`✅ Updated positions table with ${activeCount} positions, total P&L: $${totalPnl.toFixed(2)}`);
+                
+            } catch (error) {
+                console.error('Error updating positions table:', error);
             }
         }
         
@@ -2796,9 +3416,7 @@
             }
         }
         
-        // Make trading functions globally available
-        window.toggleAutoTradingJS = toggleAutoTradingJS;
-        window.refreshTradingData = refreshTradingData;
+        // Make trading functions globally available (toggleAutoTradingJS, activateTestMode, deactivateTestMode, refreshTradingData now defined globally above)
         window.filterTradingData = filterTradingData;
         window.executeSignalTrade = executeSignalTrade;
         
@@ -2808,6 +3426,201 @@
         window.adjustStopLoss = adjustStopLoss;
         window.executeTakeProfit = executeTakeProfit;
         window.updateTrailingStop = updateTrailingStop;
+        
+        // ====== REAL-TIME SIGNAL HANDLING FUNCTIONS ======
+        
+        // Update trading table with real-time signal
+        function updateTradingTableWithSignal(signalData) {
+            try {
+                const symbol = signalData.symbol;
+                const signalType = signalData.signal_type || 'NEUTRAL';
+                const confidence = signalData.confidence || 0;
+                
+                console.log(`🎯 Updating table with real-time signal: ${symbol} ${signalType} (${(confidence * 100).toFixed(1)}%)`);
+                
+                // Find the row for this symbol
+                const tbody = document.getElementById('trading-data-tbody');
+                if (!tbody) return;
+                
+                // Look for existing row with this symbol
+                const rows = tbody.querySelectorAll('tr');
+                let targetRow = null;
+                
+                for (let row of rows) {
+                    const assetCell = row.querySelector('.asset-cell strong');
+                    if (assetCell && assetCell.textContent === symbol) {
+                        targetRow = row;
+                        break;
+                    }
+                }
+                
+                if (targetRow) {
+                    // Update existing row with new signal
+                    updateRowWithSignal(targetRow, signalData);
+                } else {
+                    // Add new row if symbol not found
+                    addNewRowWithSignal(tbody, signalData);
+                }
+                
+                // Show notification for valid signals
+                if (signalType !== 'NEUTRAL' && confidence >= 0.4) {
+                    const signalIcon = signalType === 'BUY' ? '📈' : '📉';
+                    showNotificationSafe('Novo Sinal', 
+                        `${signalIcon} ${symbol}: ${signalType} (${(confidence * 100).toFixed(1)}%)`, 
+                        'info');
+                }
+                
+                // Update activity log
+                addActivityLog('🎯', `Sinal tempo real: ${symbol} ${signalType}`);
+                
+            } catch (error) {
+                console.error('Error updating table with signal:', error);
+            }
+        }
+        
+        // Update existing row with signal data
+        function updateRowWithSignal(row, signalData) {
+            try {
+                const signalType = signalData.signal_type || 'NEUTRAL';
+                const confidence = signalData.confidence || 0;
+                const timestamp = new Date().toLocaleTimeString('pt-BR');
+                
+                // Update signal column (last column)
+                const signalCell = row.querySelector('td:last-child');
+                if (signalCell) {
+                    const signalClass = signalType === 'BUY' ? 'signal-buy' : 
+                                      signalType === 'SELL' ? 'signal-sell' : 'signal-neutral';
+                    const signalIcon = signalType === 'BUY' ? '📈' : 
+                                     signalType === 'SELL' ? '📉' : '〰️';
+                    
+                    signalCell.className = `signal-cell ${signalClass}`;
+                    signalCell.innerHTML = `
+                        <div class="signal-indicator">
+                            <span class="signal-icon">${signalIcon}</span>
+                            <span class="signal-text">${signalType}</span>
+                            <div class="signal-meta">
+                                <small>${(confidence * 100).toFixed(0)}%</small>
+                                <small>${timestamp}</small>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add visual highlight to the row for new signals
+                if (signalType !== 'NEUTRAL') {
+                    row.classList.add('signal-updated');
+                    setTimeout(() => row.classList.remove('signal-updated'), 3000);
+                }
+                
+                // Update current price if available
+                if (signalData.current_price) {
+                    const priceCell = row.querySelector('.price-cell');
+                    if (priceCell) {
+                        priceCell.textContent = `$${parseFloat(signalData.current_price).toFixed(4)}`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error updating row with signal:', error);
+            }
+        }
+        
+        // Add new row for signal if symbol not found
+        function addNewRowWithSignal(tbody, signalData) {
+            try {
+                const symbol = signalData.symbol;
+                const signalType = signalData.signal_type || 'NEUTRAL';
+                const confidence = signalData.confidence || 0;
+                const currentPrice = signalData.current_price || 0;
+                const timestamp = new Date().toLocaleTimeString('pt-BR');
+                
+                const signalClass = signalType === 'BUY' ? 'signal-buy' : 
+                                  signalType === 'SELL' ? 'signal-sell' : 'signal-neutral';
+                const signalIcon = signalType === 'BUY' ? '📈' : 
+                                 signalType === 'SELL' ? '📉' : '〰️';
+                
+                const row = document.createElement('tr');
+                row.className = 'trading-data-row signal-updated';
+                row.innerHTML = `
+                    <td class="asset-cell">
+                        <strong>${symbol}</strong>
+                        <small>${timestamp}</small>
+                    </td>
+                    <td class="price-cell">${currentPrice ? `$${parseFloat(currentPrice).toFixed(4)}` : '-'}</td>
+                    <td class="price-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="candle-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="candle-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="price-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="rsi-cell">-</td>
+                    <td class="${signalClass}">
+                        <div class="signal-indicator">
+                            <span class="signal-icon">${signalIcon}</span>
+                            <span class="signal-text">${signalType}</span>
+                            <div class="signal-meta">
+                                <small>${(confidence * 100).toFixed(0)}%</small>
+                                <small>${timestamp}</small>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                
+                // Insert at the top of the table
+                tbody.insertBefore(row, tbody.firstChild);
+                
+                // Remove highlight after 3 seconds
+                setTimeout(() => row.classList.remove('signal-updated'), 3000);
+                
+                console.log(`➕ Added new row for signal: ${symbol} ${signalType}`);
+                
+            } catch (error) {
+                console.error('Error adding new row with signal:', error);
+            }
+        }
+        
+        // General real-time signal handler
+        function handleRealtimeSignal(signalData) {
+            try {
+                console.log('🎯 Real-time signal received:', signalData);
+                
+                // Update trading table if visible
+                if (document.getElementById('trading-data-tbody')) {
+                    updateTradingTableWithSignal(signalData);
+                }
+                
+                // Update signal counters if available
+                const signalsCount = document.getElementById('signals-count');
+                if (signalsCount) {
+                    const currentCount = parseInt(signalsCount.textContent) || 0;
+                    signalsCount.textContent = currentCount + 1;
+                }
+                
+                // Trigger any custom signal handlers
+                if (window.onRealtimeSignal && typeof window.onRealtimeSignal === 'function') {
+                    window.onRealtimeSignal(signalData);
+                }
+                
+            } catch (error) {
+                console.error('Error handling real-time signal:', error);
+            }
+        }
+        
+        // Make signal handling functions globally available
+        window.updateTradingTableWithSignal = updateTradingTableWithSignal;
+        window.handleRealtimeSignal = handleRealtimeSignal;
         
         
     </script>
@@ -2902,38 +3715,84 @@
     async function initializeDashboard() {
         try {
             console.log('🚀 Initializing dashboard with optimized data loading...');
-            const response = await fetch('/api/dashboard/init');
+            
+            // Use the correct dashboard summary endpoint
+            const response = await fetch('/api/dashboard/summary');
             
             if (!response.ok) {
-                console.error('Failed to fetch dashboard init data:', response.status);
+                console.error('Failed to fetch dashboard summary data:', response.status);
                 // Fallback to old method
                 await refreshScannerStatus();
                 return;
             }
             
             const data = await response.json();
-            console.log('✅ Dashboard data loaded:', data);
+            console.log('✅ Dashboard summary data loaded:', data);
             
-            // Update scanner activity with the loaded data
-            updateScannerActivity({
-                active: data.scanner_status.scanning_active,
-                monitored_assets: data.scanner_status.monitored_assets,
-                signals_detected: data.scanner_status.signals_count,
-                next_scan: formatNextScanTime(data.scanner_status.scan_interval)
-            });
-            
-            // Update system status
-            if (data.system_status.initialized) {
-                updateRobotStatus('active', 'Sistema Operacional', 100);
-                addActivityLog('✅', 'Sistema inicializado com sucesso - Todos os componentes ativos');
+            // Update dashboard with the summary data
+            if (data) {
+                updateDashboardWithSummary(data);
             }
+            
+            // Also refresh trading data
+            await refreshTradingData();
             
             console.log('🎯 Dashboard initialization completed successfully');
             
         } catch (error) {
             console.error('Error initializing dashboard:', error);
-            // Fallback to old method
+            // Fallback to basic refresh
             await refreshScannerStatus();
+        }
+    }
+
+    // Update dashboard with summary data from /api/dashboard/summary
+    function updateDashboardWithSummary(data) {
+        try {
+            console.log('🎯 Updating dashboard with summary data:', data);
+            
+            // Update robot status based on system state
+            if (data.system_health === 'ok' && data.robot_state === 'active') {
+                updateRobotStatus('active', 'Sistema Operacional', 100);
+                addActivityLog('✅', `Sistema ativo - ${data.selected_symbols} símbolos monitorados`);
+            } else if (data.system_health === 'degraded') {
+                updateRobotStatus('warning', 'Sistema Degradado', 75);
+                addActivityLog('⚠️', 'Sistema com performance degradada');
+            } else {
+                updateRobotStatus('inactive', 'Sistema Inativo', 0);
+                addActivityLog('❌', 'Sistema inativo ou com problemas');
+            }
+
+            // Update scanner activity
+            updateScannerActivity({
+                active: data.scanner_active,
+                monitored_assets: data.selected_symbols || 0,
+                signals_detected: data.symbols_with_signals || 0,
+                next_scan: data.scanner_active ? 'Em execução' : 'Pausado'
+            });
+
+            // Update performance metrics
+            updatePerformanceMetrics({
+                total_pnl: data.total_pnl || 0,
+                pnl_percentage: data.pnl_percentage || 0,
+                account_balance: data.account_balance || 0,
+                unrealized_pnl: data.total_unrealized_pnl || 0,
+                trades_today: data.recent_trades_count || 0,
+                open_positions: data.summary?.active_positions || 0
+            });
+
+            // Update position information
+            updatePositionsInfo({
+                count: data.summary?.active_positions || 0,
+                total_value: data.total_position_value || 0,
+                margin_used: data.margin_used || 0
+            });
+
+            // Log summary information
+            addActivityLog('📊', `Dashboard atualizado - ${data.selected_symbols} ativos, ${data.symbols_with_signals} sinais`);
+            
+        } catch (error) {
+            console.error('Error updating dashboard with summary:', error);
         }
     }
 
@@ -3123,6 +3982,40 @@
         }
     }
     
+    // Manual refresh function for the button
+    async function refreshDashboard() {
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '⟳ Atualizando...';
+        }
+        
+        try {
+            console.log('🔄 Manual refresh requested');
+            
+            // Refresh all data
+            await initializeDashboard();
+            await refreshScannerStatus();
+            
+            // Update last action
+            const lastActionEl = document.getElementById('last-action');
+            if (lastActionEl) {
+                const now = new Date();
+                lastActionEl.textContent = `Última ação: Atualização manual - ${now.toLocaleTimeString()}`;
+            }
+            
+            console.log('✅ Manual refresh completed');
+            
+        } catch (error) {
+            console.error('❌ Error during manual refresh:', error);
+        } finally {
+            if (refreshBtn) {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '🔄 Atualizar';
+            }
+        }
+    }
+    
     // Initialize robot dashboard
     async function initializeRobotDashboard() {
         console.log('🤖 Inicializando Robot Dashboard...');
@@ -3133,22 +4026,7 @@
         let tradingDataRefreshInterval = null;
         let scannerStatusRefreshInterval = null;
         
-        // Start auto-refresh for trading data
-        function startTradingDataAutoRefresh(intervalMs = 30000) { // 30 seconds default
-            stopTradingDataAutoRefresh(); // Clear any existing interval
-            
-            // Initial refresh
-            refreshTradingData();
-            
-            // Set up periodic refresh
-            tradingDataRefreshInterval = setInterval(() => {
-                if (document.querySelector('.tab-button.active')?.textContent?.includes('Trading')) {
-                    refreshTradingData();
-                }
-            }, intervalMs);
-            
-            addActivityLog('🔄', `Auto-refresh ativado: atualizações a cada ${intervalMs/1000}s`);
-        }
+        // Start auto-refresh for trading data - function moved to global scope above
         
         // Start auto-refresh for scanner status
         function startScannerStatusAutoRefresh(intervalMs = 15000) { // 15 seconds default
@@ -3166,26 +4044,11 @@
         }
         
         // Stop auto-refresh for trading data
-        function stopTradingDataAutoRefresh() {
-            if (tradingDataRefreshInterval) {
-                clearInterval(tradingDataRefreshInterval);
-                tradingDataRefreshInterval = null;
-                addActivityLog('⏹️', 'Auto-refresh desativado');
-            }
-        }
-        
-        // Stop auto-refresh for scanner status
-        function stopScannerStatusAutoRefresh() {
-            if (scannerStatusRefreshInterval) {
-                clearInterval(scannerStatusRefreshInterval);
-                scannerStatusRefreshInterval = null;
-                console.log('🔍 Scanner auto-refresh desativado');
-            }
-        }
+        // Stop functions moved to global scope above
         
         // Enhanced tab switching with auto-refresh management  
         const originalShowTab = window.showTab;
-        window.showTab = function(tabName) {
+        window.showTab = async function(tabName) {
             // Call original function if it exists
             if (originalShowTab) originalShowTab(tabName);
             
@@ -3206,13 +4069,27 @@
             
             // Handle tab-specific logic
             if (tabName === 'trading') {
-                // Start auto-refresh for trading tab
+                // Subscribe to trading data channels for real-time updates
+                if (window.wsClient && window.wsClient.isConnected) {
+                    window.wsClient.subscribe('trading_data');
+                    window.wsClient.subscribe('trading_signals');
+                    console.log('Subscribed to trading data channels');
+                }
+                
+                // Start auto-refresh for trading tab (as fallback)
                 startTradingDataAutoRefresh(30000); // 30 seconds
                 
                 // Initial data load
-                refreshTradingData();
-                addActivityLog('📊', 'Aba de Trading ativada - carregando dados...');
+                await refreshTradingData();
+                addActivityLog('📊', 'Aba de Trading ativada - dados em tempo real habilitados');
             } else {
+                // Unsubscribe from trading channels when leaving trading tab
+                if (window.wsClient && window.wsClient.isConnected) {
+                    window.wsClient.unsubscribe('trading_data');
+                    window.wsClient.unsubscribe('trading_signals');
+                    console.log('Unsubscribed from trading data channels');
+                }
+                
                 // Stop auto-refresh when switching away from trading tab
                 stopTradingDataAutoRefresh();
             }
@@ -3248,12 +4125,8 @@
             }
         }
         
-        // Make functions globally available
+        // Make functions globally available (startTradingDataAutoRefresh, stopTradingDataAutoRefresh, startScannerStatusAutoRefresh now defined globally above)
         window.closePosition = closePosition;
-        window.startTradingDataAutoRefresh = startTradingDataAutoRefresh;
-        window.stopTradingDataAutoRefresh = stopTradingDataAutoRefresh;
-        window.startScannerStatusAutoRefresh = startScannerStatusAutoRefresh;
-        window.stopScannerStatusAutoRefresh = stopScannerStatusAutoRefresh;
         window.refreshScannerStatus = refreshScannerStatus;
         window.updateScannerActivity = updateScannerActivity;
         
@@ -3265,7 +4138,8 @@
         await initializeDashboard();
         startScannerStatusAutoRefresh(); // Auto-refresh scanner status every 15 seconds
         
-        // Initialize positions
+        // Initialize positions from API
+        await updateAllRiskManagement();
         updatePositionsInfo({ 
             count: 0, 
             total_value: 0, 
