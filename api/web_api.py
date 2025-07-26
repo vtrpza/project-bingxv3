@@ -1046,7 +1046,7 @@ async def get_asset_validation_table(
                     # Validation metadata
                     "last_updated": asset.last_validation.isoformat() if asset.last_validation else utc_now().isoformat(),
                     "validation_duration": val_data.get('validation_duration', 0),
-                    "validation_reasons": list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else [],
+                    "validation_reasons": val_data.get('validation_checks', []) if isinstance(val_data.get('validation_checks'), list) else list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else [],
                     
                     # Risk assessment for analysis
                     "risk_level": _calculate_risk_level(market_summary) if market_summary else "UNKNOWN",
@@ -4684,11 +4684,16 @@ def _calculate_data_quality(validation_data: dict) -> int:
     try:
         score = 50  # Base score
         
-        # Validation checks
-        checks = validation_data.get('validation_checks', {})
-        if len(checks) >= 3:
+        # Validation checks (handle both dict and list formats)
+        checks = validation_data.get('validation_checks', [])
+        if isinstance(checks, list):
+            check_count = len(checks)
+        else:
+            check_count = len(checks) if isinstance(checks, dict) else 0
+            
+        if check_count >= 3:
             score += 20
-        elif len(checks) >= 1:
+        elif check_count >= 1:
             score += 10
         
         # Market summary data
