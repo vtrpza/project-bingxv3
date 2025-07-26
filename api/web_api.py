@@ -4684,11 +4684,16 @@ def _calculate_data_quality(validation_data: dict) -> int:
     try:
         score = 50  # Base score
         
-        # Validation checks
-        checks = validation_data.get('validation_checks', {})
-        if len(checks) >= 3:
+        # Validation checks (handle both dict and list formats)
+        checks = validation_data.get('validation_checks', [])
+        if isinstance(checks, list):
+            check_count = len(checks)
+        else:
+            check_count = len(checks) if isinstance(checks, dict) else 0
+            
+        if check_count >= 3:
             score += 20
-        elif len(checks) >= 1:
+        elif check_count >= 1:
             score += 10
         
         # Market summary data
