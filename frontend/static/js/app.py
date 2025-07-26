@@ -831,7 +831,7 @@ class TradingBotApp:
         """Update active trading signals from signal processor"""
         try:
             # Get active signals from the signal processor
-            signals_data = await api_client.get("/signals/active")
+            signals_data = await api_client.get_active_signals()
             if signals_data and signals_data.get("success"):
                 signals = signals_data.get("signals", [])
                 self.update_signals_display(signals)
@@ -886,7 +886,7 @@ class TradingBotApp:
                             <div class="signal-rules">Regras: {rules_text}</div>
                         </div>
                         <div class="signal-actions">
-                            <button onclick="executeSignalTrade('{symbol}', '{signal_type}', {{}})" 
+                            <button onclick='executeSignalTrade("{symbol}", "{signal_type}", {{}})' 
                                     class="signal-execute-btn">
                                 📈 Executar Trade
                             </button>

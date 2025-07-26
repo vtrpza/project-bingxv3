@@ -2599,7 +2599,7 @@
         function logRiskManagement(symbol, action, oldValue, newValue) {
             const message = `${symbol}: ${action} ${oldValue} → ${newValue}`;
             addActivityLog('🛡️', message, 'risk');
-        }
+        
                 logEntry.innerHTML = `
                     <div class="log-time">${now.toLocaleTimeString('pt-BR')}</div>
                     <div class="log-icon">${icon}</div>
@@ -2614,10 +2614,6 @@
                 if (entries.length > 50) {
                     entries[entries.length - 1].remove();
                 }
-                
-            } catch (error) {
-                console.error('Error adding activity log:', error);
-            }
         }
         
         // Clear activity log function
