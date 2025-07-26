@@ -1046,7 +1046,7 @@ async def get_asset_validation_table(
                     # Validation metadata
                     "last_updated": asset.last_validation.isoformat() if asset.last_validation else utc_now().isoformat(),
                     "validation_duration": val_data.get('validation_duration', 0),
-                    "validation_reasons": list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else [],
+                    "validation_reasons": val_data.get('validation_checks', []) if isinstance(val_data.get('validation_checks'), list) else list(val_data.get('validation_checks', {}).keys()) if val_data.get('validation_checks') else [],
                     
                     # Risk assessment for analysis
                     "risk_level": _calculate_risk_level(market_summary) if market_summary else "UNKNOWN",
