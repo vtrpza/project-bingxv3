@@ -51,8 +51,217 @@ class SignalGenerator:
     
     def __init__(self):
         self.config = TradingConfig()
-        self.indicators = get_technical_indicators()
-        self.volume_analyzer = get_volume_analyzer()
+        from analysis.indicators import TechnicalIndicators
+        self.indicators = TechnicalIndicators()
+        # Volume analyzer initialization can be added later if needed
+    
+    def generate_signal_sync(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Generate real trading signal using live market data from BingX API."""
+        try:
+            # Get real market data from BingX using thread pool to avoid event loop conflicts
+            from api.client import get_client
+            import asyncio
+            import concurrent.futures
+            
+            client = get_client()
+            if not client._initialized:
+                logger.warning(f"BingX client not initialized, cannot generate signal for {symbol}")
+                return None
+            
+            # Define async function to fetch data
+            async def fetch_market_data():
+                try:
+                    # Get candles for different timeframes in parallel
+                    candles_1m_task = client.fetch_ohlcv(symbol, '1m', limit=50)
+                    candles_2h_task = client.fetch_ohlcv(symbol, '2h', limit=50)  
+                    candles_4h_task = client.fetch_ohlcv(symbol, '4h', limit=50)
+                    
+                    # Execute in parallel for efficiency
+                    candles_1m, candles_2h, candles_4h = await asyncio.gather(
+                        candles_1m_task, candles_2h_task, candles_4h_task
+                    )
+                    
+                    return {
+                        'spot': candles_1m,
+                        '2h': candles_2h,
+                        '4h': candles_4h
+                    }
+                except Exception as e:
+                    logger.error(f"Error fetching market data for {symbol}: {e}")
+                    return None
+            
+            # Run async data fetching in separate thread to avoid event loop conflicts
+            def run_in_thread():
+                try:
+                    # Try to get current event loop
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # If we're already in an event loop, we can't use run_until_complete
+                        # So we'll use asyncio.run_coroutine_threadsafe
+                        future = asyncio.run_coroutine_threadsafe(fetch_market_data(), loop)
+                        return future.result(timeout=30)  # 30 second timeout
+                    except RuntimeError:
+                        # No event loop running, safe to create new one
+                        return asyncio.run(fetch_market_data())
+                except Exception as e:
+                    logger.error(f"Error in async thread execution: {e}")
+                    return None
+            
+            # Execute in thread pool to completely isolate from current context
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(run_in_thread)
+                try:
+                    timeframes_data = future.result(timeout=60)  # 60 second timeout
+                except concurrent.futures.TimeoutError:
+                    logger.error(f"Timeout fetching market data for {symbol}")
+                    return None
+            
+            if not timeframes_data:
+                logger.warning(f"Failed to fetch market data for {symbol}")
+                return None
+            
+            candles_1m = timeframes_data.get('spot')
+            candles_2h = timeframes_data.get('2h')
+            candles_4h = timeframes_data.get('4h')
+            
+            if not candles_1m or not candles_2h or not candles_4h:
+                logger.warning(f"Insufficient candle data for {symbol}")
+                return None
+            
+            # Calculate real indicators using the TechnicalIndicators class
+            indicators_data = {}
+            
+            # Process each timeframe
+            timeframes = {
+                'spot': candles_1m,
+                '2h': candles_2h, 
+                '4h': candles_4h
+            }
+            
+            for tf, candles in timeframes.items():
+                try:
+                    # Calculate MM1 (fast EMA)
+                    mm1 = float(self.indicators.calculate_mm1(candles))
+                    
+                    # Calculate Center (slower EMA) 
+                    center = float(self.indicators.calculate_center(candles))
+                    
+                    # Calculate RSI
+                    rsi = float(self.indicators.calculate_rsi_value(candles))
+                    
+                    # Get current price
+                    current_price = float(candles[-1]['close'])
+                    volume = float(candles[-1]['volume'])
+                    
+                    indicators_data[tf] = {
+                        'price': current_price,
+                        'mm1': mm1,
+                        'center': center,
+                        'rsi': rsi,
+                        'volume': volume,
+                        'candle': '🟢' if mm1 > center else '🔴'
+                    }
+                    
+                except Exception as e:
+                    logger.error(f"Error calculating indicators for {symbol} {tf}: {e}")
+                    indicators_data[tf] = {
+                        'price': 0, 'mm1': 0, 'center': 0, 'rsi': 50, 'volume': 0, 'candle': '⚪'
+                    }
+            
+            # Generate trading signal based on real data
+            signal, strength, rules_triggered = self._analyze_trading_rules(indicators_data)
+            
+            return {
+                'signal': signal,
+                'signal_strength': strength,
+                'rules_triggered': rules_triggered,
+                'indicators': indicators_data
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating real signal for {symbol}: {e}")
+            return None
+    
+    def _analyze_trading_rules(self, indicators_data: Dict) -> Tuple[str, float, List[str]]:
+        """Analyze trading rules based on real indicator data."""
+        try:
+            signal = 'NEUTRAL'
+            strength = 0.0
+            rules_triggered = []
+            
+            spot = indicators_data.get('spot', {})
+            tf_2h = indicators_data.get('2h', {})
+            tf_4h = indicators_data.get('4h', {})
+            
+            # Rule 1: MA Crossover with RSI confirmation
+            crossover_signals = []
+            for tf_name, tf_data in [('2h', tf_2h), ('4h', tf_4h)]:
+                mm1 = tf_data.get('mm1', 0)
+                center = tf_data.get('center', 0) 
+                rsi = tf_data.get('rsi', 50)
+                
+                # Check if RSI is in valid range (35-73)
+                rsi_valid = 35 <= rsi <= 73
+                
+                # Check MA crossover direction
+                if mm1 > center and rsi_valid:
+                    crossover_signals.append(('BUY', 0.7, f'MA_CROSSOVER_{tf_name.upper()}'))
+                elif mm1 < center and rsi_valid:
+                    crossover_signals.append(('SELL', 0.7, f'MA_CROSSOVER_{tf_name.upper()}'))
+            
+            # Rule 2: MA Distance (stronger signal without RSI)
+            distance_signals = []
+            for tf_name, tf_data, threshold in [('2h', tf_2h, 0.02), ('4h', tf_4h, 0.03)]:
+                mm1 = tf_data.get('mm1', 0)
+                center = tf_data.get('center', 1)
+                
+                distance_pct = abs(mm1 - center) / center if center > 0 else 0
+                
+                if distance_pct >= threshold:
+                    if mm1 > center:
+                        distance_signals.append(('BUY', 0.8, f'MA_DISTANCE_{tf_name.upper()}'))
+                    else:
+                        distance_signals.append(('SELL', 0.8, f'MA_DISTANCE_{tf_name.upper()}'))
+            
+            # Rule 3: Volume spike analysis (simplified for now)
+            volume_signals = []
+            current_volume = spot.get('volume', 0)
+            if current_volume > 0:  # If we have volume data
+                mm1_spot = spot.get('mm1', 0)
+                center_spot = spot.get('center', 0)
+                
+                # Simple volume spike detection (can be enhanced)
+                if current_volume > 1000000:  # High volume threshold
+                    if mm1_spot > center_spot:
+                        volume_signals.append(('BUY', 0.6, 'VOLUME_SPIKE'))
+                    else:
+                        volume_signals.append(('SELL', 0.6, 'VOLUME_SPIKE'))
+            
+            # Combine all signals
+            all_signals = crossover_signals + distance_signals + volume_signals
+            
+            if all_signals:
+                # Group by signal type
+                buy_signals = [s for s in all_signals if s[0] == 'BUY']
+                sell_signals = [s for s in all_signals if s[0] == 'SELL']
+                
+                if buy_signals and len(buy_signals) >= len(sell_signals):
+                    signal = 'BUY'
+                    strength = sum(s[1] for s in buy_signals) / len(buy_signals)
+                    rules_triggered = [s[2] for s in buy_signals]
+                elif sell_signals:
+                    signal = 'SELL' 
+                    strength = sum(s[1] for s in sell_signals) / len(sell_signals)
+                    rules_triggered = [s[2] for s in sell_signals]
+            
+            # Cap strength at 1.0
+            strength = min(strength, 1.0)
+            
+            return signal, round(strength, 3), rules_triggered
+            
+        except Exception as e:
+            logger.error(f"Error analyzing trading rules: {e}")
+            return 'NEUTRAL', 0.0, []
     
     def analyze_rule_1_crossover(self, candles_2h: List[Dict[str, Any]], 
                                 candles_4h: List[Dict[str, Any]]) -> Dict[str, Any]:

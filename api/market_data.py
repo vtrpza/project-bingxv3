@@ -245,39 +245,51 @@ class MarketDataAPI:
         return await self.get_candles(symbol, timeframe, since=since)
     
     async def get_multiple_tickers(self, symbols: List[str]) -> Dict[str, Dict[str, Any]]:
-        """Get tickers for multiple symbols concurrently."""
-        valid_symbols = []
-        for symbol in symbols:
-            if Validator.is_valid_symbol(symbol):
-                valid_symbols.append(symbol)
-            else:
-                logger.warning(f"Skipping invalid symbol: {symbol}")
+        """Get tickers for multiple symbols with optimized concurrency and batching."""
+        # Pre-filter invalid symbols using list comprehension (faster than loop)
+        valid_symbols = [symbol for symbol in symbols if Validator.is_valid_symbol(symbol)]
+        invalid_count = len(symbols) - len(valid_symbols)
+        
+        if invalid_count > 0:
+            logger.warning(f"Skipped {invalid_count} invalid symbols")
         
         if not valid_symbols:
             return {}
         
+        # Batch processing for better rate limit management (reduced for efficiency)
+        batch_size = 5
         try:
             start_time = asyncio.get_event_loop().time()
+            tickers = {}
             
-            # Fetch tickers concurrently
-            tasks = [self.client.fetch_ticker(symbol) for symbol in valid_symbols]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            # Process in batches to avoid overwhelming the API
+            for i in range(0, len(valid_symbols), batch_size):
+                batch_symbols = valid_symbols[i:i + batch_size]
+                
+                # Create tasks for this batch
+                tasks = [self.client.fetch_ticker(symbol) for symbol in batch_symbols]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Process batch results
+                for j, result in enumerate(results):
+                    symbol = batch_symbols[j]
+                    if isinstance(result, Exception):
+                        logger.error(f"Error fetching ticker for {symbol}: {result}")
+                    else:
+                        tickers[symbol] = result
+                
+                # Longer delay between batches to respect strict rate limits
+                if i + batch_size < len(valid_symbols):
+                    await asyncio.sleep(1.0)  # 1 second delay between batches
             
             duration = asyncio.get_event_loop().time() - start_time
             perf_logger.execution_time("fetch_multiple_tickers", duration, {
-                "symbols_count": len(valid_symbols)
+                "symbols_count": len(valid_symbols),
+                "batches": (len(valid_symbols) + batch_size - 1) // batch_size,
+                "success_rate": len(tickers) / len(valid_symbols)
             })
             
-            # Process results
-            tickers = {}
-            for i, result in enumerate(results):
-                symbol = valid_symbols[i]
-                if isinstance(result, Exception):
-                    logger.error(f"Error fetching ticker for {symbol}: {result}")
-                else:
-                    tickers[symbol] = result
-            
-            logger.info(f"Fetched tickers for {len(tickers)}/{len(valid_symbols)} symbols")
+            logger.info(f"Fetched tickers for {len(tickers)}/{len(valid_symbols)} symbols in {len(valid_symbols)//batch_size + 1} batches")
             return tickers
             
         except Exception as e:

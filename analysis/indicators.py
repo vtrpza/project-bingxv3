@@ -452,8 +452,8 @@ def get_technical_indicators() -> TechnicalIndicators:
 
 
 # Convenience functions for direct calculation
-async def calculate_indicators_for_symbol(symbol: str, timeframe: str, 
-                                        candles: List[Dict[str, Any]]) -> Dict[str, Any]:
+def calculate_indicators_for_symbol(symbol: str, timeframe: str, 
+                                   candles: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate indicators for a specific symbol and timeframe."""
     try:
         indicators = get_technical_indicators()

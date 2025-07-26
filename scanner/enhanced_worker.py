@@ -9,7 +9,7 @@ import sys
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 # Add project root to Python path
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -27,12 +27,13 @@ from utils.rate_limiter import get_rate_limiter
 from utils.smart_cache import get_smart_cache
 from trading.symbol_selector import get_symbol_selector
 from trading.trading_cache import get_trading_cache
+from analysis.signals import get_signal_generator
 
 logger = get_logger(__name__)
 
 
 class EnhancedScannerWorker:
-    """Enhanced worker with both regular and parallel scanning modes."""
+    """Enhanced worker with real-time signal streaming and continuous processing."""
     
     def __init__(self, use_parallel: bool = True):
         self.config = TradingConfig()
@@ -52,16 +53,27 @@ class EnhancedScannerWorker:
         # Trading-specific components
         self.symbol_selector = get_symbol_selector()
         self.trading_cache = get_trading_cache()
+        self.signal_generator = get_signal_generator()
+        
+        # Real-time signal streaming
+        self.signal_queue = asyncio.Queue(maxsize=1000)  # Signal queue for real-time processing
+        self.processed_symbols = set()  # Track which symbols we've processed
+        self.signal_callbacks = []  # Callbacks for when signals are generated
+        self.continuous_mode = True  # Enable continuous processing
         
         # Performance tracking
         self.scan_metrics = {
             'total_scans': 0,
             'total_scan_time': 0,
             'signals_generated': 0,
+            'signals_per_minute': 0,
+            'last_signal_time': None,
             'errors': 0,
             'avg_scan_time': 0,
             'best_scan_time': float('inf'),
-            'worst_scan_time': 0
+            'worst_scan_time': 0,
+            'valid_symbols_count': 0,
+            'processing_rate': 0  # symbols per second
         }
         
     async def initialize(self):
@@ -88,27 +100,198 @@ class EnhancedScannerWorker:
             return False
     
     async def _ensure_trading_symbols(self):
-        """Ensure we have symbols selected for trading."""
+        """Ensure we have ALL valid trading symbols selected."""
         try:
-            # Check if we need to select/re-select symbols
-            if await self.trading_cache.needs_reselection():
-                logger.info("🎯 Selecting symbols for trading...")
-                selected_symbols = await self.symbol_selector.select_trading_symbols(force_refresh=True)
+            # Always get fresh symbols for real-time processing
+            logger.info("🎯 Selecting ALL valid symbols for real-time trading...")
+            selected_symbols = await self.symbol_selector.select_trading_symbols(force_refresh=True)
+            
+            if selected_symbols:
+                # Update cache with ALL valid symbols
                 await self.trading_cache.update_selected_symbols(selected_symbols)
+                self.scan_metrics['valid_symbols_count'] = len(selected_symbols)
                 
-                if selected_symbols:
-                    logger.info(f"✅ Selected {len(selected_symbols)} symbols for trading")
-                    # Log top symbols
-                    for i, sym in enumerate(selected_symbols[:5], 1):
-                        logger.info(f"{i}. {sym.symbol} - Score: {sym.selection_score:.2f}")
-                else:
-                    logger.warning("❌ No symbols selected for trading")
+                logger.info(f"✅ Selected {len(selected_symbols)} symbols for real-time trading")
+                # Log top symbols
+                for i, sym in enumerate(selected_symbols[:10], 1):
+                    logger.info(f"{i}. {sym.symbol} - Score: {sym.selection_score:.2f}")
+                
+                if len(selected_symbols) > 10:
+                    logger.info(f"... and {len(selected_symbols) - 10} more symbols")
             else:
-                symbols = await self.trading_cache.get_selected_symbols()
-                logger.info(f"Using cached {len(symbols)} trading symbols")
+                logger.warning("❌ No symbols selected for trading")
                     
         except Exception as e:
             logger.error(f"Error ensuring trading symbols: {e}")
+    
+    def add_signal_callback(self, callback):
+        """Add a callback function to be called when signals are generated."""
+        self.signal_callbacks.append(callback)
+    
+    async def _broadcast_signal(self, signal_data: Dict[str, Any]):
+        """Broadcast signal to all registered callbacks."""
+        try:
+            # Update metrics
+            self.scan_metrics['signals_generated'] += 1
+            self.scan_metrics['last_signal_time'] = datetime.utcnow()
+            
+            # Call all registered callbacks
+            for callback in self.signal_callbacks:
+                try:
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(signal_data)
+                    else:
+                        callback(signal_data)
+                except Exception as e:
+                    logger.error(f"Error in signal callback: {e}")
+            
+            # Add to queue for further processing
+            try:
+                self.signal_queue.put_nowait(signal_data)
+            except asyncio.QueueFull:
+                logger.warning("Signal queue is full, dropping oldest signal")
+                try:
+                    self.signal_queue.get_nowait()  # Remove oldest
+                    self.signal_queue.put_nowait(signal_data)  # Add new
+                except asyncio.QueueEmpty:
+                    pass
+                    
+        except Exception as e:
+            logger.error(f"Error broadcasting signal: {e}")
+    
+    async def start_continuous_processing(self):
+        """Start continuous symbol processing for real-time signals."""
+        logger.info("🚀 Starting continuous real-time signal processing...")
+        
+        while self.running:
+            try:
+                # Get all valid trading symbols
+                trading_symbols = await self.trading_cache.get_trading_symbols()
+                if not trading_symbols:
+                    logger.warning("No trading symbols available for processing")
+                    await asyncio.sleep(5)
+                    continue
+                
+                # Process symbols continuously in batches
+                batch_size = 10
+                start_time = time.time()
+                processed_count = 0
+                
+                for i in range(0, len(trading_symbols), batch_size):
+                    if not self.running:
+                        break
+                        
+                    batch = trading_symbols[i:i + batch_size]
+                    
+                    # Process batch concurrently
+                    batch_tasks = [
+                        self._process_symbol_for_signals(symbol)
+                        for symbol in batch
+                    ]
+                    
+                    batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+                    
+                    # Handle results
+                    for j, result in enumerate(batch_results):
+                        if isinstance(result, Exception):
+                            logger.debug(f"Error processing {batch[j]}: {result}")
+                            self.scan_metrics['errors'] += 1
+                        elif result:
+                            # Signal generated, broadcast it
+                            await self._broadcast_signal(result)
+                    
+                    processed_count += len(batch)
+                    
+                    # Brief pause between batches
+                    await asyncio.sleep(0.1)
+                
+                # Update performance metrics
+                cycle_time = time.time() - start_time
+                if cycle_time > 0:
+                    self.scan_metrics['processing_rate'] = processed_count / cycle_time
+                
+                # Calculate signals per minute
+                if self.scan_metrics['last_signal_time']:
+                    time_diff = (datetime.utcnow() - self.scan_metrics['last_signal_time']).total_seconds()
+                    if time_diff > 0:
+                        self.scan_metrics['signals_per_minute'] = (self.scan_metrics['signals_generated'] * 60) / time_diff
+                
+                logger.info(f"📊 Processed {processed_count} symbols in {cycle_time:.2f}s "
+                          f"({self.scan_metrics['processing_rate']:.1f} symbols/s)")
+                
+                # Wait before next cycle (shorter for real-time)
+                await asyncio.sleep(2)  # 2 second cycles for real-time
+                
+            except Exception as e:
+                logger.error(f"Error in continuous processing: {e}")
+                await asyncio.sleep(5)  # Wait before retry
+    
+    async def _process_symbol_for_signals(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Process a single symbol and generate trading signals in real-time."""
+        try:
+            client = get_client()
+            
+            # Fetch market data with caching
+            ticker = await self.cache.get_or_fetch(
+                'ticker', symbol,
+                lambda: self._fetch_ticker_with_rate_limit(client, symbol)
+            )
+            
+            if not ticker:
+                return None
+            
+            # Get OHLCV data for multiple timeframes
+            ohlcv_spot = await self.cache.get_or_fetch(
+                'candles', f"{symbol}_1m_50",
+                lambda: self._fetch_ohlcv_with_rate_limit(client, symbol, '1m', 50)
+            )
+            
+            ohlcv_2h = await self.cache.get_or_fetch(
+                'candles', f"{symbol}_2h_100",
+                lambda: self._fetch_ohlcv_with_rate_limit(client, symbol, '2h', 100)
+            )
+            
+            ohlcv_4h = await self.cache.get_or_fetch(
+                'candles', f"{symbol}_4h_100", 
+                lambda: self._fetch_ohlcv_with_rate_limit(client, symbol, '4h', 100)
+            )
+            
+            if not all([ohlcv_spot, ohlcv_2h, ohlcv_4h]):
+                return None
+            
+            # Generate comprehensive trading signal
+            signal_result = self.signal_generator.generate_trading_signal(
+                symbol=symbol,
+                candles_spot=ohlcv_spot,
+                candles_2h=ohlcv_2h, 
+                candles_4h=ohlcv_4h
+            )
+            
+            # Only return signals that meet quality threshold
+            if (signal_result and 
+                signal_result.get('signal_type') != 'NEUTRAL' and
+                signal_result.get('confidence', 0) >= 0.4):
+                
+                # Enhance signal with current market data
+                enhanced_signal = {
+                    **signal_result,
+                    'current_price': float(ticker['last']),
+                    'volume_24h': float(ticker.get('quoteVolume', 0)),
+                    'change_24h': float(ticker.get('percentage', 0)),
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'source': 'real_time_scanner'
+                }
+                
+                logger.info(f"🎯 Real-time signal: {symbol} {signal_result['signal_type']} "
+                          f"(confidence: {signal_result['confidence']:.1%})")
+                
+                return enhanced_signal
+            
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Error processing symbol {symbol} for signals: {e}")
+            return None
     
     async def _convert_symbols_to_assets(self, trading_symbols: List[str], session):
         """Convert trading symbol strings to asset-like objects for compatibility."""
@@ -602,26 +785,61 @@ class EnhancedScannerWorker:
         """)
     
     async def run(self):
-        """Run the enhanced scanner worker continuously."""
+        """Run the enhanced scanner worker with real-time continuous processing."""
         self.running = True
-        logger.info(f"🚀 Enhanced Scanner Worker started - monitoring assets for signals...")
-        logger.info(f"⚡ Performance mode: {'PARALLEL' if self.use_parallel else 'REGULAR'}")
-        logger.info(f"⏱️ Scan interval: {self.config.SCAN_INTERVAL} seconds")
+        logger.info(f"🚀 Enhanced Scanner Worker started - REAL-TIME signal processing...")
+        logger.info(f"⚡ Mode: CONTINUOUS STREAMING")
+        logger.info(f"🎯 Processing: ALL valid symbols")
         
-        while self.running:
+        try:
+            # Start continuous processing in background
+            continuous_task = asyncio.create_task(self.start_continuous_processing())
+            
+            # Run both continuous processing and periodic full scans
+            while self.running:
+                try:
+                    # Periodic full scan for cache refresh and metrics
+                    if self.scan_metrics['total_scans'] % 10 == 0:  # Every 10 cycles
+                        await self.scan_cycle()
+                    
+                    # Log performance metrics
+                    self._log_real_time_performance()
+                    
+                    # Wait before next cycle (much shorter for real-time)
+                    await asyncio.sleep(10)  # 10 second metrics updates
+                    
+                except KeyboardInterrupt:
+                    logger.info("👋 Stopping enhanced scanner worker...")
+                    self.running = False
+                    break
+                except Exception as e:
+                    logger.error(f"❌ Error in enhanced scanner worker: {e}")
+                    await asyncio.sleep(5)  # Wait before retry
+            
+            # Cancel continuous processing task
+            continuous_task.cancel()
             try:
-                await self.scan_cycle()
+                await continuous_task
+            except asyncio.CancelledError:
+                pass
                 
-                # Wait for next cycle
-                await asyncio.sleep(self.config.SCAN_INTERVAL)
-                
-            except KeyboardInterrupt:
-                logger.info("👋 Stopping enhanced scanner worker...")
-                self.running = False
-                break
-            except Exception as e:
-                logger.error(f"❌ Error in enhanced scanner worker: {e}")
-                await asyncio.sleep(5)  # Wait before retry
+        except Exception as e:
+            logger.error(f"❌ Fatal error in enhanced scanner worker: {e}")
+        finally:
+            logger.info("🏁 Enhanced scanner worker stopped")
+    
+    def _log_real_time_performance(self):
+        """Log real-time performance metrics."""
+        if self.scan_metrics['total_scans'] % 6 == 0:  # Every minute
+            logger.info(f"""
+            📊 REAL-TIME PERFORMANCE METRICS
+            ├─ Valid symbols: {self.scan_metrics['valid_symbols_count']}
+            ├─ Signals generated: {self.scan_metrics['signals_generated']}
+            ├─ Signals/minute: {self.scan_metrics['signals_per_minute']:.1f}
+            ├─ Processing rate: {self.scan_metrics['processing_rate']:.1f} symbols/s
+            ├─ Error rate: {self.scan_metrics['errors']} errors
+            └─ Last signal: {self.scan_metrics['last_signal_time'].strftime('%H:%M:%S') if self.scan_metrics['last_signal_time'] else 'None'}
+            """)
     
     def stop(self):
         """Stop the enhanced scanner worker."""

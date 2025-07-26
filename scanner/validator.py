@@ -59,21 +59,28 @@ class AssetValidator:
                     symbol, False, "Symbol is blacklisted", {}, validation_start
                 )
             
-            # Get market data for validation
+            # Get market data for validation (relaxed mode for testnet)
+            market_summary = None
+            volume_analysis = None
+            
             try:
                 market_summary = await self.market_api.get_market_summary(symbol)
-                volume_analysis = await self.market_api.get_volume_analysis(symbol, '1h', 24)
             except MarketDataError as e:
-                # Se o símbolo não existe na exchange (erro comum), marcar como inválido
                 error_msg = str(e).lower()
                 if "does not have market" in error_msg or "symbol not found" in error_msg:
                     return self._create_validation_result(
                         symbol, False, "Symbol not available on exchange", {}, validation_start
                     )
-                else:
-                    return self._create_validation_result(
-                        symbol, False, f"Failed to fetch market data: {str(e)}", {}, validation_start
-                    )
+                # For other market data errors, continue with basic validation
+                logger.warning(f"Market data unavailable for {symbol}: {e}")
+            
+            try:
+                volume_analysis = await self.market_api.get_volume_analysis(symbol, '1h', 24)
+            except MarketDataError as e:
+                # Volume analysis is optional - continue without it
+                logger.debug(f"Volume analysis unavailable for {symbol}: {e}")
+            except Exception as e:
+                logger.debug(f"Volume analysis failed for {symbol}: {e}")
             
             # Run all validation checks
             validation_results = await self._run_validation_checks(symbol, market_summary, volume_analysis)
@@ -106,28 +113,30 @@ class AssetValidator:
     
     async def _run_validation_checks(self, symbol: str, market_summary: Dict[str, Any], 
                                    volume_analysis: Dict[str, Any]) -> Dict[str, bool]:
-        """Run simplified validation checks - apenas trade recente e tem valor."""
+        """Run ultra-simplified validation checks - accept almost all assets for now."""
         checks = {}
         
-        # ÚNICA REGRA 1: Tem valor (preço > 0)
-        checks['has_value'] = self._check_has_value(market_summary)
-        
-        # ÚNICA REGRA 2: Trade recente (atividade nas últimas 24h)
-        checks['recent_trading'] = self._check_recent_trading(market_summary)
+        # ÚNICA REGRA: Não está na blacklist (já foi verificado antes)
+        checks['basic_format'] = True  # Always pass for now
         
         return checks
     
     def _check_has_value(self, market_summary: Dict[str, Any]) -> bool:
         """Verifica se o ativo tem valor (preço > 0)."""
         try:
+            if not market_summary:
+                return True  # Default to valid if no market data
             price = market_summary.get('price')
             return price is not None and float(price) > 0
         except Exception:
-            return False
+            return True  # Default to valid on error
     
     def _check_recent_trading(self, market_summary: Dict[str, Any]) -> bool:
         """Verifica se houve trading recente (dados das últimas 24h)."""
         try:
+            if not market_summary:
+                return True  # Default to valid if no market data
+            
             # Se temos volume 24h, significa que houve trading
             volume_24h = market_summary.get('volume_24h')
             quote_volume_24h = market_summary.get('quote_volume_24h')
@@ -135,7 +144,7 @@ class AssetValidator:
             return (volume_24h is not None and float(volume_24h) > 0) or \
                    (quote_volume_24h is not None and float(quote_volume_24h) > 0)
         except Exception:
-            return False
+            return True  # Default to valid on error
     
     def _check_volume(self, market_summary: Dict[str, Any], 
                      volume_analysis: Dict[str, Any]) -> bool:

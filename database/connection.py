@@ -3,7 +3,7 @@
 
 import os
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 from contextlib import contextmanager
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, Session
@@ -54,33 +54,67 @@ class DatabaseManager:
                     future=True
                 )
             else:
-                # PostgreSQL configuration optimized for Render
+                # PostgreSQL configuration optimized for high-frequency trading operations
+                # Detect if running on Render or other cloud platforms
+                is_cloud = any(key in os.environ for key in ['RENDER', 'HEROKU', 'DATABASE_URL'])
+                
+                if is_cloud:
+                    # Cloud optimized settings (conservative)
+                    pool_size = 8
+                    max_overflow = 15
+                    pool_timeout = 20
+                    connect_timeout = 8
+                else:
+                    # Local/dedicated server settings (more aggressive)
+                    pool_size = 15
+                    max_overflow = 30
+                    pool_timeout = 30
+                    connect_timeout = 10
+                
                 self.engine = create_engine(
                     database_url,
                     poolclass=QueuePool,
-                    pool_size=10,      # Increased from 5 to handle background tasks
-                    max_overflow=20,   # Increased from 10 for peak loads
-                    pool_timeout=30,   # Reduced from 60 to fail faster
-                    pool_recycle=1800, # Reduced from 3600 to recycle connections more frequently
-                    pool_pre_ping=True,  # Test connections before use
+                    pool_size=pool_size,
+                    max_overflow=max_overflow,
+                    pool_timeout=pool_timeout,
+                    pool_recycle=1200,     # 20min - optimized for trading session length
+                    pool_pre_ping=True,    # Essential for trading systems
+                    pool_reset_on_return='commit',  # Clean state for each connection
                     connect_args={
-                        "connect_timeout": 10,  # Reduced from 30 for faster failure
+                        "connect_timeout": connect_timeout,
                         "application_name": "bingx_trading_bot",
                         "keepalives": 1,
-                        "keepalives_idle": 30,
-                        "keepalives_interval": 10,
-                        "keepalives_count": 5
+                        "keepalives_idle": 600,    # 10min - longer for trading sessions
+                        "keepalives_interval": 30,  # Check every 30s
+                        "keepalives_count": 3,      # Fail after 3 missed keepalives
+                        "tcp_keepalives_idle": 600,
+                        "tcp_keepalives_interval": 30,
+                        "tcp_keepalives_count": 3,
+                        # Performance optimizations
+                        "statement_timeout": "30000",  # 30s statement timeout
+                        "idle_in_transaction_session_timeout": "60000",  # 1min idle transaction timeout
                     },
                     echo=os.getenv("DB_ECHO", "false").lower() == "true",
-                    future=True
+                    future=True,
+                    # Additional engine options for performance
+                    execution_options={
+                        "isolation_level": "READ_COMMITTED",  # Optimal for trading systems
+                        "autocommit": False
+                    }
                 )
             
-            # Create session factory
+            # Create session factory with performance optimizations
             self.SessionLocal = sessionmaker(
                 bind=self.engine,
                 autocommit=False,
-                autoflush=False,
-                expire_on_commit=False
+                autoflush=False,           # Manual flush control for better performance
+                expire_on_commit=False,    # Keep objects accessible after commit
+                # Trading-specific optimizations
+                class_=Session,
+                info={
+                    "trading_optimized": True,
+                    "batch_size": 100,     # Default batch size for bulk operations
+                }
             )
             
             # Test connection
@@ -299,7 +333,7 @@ class DatabaseManager:
         return self.SessionLocal
     
     def health_check(self) -> bool:
-        """Check database connection health."""
+        """Check database connection health with detailed diagnostics."""
         try:
             if not self._initialized:
                 return False
@@ -312,6 +346,28 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
             return False
+    
+    def get_pool_status(self) -> Dict[str, Any]:
+        """Get detailed connection pool status for monitoring."""
+        try:
+            if not self._initialized or not self.engine:
+                return {"status": "not_initialized"}
+            
+            pool = self.engine.pool
+            return {
+                "status": "active",
+                "pool_size": pool.size(),
+                "checked_in": pool.checkedin(),
+                "checked_out": pool.checkedout(),
+                "overflow": pool.overflow(),
+                "invalid": pool.invalid(),
+                "utilization_percent": round((pool.checkedout() / (pool.size() + pool.overflow())) * 100, 2) if (pool.size() + pool.overflow()) > 0 else 0,
+                "is_sqlite": self.is_sqlite,
+                "engine_url": str(self.engine.url).replace(self.engine.url.password or "", "***") if self.engine.url.password else str(self.engine.url)
+            }
+        except Exception as e:
+            logger.error(f"Error getting pool status: {e}")
+            return {"status": "error", "error": str(e)}
     
     def close(self):
         """Close database connections."""
@@ -367,3 +423,22 @@ def health_check() -> bool:
 def close_database():
     """Close database connections."""
     db_manager.close()
+
+
+def get_pool_status() -> Dict[str, Any]:
+    """Get global database pool status for monitoring."""
+    return db_manager.get_pool_status()
+
+
+def optimize_connection(func):
+    """Decorator to optimize database operations with connection reuse."""
+    def wrapper(*args, **kwargs):
+        # Check if session is already provided in kwargs
+        if 'session' in kwargs and kwargs['session'] is not None:
+            return func(*args, **kwargs)
+        
+        # Otherwise create optimized session
+        with get_session() as session:
+            kwargs['session'] = session
+            return func(*args, **kwargs)
+    return wrapper

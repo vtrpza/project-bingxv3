@@ -14,22 +14,23 @@ from sqlalchemy.orm import relationship, validates
 from sqlalchemy.sql import func
 
 # Database-agnostic types - determine at runtime
-import os
-database_url = os.getenv("DATABASE_URL", "")
+def get_db_types():
+    """Get database types based on DATABASE_URL"""
+    import os
+    database_url = os.getenv("DATABASE_URL", "sqlite:///./bingx_trading.db")
+    
+    if database_url.startswith("sqlite"):
+        # SQLite-compatible types
+        return String(36), JSON
+    else:
+        # PostgreSQL types
+        try:
+            from sqlalchemy.dialects.postgresql import UUID, JSONB
+            return UUID(as_uuid=True), JSONB
+        except ImportError:
+            return String(36), JSON
 
-if database_url.startswith("sqlite"):
-    # SQLite-compatible types
-    UUIDType = String(36)
-    JSONType = JSON
-else:
-    # PostgreSQL types
-    try:
-        from sqlalchemy.dialects.postgresql import UUID, JSONB
-        UUIDType = UUID(as_uuid=True)
-        JSONType = JSONB
-    except ImportError:
-        UUIDType = String(36)
-        JSONType = JSON
+UUIDType, JSONType = get_db_types()
 
 # Check if we're using SQLite (for UUID handling)
 def get_uuid():

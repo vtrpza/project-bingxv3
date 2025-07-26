@@ -23,7 +23,10 @@ class APIClient:
         self.connection_id = None
         self.server_version = None
         self.last_ping_time = None
-        self.auto_subscribe_channels = ["general", "trading_data"]  # Default subscriptions
+        self.auto_subscribe_channels = ["general", "trading_data", "trading_signals"]  # Default subscriptions
+        self.signals_websocket = None  # Dedicated signals WebSocket
+        self.signals_connected = False
+        self.signals_channel_connected = False  # Track if trading_signals channel is active
         
     async def get(self, endpoint):
         """Make GET request to API with enhanced error handling"""
@@ -295,11 +298,21 @@ class APIClient:
                 channel = channel_info.get("channel", "unknown")
                 console.log(f"Subscribed to channel: {channel}")
                 
+                # Track trading_signals subscription
+                if channel == "trading_signals":
+                    self.signals_channel_connected = True
+                    console.log("✅ Real-time signals channel active")
+                
             # Handle unsubscription confirmations
             elif message_type == "unsubscribed":
                 channel_info = data.get("data", {})
                 channel = channel_info.get("channel", "unknown")
                 console.log(f"Unsubscribed from channel: {channel}")
+                
+                # Track trading_signals unsubscription
+                if channel == "trading_signals":
+                    self.signals_channel_connected = False
+                    console.log("❌ Real-time signals channel disconnected")
                 
             # Handle errors
             elif message_type == "error":
@@ -358,6 +371,10 @@ class APIClient:
                 broadcast_info = data.get("broadcast_info", {})
                 channel = broadcast_info.get("channel", "general")
                 
+                # Special handling for trading signals from real-time scanner
+                if channel == "trading_signals" and message_type == "new_signal":
+                    self._handle_real_time_signal(data)
+                
                 # Route to channel-specific callback if available
                 channel_callback = f"channel_{channel}"
                 if channel_callback in self.callbacks:
@@ -393,6 +410,7 @@ class APIClient:
         # Subscribe to channels that PyScript needs
         self.subscribe_to_channel('general')
         self.subscribe_to_channel('trading_data')
+        self.subscribe_to_channel('trading_signals')  # Subscribe to real-time signals
         
         # Send ping to keep connection alive
         if self.websocket:
@@ -740,10 +758,70 @@ class APIClient:
         self.health_check_active = False
         console.log("Health check polling stopped")
     
+    def _handle_real_time_signal(self, signal_data):
+        """Handle real-time trading signals from the scanner."""
+        try:
+            signal_payload = signal_data.get("data", {})
+            signal_type = signal_payload.get("signal_type", "NEUTRAL")
+            symbol = signal_payload.get("symbol", "UNKNOWN")
+            confidence = signal_payload.get("confidence", 0)
+            
+            console.log(f"🎯 Real-time signal received: {symbol} {signal_type} (confidence: {confidence:.1%})")
+            
+            # Update trading table with new signal if possible
+            try:
+                # Try to get the JavaScript trading table update function
+                if hasattr(document.defaultView, 'updateTradingTableWithSignal'):
+                    update_func = document.defaultView.updateTradingTableWithSignal
+                    update_func(signal_payload)
+                elif hasattr(document.defaultView, 'handleRealtimeSignal'):
+                    handle_func = document.defaultView.handleRealtimeSignal
+                    handle_func(signal_payload)
+                else:
+                    console.log("No JavaScript signal handler found - signal logged only")
+            except Exception as e:
+                console.warn(f"Could not update trading table with signal: {e}")
+            
+            # Try to call PyScript signal callback if registered
+            signal_callback = self.callbacks.get("new_signal")
+            if signal_callback:
+                try:
+                    if asyncio.iscoroutinefunction(signal_callback):
+                        asyncio.create_task(signal_callback(signal_payload))
+                    else:
+                        signal_callback(signal_payload)
+                except Exception as e:
+                    console.error(f"Error in PyScript signal callback: {e}")
+                    
+        except Exception as e:
+            console.error(f"Error handling real-time signal: {e}")
+    
+    def connect_to_signals_stream(self):
+        """Connect specifically to the trading signals stream."""
+        if self.signals_channel_connected:
+            console.log("Already connected to trading signals stream")
+            return True
+            
+        if self.is_connected:
+            self.subscribe_to_channel('trading_signals')
+            console.log("Subscribing to real-time trading signals stream...")
+            return True
+        else:
+            console.warn("WebSocket not connected - cannot subscribe to signals")
+            return False
+    
+    def get_signals_connection_status(self):
+        """Get the current status of signals connection."""
+        return {
+            'websocket_connected': self.is_connected,
+            'signals_channel_connected': self.signals_channel_connected,
+            'signals_websocket_available': self.signals_websocket is not None
+        }
+    
     # Trading API Methods
     async def get_trading_live_data(self, limit=50):
         """Get real-time trading data with indicators and signals"""
-        return await self.get(f"/trading/live-data?limit={limit}")
+        return await self.get(f"/assets/trading-data?limit={limit}")
     
     async def execute_signal_trade(self, symbol, signal_type, signal_data):
         """Execute a trade based on signal detection"""

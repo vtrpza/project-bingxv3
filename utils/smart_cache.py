@@ -53,31 +53,44 @@ class SmartCache:
             'markets': {'ttl': 1800, 'priority': 'low'},           # 30min - market list (reduced for freshness)
             'user_data': {'ttl': 60, 'priority': 'high'},          # 1min - user-specific data
         }
+        
+        # Performance monitoring
+        self._last_cleanup = time.time()
+        self._cleanup_interval = 300  # Cleanup every 5 minutes
     
     def _make_key(self, category: str, identifier: str, **kwargs) -> str:
-        """Generate cache key from parameters."""
+        """Generate cache key from parameters with optimized string operations."""
+        if not kwargs:
+            return f"{category}:{identifier}"
+        
+        # Pre-allocate list for better performance
+        parts = [category, identifier]
         if kwargs:
-            params = "_".join(f"{k}={v}" for k, v in sorted(kwargs.items()))
-            return f"{category}:{identifier}:{params}"
-        return f"{category}:{identifier}"
+            # Use list comprehension and join for better performance than string concatenation
+            sorted_items = sorted(kwargs.items())
+            params = "_".join(f"{k}={v}" for k, v in sorted_items)
+            parts.append(params)
+        
+        return ":".join(parts)
     
     def _is_expired(self, entry: CacheEntry) -> bool:
         """Check if cache entry is expired."""
         return time.time() > entry.expires_at
     
     def _cleanup_expired(self):
-        """Remove expired entries."""
+        """Remove expired entries with optimized batch deletion."""
         current_time = time.time()
-        expired_keys = [
-            key for key, entry in self.cache.items()
-            if current_time > entry.expires_at
-        ]
         
-        for key in expired_keys:
-            del self.cache[key]
-            
-        if expired_keys:
-            logger.debug(f"Cleaned up {len(expired_keys)} expired cache entries")
+        # Use dict comprehension for single-pass cleanup (more efficient than building list then deleting)
+        original_size = len(self.cache)
+        self.cache = {
+            key: entry for key, entry in self.cache.items()
+            if current_time <= entry.expires_at
+        }
+        
+        cleaned_count = original_size - len(self.cache)
+        if cleaned_count > 0:
+            logger.debug(f"Cleaned up {cleaned_count} expired cache entries")
     
     def _evict_lru(self, count: int = 1):
         """Evict least recently used entries."""
@@ -96,9 +109,13 @@ class SmartCache:
             self.stats['evictions'] += 1
     
     def _ensure_space(self):
-        """Ensure cache doesn't exceed size limit."""
-        # First cleanup expired entries
-        self._cleanup_expired()
+        """Ensure cache doesn't exceed size limit with automatic cleanup."""
+        current_time = time.time()
+        
+        # Periodic cleanup based on time interval
+        if current_time - self._last_cleanup > self._cleanup_interval:
+            self._cleanup_expired()
+            self._last_cleanup = current_time
         
         # If still over limit, evict LRU entries
         if len(self.cache) >= self.max_size:

@@ -78,6 +78,60 @@ async def safe_create_stop_loss_order(symbol: str, side: str, amount: float, sto
 # Global startup state
 startup_complete = False
 database_ready = False
+real_time_broadcasting_enabled = False
+scanner_worker = None
+
+async def initialize_signal_broadcasting():
+    """Initialize real-time signal broadcasting system - DISABLED for performance."""
+    global real_time_broadcasting_enabled, scanner_worker
+    
+    try:
+        logger.info("🚀 Signal broadcasting disabled for performance optimization...")
+        
+        # DISABLED: Scanner worker causes server overload to prevent server crashes
+        scanner_worker = None
+        real_time_broadcasting_enabled = False
+        
+        logger.info("✅ Signal broadcasting disabled successfully (performance mode)")
+        return
+        
+        # DISABLED CODE - keeping for reference
+        # Add signal callback for real-time broadcasting
+        async def broadcast_signal(signal_data):
+            """Broadcast trading signals via WebSocket."""
+            try:
+                # Broadcast to trading signals channel
+                await ws_manager.broadcast_to_channel("trading_signals", {
+                    "type": "new_signal",
+                    "data": signal_data
+                })
+                
+                # Also broadcast to general channel for backwards compatibility
+                await ws_manager.broadcast({
+                    "type": "trading_signal",
+                    "data": signal_data
+                })
+                
+                logger.info(f"📡 Broadcasted signal: {signal_data['symbol']} {signal_data['signal_type']}")
+                
+            except Exception as e:
+                logger.error(f"Error broadcasting signal: {e}")
+        
+        # Register the callback
+        scanner_worker.add_signal_callback(broadcast_signal)
+        
+        # Initialize the worker
+        await scanner_worker.initialize()
+        
+        # Start the worker in background
+        asyncio.create_task(scanner_worker.run())
+        
+        real_time_broadcasting_enabled = True
+        logger.info("✅ Real-time signal broadcasting initialized successfully")
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize signal broadcasting: {e}")
+        real_time_broadcasting_enabled = False
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -95,6 +149,98 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ===== WEBSOCKET ROUTES =====
+
+@app.websocket("/ws/signals")
+async def websocket_signals_endpoint(websocket: WebSocket):
+    """Dedicated WebSocket endpoint for real-time trading signals."""
+    client_host = websocket.client.host if websocket.client else "unknown"
+    logger.info(f"Trading signals WebSocket connection from {client_host}")
+    
+    try:
+        await manager.connect(websocket)
+        # Auto-subscribe to trading signals channel
+        manager.subscribe_to_channel(websocket, "trading_signals")
+        
+        # Send connection confirmation
+        await websocket.send_json({
+            "type": "connected", 
+            "channel": "trading_signals",
+            "message": "Connected to real-time trading signals stream",
+            "timestamp": datetime.utcnow().isoformat()
+        })
+        
+        logger.info(f"WebSocket signals client connected and subscribed")
+        
+        # Keep connection alive and handle messages
+        while True:
+            try:
+                data = await websocket.receive_text()
+                # Handle client messages for signals channel
+                try:
+                    message = json.loads(data)
+                    if message.get("action") == "ping":
+                        await websocket.send_json({
+                            "type": "pong",
+                            "timestamp": datetime.utcnow().isoformat()
+                        })
+                    elif message.get("action") == "status":
+                        await websocket.send_json({
+                            "type": "status",
+                            "broadcasting_enabled": real_time_broadcasting_enabled,
+                            "connected_clients": len(manager.active_connections),
+                            "timestamp": datetime.utcnow().isoformat()
+                        })
+                    else:
+                        logger.debug(f"Signals WebSocket received: {data}")
+                except json.JSONDecodeError:
+                    logger.debug(f"Signals WebSocket received non-JSON: {data}")
+                    
+            except Exception as e:
+                logger.error(f"Error in signals WebSocket message loop: {e}")
+                break
+                
+    except WebSocketDisconnect:
+        logger.info(f"Trading signals WebSocket disconnected from {client_host}")
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"Error in signals WebSocket endpoint: {e}")
+        try:
+            manager.disconnect(websocket)
+        except:
+            pass
+
+@app.get("/api/realtime/status")
+async def get_realtime_status():
+    """Get real-time broadcasting status."""
+    global real_time_broadcasting_enabled, scanner_worker
+    
+    try:
+        # Get WebSocket stats
+        ws_stats = manager.get_subscription_stats()
+        
+        # Get scanner metrics if available
+        scanner_metrics = {}
+        if scanner_worker:
+            scanner_metrics = scanner_worker.scan_metrics.copy()
+        
+        status = {
+            "broadcasting_enabled": real_time_broadcasting_enabled,
+            "websocket_stats": ws_stats,
+            "scanner_metrics": scanner_metrics,
+            "timestamp": datetime.utcnow().isoformat(),
+            "endpoints": {
+                "general_websocket": "/ws",
+                "signals_websocket": "/ws/signals"
+            }
+        }
+        
+        return {"success": True, "data": status}
+        
+    except Exception as e:
+        logger.error(f"Error getting realtime status: {e}")
+        return {"success": False, "error": str(e)}
+
 async def startup_event():
     """Initialize database on startup with optimized performance."""
     global startup_complete, database_ready
@@ -106,6 +252,9 @@ async def startup_event():
         
         # Start database initialization in background (non-blocking)
         asyncio.create_task(initialize_database_background())
+        
+        # Initialize real-time signal broadcasting
+        await initialize_signal_broadcasting()
         
         # Start background tasks immediately (they handle their own initialization)
         asyncio.create_task(start_background_tasks_delayed())
@@ -226,6 +375,7 @@ def mount_frontend():
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.max_connections = 5  # THROTTLING: Limit concurrent connections
         self.connection_metadata: Dict[WebSocket, Dict] = {}
         self.heartbeat_interval = 30  # seconds
         self.max_retries = 3
@@ -239,6 +389,12 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         """Accept WebSocket connection with enhanced metadata tracking and initialization."""
         try:
+            # THROTTLING: Check connection limit
+            if len(self.active_connections) >= self.max_connections:
+                logger.warning(f"WebSocket connection rejected - limit reached: {len(self.active_connections)}/{self.max_connections}")
+                await websocket.close(code=1008, reason="Connection limit reached")
+                return
+                
             await websocket.accept()
             self._connection_counter += 1
             connection_id = f"conn_{self._connection_counter}_{int(utc_now().timestamp())}"
@@ -603,6 +759,31 @@ class ConnectionManager:
             "connections_by_host": connections_by_host,
             "subscription_stats": self.get_subscription_stats()
         }
+    
+    def cleanup_stale_connections(self):
+        """Clean up stale WebSocket connections that are no longer active."""
+        stale_connections = []
+        current_time = utc_now()
+        
+        for websocket in self.active_connections:
+            try:
+                metadata = self.connection_metadata.get(websocket, {})
+                last_activity = metadata.get('last_activity', metadata.get('connected_at', current_time))
+                
+                # Consider connection stale if no activity for 5 minutes
+                if (current_time - last_activity).total_seconds() > 300:
+                    stale_connections.append(websocket)
+                    
+            except Exception as e:
+                # If we can't check the connection, consider it stale
+                logger.debug(f"Error checking connection status: {e}")
+                stale_connections.append(websocket)
+        
+        # Remove stale connections
+        for websocket in stale_connections:
+            self.disconnect(websocket, "stale_connection")
+        
+        return len(stale_connections)
 
 manager = ConnectionManager()
 
@@ -937,12 +1118,12 @@ async def get_asset_validation_table(
 @app.get("/api/assets/trading-data")
 async def get_asset_trading_data(
     symbols: Optional[str] = None,  # comma-separated list
-    limit: Optional[int] = 50,
+    limit: Optional[int] = 20,  # REDUCED: Avoid timeout with sequential processing
     offset: Optional[int] = 0
 ):
     """Get trading-specific data (RSI, signals, MA) for order management"""
     try:
-        logger.info(f"Trading data requested for symbols: {symbols}")
+        logger.info(f"🟢 MODIFIED ENDPOINT: Trading data requested for symbols: {symbols}")
         
         from scanner.asset_table import get_asset_validation_table
         
@@ -975,7 +1156,11 @@ async def get_asset_trading_data(
             })
         
         return {
+            "success": True,
             "trading_data": trading_data,
+            "total_symbols": len(trading_data),
+            "message": f"Dados de {len(trading_data)} ativos atualizados com sucesso",
+            "timestamp": utc_now().isoformat(),
             "metadata": {
                 "endpoint_version": "1.0",
                 "data_type": "trading_signals",
@@ -1025,10 +1210,10 @@ async def update_refresh_strategy(
 revalidation_status = {"running": False, "progress": 0, "total": 0, "completed": False, "error": None}
 
 async def run_revalidation_task():
-    """Run the revalidation task with performance-optimized scanner"""
+    """Run intelligent revalidation task using the enhanced initial scanner"""
     global revalidation_status
     try:
-        from scanner.initial_scanner import InitialScanner
+        from scanner.initial_scanner import perform_symbol_revalidation
         
         revalidation_status["running"] = True
         revalidation_status["progress"] = 0
@@ -1036,28 +1221,46 @@ async def run_revalidation_task():
         revalidation_status["completed"] = False
         revalidation_status["error"] = None
         
-        logger.info("Starting full asset revalidation with optimized scanner...")
+        logger.info("🔄 Starting intelligent symbol revalidation with real market data...")
         
-        # Use the optimized initial scanner with new performance settings
-        scanner = InitialScanner()
-        result = await scanner.scan_all_assets(
-            force_refresh=True,
-            max_assets=None  # Remover limitação - pegar TODOS os ativos
-        )
+        # Use the enhanced revalidation function
+        result = await perform_symbol_revalidation()
         
-        if result:
-            revalidation_status["total"] = result.total_discovered
-            revalidation_status["progress"] = result.total_discovered
-            revalidation_status["completed"] = True
-            summary = result.get_summary()
-            logger.info(f"Revalidation completed: {summary['valid_assets_count']}/{summary['total_discovered']} valid "
-                       f"({summary['success_rate']:.1f}% success rate) in {summary['scan_duration_seconds']:.1f}s")
-        else:
-            revalidation_status["error"] = "Revalidation failed"
+        # Update status with results
+        revalidation_status["progress"] = result.total_discovered
+        revalidation_status["total"] = result.total_discovered
+        revalidation_status["completed"] = True
+        
+        valid_count = len(result.valid_assets)
+        invalid_count = len(result.invalid_assets)
+        error_count = len(result.errors)
+        
+        logger.info(f"✅ Intelligent revalidation completed: {valid_count} valid, {invalid_count} invalid, {error_count} errors")
+        
+        # Broadcast completion via WebSocket
+        await manager.broadcast({
+            "type": "revalidation_completed",
+            "data": {
+                "valid_count": valid_count,
+                "invalid_count": invalid_count,
+                "total_processed": result.total_discovered,
+                "duration": result.scan_duration,
+                "valid_symbols": [asset['symbol'] for asset in result.valid_assets][:10]  # First 10
+            }
+        })
             
     except Exception as e:
-        logger.error(f"Error during revalidation: {e}")
+        logger.error(f"Error during intelligent revalidation: {e}")
         revalidation_status["error"] = str(e)
+        
+        # Broadcast error via WebSocket
+        await manager.broadcast({
+            "type": "revalidation_error",
+            "data": {
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+        })
     finally:
         revalidation_status["running"] = False
 
@@ -1210,6 +1413,39 @@ async def get_assets(
     except Exception as e:
         logger.error(f"Error fetching assets: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/assets/symbols-table")
+async def get_symbols_table_data(
+    include_market_data: bool = True,
+    max_symbols: Optional[int] = None
+):
+    """Get comprehensive symbols data for the frontend table with live market data"""
+    try:
+        from scanner.initial_scanner import get_initial_scanner
+        
+        logger.info(f"Fetching symbols table data (include_market_data={include_market_data}, max_symbols={max_symbols})")
+        
+        # Get the scanner instance
+        scanner = get_initial_scanner()
+        
+        # Get comprehensive symbols data
+        symbols_data = await scanner.get_all_symbols_data(
+            include_market_data=include_market_data,
+            max_symbols=max_symbols
+        )
+        
+        logger.info(f"Successfully fetched symbols table data: {symbols_data['total_count']} symbols")
+        
+        return symbols_data
+        
+    except Exception as e:
+        logger.error(f"Error fetching symbols table data: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Error fetching symbols table data: {str(e)}"
+        )
 
 @app.get("/api/assets/{symbol}")
 async def get_asset_details(
@@ -1695,56 +1931,370 @@ async def stop_trading():
         raise HTTPException(status_code=500, detail=str(e))
 
 # Dashboard summary endpoint
+# Cache for dashboard summary (30 seconds TTL)
+_dashboard_cache = {
+    'data': None,
+    'timestamp': None,
+    'ttl': 30  # seconds
+}
+
 @app.get("/api/dashboard/summary")
 async def get_dashboard_summary(
     db: Session = Depends(get_db),
     asset_repo: AssetRepository = Depends(get_asset_repo),
-    signal_repo: SignalRepository = Depends(get_signal_repo),
-    trade_repo: TradeRepository = Depends(get_trade_repo)
+    signal_repo: SignalRepository = Depends(get_signal_repo)
 ):
-    """Get dashboard summary data"""
+    """Optimized dashboard summary with caching and minimal operations"""
     try:
-        # Ensure database is initialized
-        from database.connection import init_database
-        try:
-            init_database()
-        except Exception as init_error:
-            logger.warning(f"Database initialization issue: {init_error}")
-            # Return basic summary if database is not available
-            return {
-                "summary": {
-                    "valid_assets": 0,
-                    "active_signals": 0,
-                    "active_positions": 0,
-                    "total_unrealized_pnl": 0.0,
-                    "recent_trades_count": 0
-                },
-                "timestamp": utc_now().isoformat()
+        current_time = utc_now()
+        
+        # Check cache first
+        if (_dashboard_cache['data'] is not None and 
+            _dashboard_cache['timestamp'] is not None and
+            (current_time.timestamp() - _dashboard_cache['timestamp']) < _dashboard_cache['ttl']):
+            logger.debug("📊 Dashboard summary served from cache")
+            return _dashboard_cache['data']
+        
+        # === LIGHTWEIGHT DATA COLLECTION ===
+        # Run basic queries in parallel
+        import asyncio
+        from sqlalchemy import text
+        
+        async def get_core_data():
+            valid_assets_count = asset_repo.get_valid_assets_count(db)
+            active_signals_count = signal_repo.get_active_signals_count(db)
+            return valid_assets_count, active_signals_count
+        
+        async def get_recent_trades_count():
+            try:
+                # Only get count of recent trades (last 24h)
+                recent_trades = db.execute(
+                    text("SELECT COUNT(*) FROM trades WHERE created_at > NOW() - INTERVAL '24 hours'")
+                ).scalar()
+                return recent_trades or 0
+            except:
+                return 0
+        
+        # Execute lightweight operations in parallel
+        (valid_assets_count, active_signals_count), recent_trades_count = await asyncio.gather(
+            get_core_data(),
+            get_recent_trades_count(),
+            return_exceptions=True
+        )
+        
+        # Handle exceptions from parallel execution
+        if isinstance(recent_trades_count, Exception):
+            recent_trades_count = 0
+        
+        # === SCANNER STATUS ===
+        scanner_active = bot_status.get("running", False)
+        trading_enabled = bot_status.get("trading_enabled", False)
+        scanner_monitoring = valid_assets_count if scanner_active else 0
+        
+        # === BOT STATE ===
+        if scanner_active and trading_enabled:
+            robot_state = f"Active - Monitoring {scanner_monitoring} symbols"
+        elif scanner_active:
+            robot_state = f"Monitoring - Scanning {scanner_monitoring} symbols"
+        else:
+            robot_state = "Stopped"
+        
+        # === ALERTS COUNT (simple estimation) ===
+        alerts_count = min(active_signals_count, 5) if active_signals_count > 0 else 0
+        
+        # === SIMPLIFIED RESPONSE ===
+        dashboard_data = {
+            # === CORE SUMMARY ===
+            "summary": {
+                "valid_assets": valid_assets_count,
+                "active_signals": active_signals_count,
+                "active_positions": 0,  # Will be populated by /api/positions
+                "total_unrealized_pnl": 0.0,  # Will be populated by /api/positions
+                "recent_trades_count": recent_trades_count,
+                "open_positions": 0  # Will be populated by /api/positions
+            },
+            
+            # === ASSET MONITORING ===
+            "selected_symbols": valid_assets_count,
+            "symbols_with_signals": active_signals_count,
+            "monitored_assets": scanner_monitoring,
+            
+            # === TRADING STATUS ===
+            "trading_enabled": trading_enabled,
+            "scanner_active": scanner_active,
+            "robot_state": robot_state,
+            
+            # === BASIC METRICS (will be enhanced by other endpoints) ===
+            "account_balance": 0.0,  # Will be populated by /api/positions
+            "available_balance": 0.0,  # Will be populated by /api/positions
+            "margin_used": 0.0,  # Will be populated by /api/positions
+            "total_position_value": 0.0,  # Will be populated by /api/positions
+            
+            # === P&L PLACEHOLDER (will be populated by /api/trades) ===
+            "total_pnl": 0.0,
+            "total_unrealized_pnl": 0.0,
+            "pnl_percentage": 0.0,
+            "daily_pnl": 0.0,
+            "weekly_pnl": 0.0,
+            "monthly_pnl": 0.0,
+            
+            # === TRADING STATISTICS PLACEHOLDER (will be populated by /api/trades) ===
+            "trades_today": recent_trades_count,
+            "trades_total": 0,
+            "win_rate": 0.0,
+            "wins": 0,
+            "losses": 0,
+            
+            # === POSITION MANAGEMENT PLACEHOLDER ===
+            "open_positions": 0,
+            "closed_positions_today": recent_trades_count,
+            
+            # === ALERTS AND NOTIFICATIONS ===
+            "alerts_count": alerts_count,
+            "active_alerts": alerts_count > 0,
+            
+            # === SYSTEM STATUS ===
+            "system_health": "online" if scanner_active else "offline",
+            "last_update": current_time.isoformat(),
+            "timestamp": current_time.isoformat(),
+            
+            # === METADATA ===
+            "data_sources": {
+                "asset_count": "database",
+                "signals": "database",
+                "positions": "use_/api/positions",
+                "balance": "use_/api/positions",
+                "performance": "use_/api/trades"
             }
+        }
         
-        valid_assets = asset_repo.get_valid_assets_count(db)
-        active_signals = signal_repo.get_active_signals_count(db)
+        # Cache the response
+        _dashboard_cache['data'] = dashboard_data
+        _dashboard_cache['timestamp'] = current_time.timestamp()
         
-        # Get positions and P&L
-        positions = trade_repo.get_open_positions(db)
-        total_pnl = sum(p.unrealized_pnl for p in positions if p.unrealized_pnl)
+        logger.info(f"📊 Dashboard summary generated: {valid_assets_count} assets, "
+                   f"{active_signals_count} signals, {recent_trades_count} recent trades")
         
-        # Get recent trades
-        recent_trades = trade_repo.get_trades_since(db, utc_now() - timedelta(days=1))
+        return dashboard_data
         
+    except Exception as e:
+        logger.error(f"Dashboard summary error: {e}")
+        # Enhanced fallback with minimal data
         return {
             "summary": {
-                "valid_assets": valid_assets,
-                "active_signals": active_signals,
-                "active_positions": len(positions),
-                "total_unrealized_pnl": total_pnl,
-                "recent_trades_count": len(recent_trades)
+                "valid_assets": 0, "active_signals": 0, "active_positions": 0,
+                "total_unrealized_pnl": 0.0, "recent_trades_count": 0, "open_positions": 0
+            },
+            "selected_symbols": 0, "symbols_with_signals": 0, "monitored_assets": 0,
+            "trading_enabled": False, "scanner_active": False,
+            "robot_state": "Error - Sistema inicializando",
+            "account_balance": 0.0, "available_balance": 0.0, "margin_used": 0.0,
+            "total_position_value": 0.0, "total_pnl": 0.0, "total_unrealized_pnl": 0.0,
+            "pnl_percentage": 0.0, "daily_pnl": 0.0, "weekly_pnl": 0.0, "monthly_pnl": 0.0,
+            "trades_today": 0, "trades_total": 0, "win_rate": 0.0, "wins": 0, "losses": 0,
+            "open_positions": 0, "closed_positions_today": 0,
+            "alerts_count": 0, "active_alerts": False,
+            "system_health": "error", "timestamp": utc_now().isoformat(),
+            "data_sources": {"error": "system_error"}
+        }
+
+# Optimized positions endpoint with balance and P&L data
+@app.get("/api/positions")
+async def get_positions(limit: int = 20):
+    """Get positions, balance, and P&L data - optimized for dashboard"""
+    try:
+        current_time = utc_now()
+        
+        # === POSITION DATA ===
+        open_positions = []
+        total_unrealized_pnl = 0.0
+        total_position_value = 0.0
+        portfolio_metrics = None
+        
+        try:
+            # Check if trading worker is available and has position tracker
+            from trading.worker import TradingWorker
+            if hasattr(TradingWorker, '_instance') and TradingWorker._instance:
+                worker = TradingWorker._instance
+                if worker.position_tracker and worker.position_tracker._is_running:
+                    portfolio_metrics = await worker.position_tracker.get_portfolio_metrics()
+                    all_positions = await worker.position_tracker.get_all_positions()
+                    
+                    if portfolio_metrics:
+                        total_unrealized_pnl = portfolio_metrics.get('total_unrealized_pnl', 0.0)
+                        total_position_value = portfolio_metrics.get('total_exposure', 0.0)
+                    
+                    if all_positions:
+                        # Convert to list format for API response (limit results)
+                        open_positions = list(all_positions.values())[:limit]
+        except Exception as e:
+            logger.debug(f"Position tracker not available: {e}")
+        
+        # === ACCOUNT BALANCE ===
+        account_balance = 0.0
+        margin_used = 0.0
+        available_balance = 0.0
+        
+        try:
+            # Get balance from BingX client with timeout
+            from api.client import get_client
+            client = get_client()
+            if client._initialized:
+                balance_data = await client.fetch_balance()
+                if balance_data and 'USDT' in balance_data:
+                    usdt_balance = balance_data['USDT']
+                    account_balance = float(usdt_balance.get('total', 0))
+                    available_balance = float(usdt_balance.get('free', 0))
+                    margin_used = float(usdt_balance.get('used', 0))
+        except Exception as e:
+            logger.debug(f"Balance fetch not available: {e}")
+        
+        return {
+            "success": True,
+            "positions": open_positions,
+            "summary": {
+                "total_positions": len(open_positions),
+                "total_unrealized_pnl": float(total_unrealized_pnl),
+                "total_position_value": float(total_position_value),
+                "pnl_percentage": float(total_unrealized_pnl / max(account_balance, 1) * 100) if account_balance > 0 else 0.0
+            },
+            "balance": {
+                "account_balance": account_balance,
+                "available_balance": available_balance,
+                "margin_used": margin_used
+            },
+            "portfolio": portfolio_metrics or {},
+            "timestamp": current_time.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Positions endpoint error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "positions": [],
+            "summary": {
+                "total_positions": 0,
+                "total_unrealized_pnl": 0.0,
+                "total_position_value": 0.0,
+                "pnl_percentage": 0.0
+            },
+            "balance": {
+                "account_balance": 0.0,
+                "available_balance": 0.0,
+                "margin_used": 0.0
+            },
+            "portfolio": {},
+            "timestamp": utc_now().isoformat()
+        }
+
+# Optimized trades endpoint with performance stats
+@app.get("/api/trades")
+async def get_trades(limit: int = 20, db: Session = Depends(get_db), trade_repo: TradeRepository = Depends(get_trade_repo)):
+    """Get recent trades and performance statistics - optimized for dashboard"""
+    try:
+        current_time = utc_now()
+        
+        # === RECENT TRADES ===
+        recent_trades = []
+        try:
+            # Get recent trades (last 50 for analysis, return limited for display)
+            trades_query = db.query(Trade).order_by(Trade.created_at.desc()).limit(50).all()
+            recent_trades = [
+                {
+                    "id": trade.id,
+                    "symbol": trade.symbol,
+                    "side": trade.side,
+                    "amount": float(trade.amount),
+                    "price": float(trade.entry_price) if trade.entry_price else 0.0,
+                    "pnl": float(trade.pnl) if trade.pnl else 0.0,
+                    "status": trade.status,
+                    "created_at": trade.created_at.isoformat() if trade.created_at else None,
+                    "closed_at": trade.closed_at.isoformat() if trade.closed_at else None
+                }
+                for trade in trades_query[:limit]
+            ]
+        except Exception as e:
+            logger.debug(f"Error fetching recent trades: {e}")
+        
+        # === PERFORMANCE STATS ===
+        performance_stats = {}
+        try:
+            # Get performance stats for different periods (parallel execution)
+            import asyncio
+            from sqlalchemy import text
+            
+            async def get_stats_period(days, period_name):
+                try:
+                    stats = trade_repo.get_performance_stats(db, days=days)
+                    return period_name, stats
+                except:
+                    return period_name, {
+                        'total_trades': 0, 'winning_trades': 0, 'losing_trades': 0,
+                        'win_rate': 0.0, 'total_pnl': 0.0, 'avg_pnl': 0.0
+                    }
+            
+            # Get stats for different periods in parallel
+            results = await asyncio.gather(
+                get_stats_period(1, 'daily'),
+                get_stats_period(7, 'weekly'),
+                get_stats_period(30, 'monthly'),
+                return_exceptions=True
+            )
+            
+            # Process results
+            for result in results:
+                if isinstance(result, tuple):
+                    period_name, stats = result
+                    performance_stats[period_name] = stats
+                    
+        except Exception as e:
+            logger.debug(f"Error calculating performance stats: {e}")
+            performance_stats = {
+                'daily': {'total_trades': 0, 'winning_trades': 0, 'losing_trades': 0, 'win_rate': 0.0, 'total_pnl': 0.0, 'avg_pnl': 0.0},
+                'weekly': {'total_trades': 0, 'winning_trades': 0, 'losing_trades': 0, 'win_rate': 0.0, 'total_pnl': 0.0, 'avg_pnl': 0.0},
+                'monthly': {'total_trades': 0, 'winning_trades': 0, 'losing_trades': 0, 'win_rate': 0.0, 'total_pnl': 0.0, 'avg_pnl': 0.0}
+            }
+        
+        return {
+            "success": True,
+            "trades": recent_trades,
+            "summary": {
+                "total_recent_trades": len(recent_trades),
+                "trades_today": performance_stats.get('daily', {}).get('total_trades', 0),
+                "trades_week": performance_stats.get('weekly', {}).get('total_trades', 0),
+                "trades_month": performance_stats.get('monthly', {}).get('total_trades', 0)
+            },
+            "performance": {
+                "daily": performance_stats.get('daily', {}),
+                "weekly": performance_stats.get('weekly', {}),
+                "monthly": performance_stats.get('monthly', {})
+            },
+            "timestamp": current_time.isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Trades endpoint error: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "trades": [],
+            "summary": {
+                "total_recent_trades": 0,
+                "trades_today": 0,
+                "trades_week": 0,
+                "trades_month": 0
+            },
+            "performance": {
+                "daily": {"total_trades": 0, "win_rate": 0.0, "total_pnl": 0.0},
+                "weekly": {"total_trades": 0, "win_rate": 0.0, "total_pnl": 0.0},
+                "monthly": {"total_trades": 0, "win_rate": 0.0, "total_pnl": 0.0}
             },
             "timestamp": utc_now().isoformat()
         }
-    except Exception as e:
-        logger.error(f"Error fetching dashboard summary: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+# === IMPORT TRADE MODEL ===
+from database.models import Trade
 
 # Fast dashboard initialization endpoint
 @app.get("/api/dashboard/init")
@@ -1825,14 +2375,59 @@ TRADING_CACHE_TTL = 30  # Cache for 30 seconds
 
 @app.get("/api/trading/live-data")
 async def get_trading_live_data(
-    limit: int = 20,  # Reduced default limit
-    symbols: str = None,  # Optional comma-separated list of symbols
-    db: Session = Depends(get_db),
-    trade_repo: TradeRepository = Depends(get_trade_repo)
+    limit: int = 20,
+    symbols: str = None
 ):
-    """Get real-time trading data using optimized CCXT calls with caching and parallelization"""
+    """Get real-time trading data using symbol selector - no database dependencies"""
     try:
         logger.info(f"Trading live data requested - symbols: {symbols}, limit: {limit}")
+        
+        # Use optimized symbol selector with signal processor
+        try:
+            from trading.symbol_selector import get_symbol_selector
+            from trading.trading_cache import TradingCache
+            
+            # Get selected symbols with their data
+            symbol_selector = get_symbol_selector()
+            selected_data = symbol_selector.get_selected_symbols_with_data(limit=limit)
+            
+            if not selected_data:
+                logger.warning("No symbols available from symbol selector")
+                selected_data = {}
+            
+            logger.info(f"✅ Got {len(selected_data)} symbols from symbol selector")
+            
+            # Get additional signal data from cache
+            trading_cache = TradingCache()
+            
+            # Format data for frontend
+            trading_data = []
+            for symbol, data in selected_data.items():
+                # Get latest signal from cache if available
+                signal_info = await trading_cache.get_signal(symbol) or {}
+                
+                trading_data.append({
+                    'symbol': symbol,
+                    'score': data.get('score', 0),
+                    'timestamp': utc_now().isoformat(),
+                    'spot': data.get('spot', {}),
+                    '2h': data.get('2h', {}),
+                    '4h': data.get('4h', {}),
+                    'signal': signal_info.get('signal', data.get('signal', 'NEUTRAL')),
+                    'signal_strength': signal_info.get('strength', 0),
+                    'rules_triggered': signal_info.get('rules', []),
+                    'analysis': data.get('analysis', {})
+                })
+            
+            return JSONResponse({
+                'success': True,
+                'trading_data': trading_data,
+                'count': len(trading_data),
+                'timestamp': utc_now().isoformat()
+            })
+                
+        except Exception as e:
+            logger.error(f"Error getting data from symbol selector: {e}")
         
         # Check cache first
         cache_key = f"trading_live_{symbols or 'default'}_{limit}"
@@ -1842,16 +2437,25 @@ async def get_trading_live_data(
             cache_key in trading_cache_timestamps and
             current_time - trading_cache_timestamps[cache_key] < TRADING_CACHE_TTL):
             logger.info(f"Returning cached trading data for {cache_key}")
-            return trading_data_cache[cache_key]
+            cached_data = trading_data_cache[cache_key]
+            # Ensure cached data has the correct structure
+            if not isinstance(cached_data, dict) or 'success' not in cached_data:
+                # Convert old format to new format
+                trading_data = cached_data if isinstance(cached_data, list) else cached_data.get('trading_data', [])
+                return {
+                    "success": True,
+                    "trading_data": trading_data,
+                    "total_symbols": len(trading_data),
+                    "message": f"Dados de {len(trading_data)} ativos (cached)",
+                    "timestamp": utc_now().isoformat(),
+                    "metadata": {
+                        "endpoint_version": "1.0",
+                        "data_source": "cache"
+                    }
+                }
+            return cached_data
         
-        # Ensure database is initialized (in case position tracking is needed)
-        from database.connection import init_database
-        try:
-            init_database()
-        except Exception as init_error:
-            logger.debug(f"Database initialization: {init_error}")
-        
-        # Initialize BingX client for real-time data
+        # Initialize BingX client
         from api.client import get_client
         try:
             client = get_client()
@@ -1869,32 +2473,51 @@ async def get_trading_live_data(
             symbol_list = [s.strip().upper() for s in symbols.split(',')]
             logger.info(f"Using provided symbols: {symbol_list}")
         else:
-            # First try: Get valid symbols from database
+            # HYBRID: Database first, then limited symbol selector if needed
+            logger.info("Using hybrid approach: Database → Limited Symbol Selector → Static fallback")
+            
+            # Try database first
             try:
-                from database.repository import AssetRepository
-                asset_repo = AssetRepository()
+                from database.connection import get_session
+                from database.models import Asset
                 
                 with get_session() as session:
-                    valid_assets = asset_repo.get_valid_assets(session, limit=limit)
-                    if valid_assets and len(valid_assets) > 0:
-                        symbol_list = [asset.symbol for asset in valid_assets]
-                        logger.info(f"Using {len(symbol_list)} valid symbols from database: {symbol_list}")
-                    else:
-                        raise Exception("No valid assets in database - scan required")
-                        
-            except Exception as db_error:
-                logger.warning(f"No valid symbols in database: {db_error}")
+                    valid_assets = session.query(Asset).filter(Asset.is_valid == True).limit(limit).all()
+                    symbol_list = [asset.symbol for asset in valid_assets]
+                    logger.info(f"Database returned {len(symbol_list)} valid symbols")
                 
-                # If no valid symbols, return error indicating scan is needed
-                raise HTTPException(
-                    status_code=424,  # Failed Dependency
-                    detail={
-                        "error": "no_valid_symbols",
-                        "message": "Nenhum ativo válido encontrado no banco de dados. Execute o scan inicial primeiro.",
-                        "action_required": "initial_scan",
-                        "suggestion": "Clique em 'Executar Scan Inicial' na aba Scanner para descobrir ativos válidos."
+                # If database has sufficient data, use it
+                if len(symbol_list) >= 10:
+                    logger.info(f"✅ Using {len(symbol_list)} symbols from database")
+                else:
+                    # Database empty/insufficient - ESPERAR ao invés de fallback
+                    logger.warning(f"Database has only {len(symbol_list)} symbols - se não tiver símbolos, espera, não faça nada")
+                    logger.info("⏳ Sistema em modo de espera - aguardando scan inicial para popular banco de dados")
+                    
+                    # Return empty data instead of trying fallbacks
+                    return {
+                        "success": True,
+                        "trading_data": [],
+                        "total_symbols": 0,
+                        "message": "Sistema aguardando scan inicial - banco de dados vazio",
+                        "timestamp": utc_now().isoformat(),
+                        "status": "waiting_for_initial_scan",
+                        "instructions": "Execute o scan inicial para popular o banco de dados"
                     }
-                )
+                    
+            except Exception as fallback_error:
+                logger.error(f"Database query failed: {fallback_error}")
+                # Se falhou até mesmo o acesso ao banco, retorna modo de espera
+                logger.info("⏳ Sistema em modo de espera - falha no acesso ao banco de dados")
+                return {
+                    "success": True,
+                    "trading_data": [],
+                    "total_symbols": 0,
+                    "message": "Sistema aguardando scan inicial - banco de dados indisponível",
+                    "timestamp": utc_now().isoformat(),
+                    "status": "waiting_for_initial_scan",
+                    "instructions": "Execute o scan inicial para popular o banco de dados"
+                }
         
         # Helper function to safely get candle color
         def get_candle_color(candles):
@@ -1996,14 +2619,24 @@ async def get_trading_live_data(
                     logger.error(f"Error processing symbol {symbol}: {type(e).__name__}: {e}")
                     return None
         
-        # Fetch all symbol data in parallel
-        logger.info(f"Fetching data for {len(symbol_list)} symbols in parallel...")
+        # Fetch symbol data SEQUENTIALLY to avoid overload
+        logger.info(f"Fetching data for {len(symbol_list)} symbols sequentially...")
         start_time = utc_now()
         
-        symbol_data_results = await asyncio.gather(
-            *[fetch_symbol_data(symbol) for symbol in symbol_list],
-            return_exceptions=True
-        )
+        symbol_data_results = []
+        for i, symbol in enumerate(symbol_list):
+            try:
+                result = await fetch_symbol_data(symbol)
+                symbol_data_results.append(result)
+                
+                # Small delay to avoid rate limiting
+                if i > 0 and i % 10 == 0:
+                    await asyncio.sleep(0.1)
+                    logger.debug(f"Processed {i+1}/{len(symbol_list)} symbols")
+                    
+            except Exception as e:
+                logger.error(f"Error fetching data for {symbol}: {e}")
+                symbol_data_results.append(e)
         
         fetch_duration = (utc_now() - start_time).total_seconds()
         logger.info(f"Parallel data fetch completed in {fetch_duration:.2f}s")
@@ -2053,12 +2686,42 @@ async def get_trading_live_data(
                 except Exception as e:
                     logger.debug(f"No position data available for {symbol}: {e}")
                 
-                # Build simplified trading data using direct CCXT data
+                # Calculate additional metrics needed for frontend table
+                ticker_data = result['ticker']
+                bid = float(ticker_data.get('bid', 0)) if ticker_data.get('bid') else 0.0
+                ask = float(ticker_data.get('ask', 0)) if ticker_data.get('ask') else 0.0
+                high_24h = float(ticker_data.get('high', 0)) if ticker_data.get('high') else current_price
+                low_24h = float(ticker_data.get('low', 0)) if ticker_data.get('low') else current_price
+                change_24h = float(ticker_data.get('percentage', 0)) if ticker_data.get('percentage') else 0.0
+                
+                # Calculate spread percentage
+                spread_percent = ((ask - bid) / current_price) * 100 if current_price > 0 and ask > bid else 0.0
+                
+                # Calculate volatility (24h high-low range as % of current price)
+                volatility_24h = ((high_24h - low_24h) / current_price) * 100 if current_price > 0 else 0.0
+                
+                # Calculate risk level based on volatility and spread
+                if volatility_24h < 2.0 and spread_percent < 0.1:
+                    risk_level = "BAIXO"
+                    risk_color = "🟢"
+                elif volatility_24h < 5.0 and spread_percent < 0.3:
+                    risk_level = "MÉDIO"
+                    risk_color = "🟡"
+                else:
+                    risk_level = "ALTO"
+                    risk_color = "🔴"
+                
+                # Build enhanced trading data with all frontend table fields
                 symbol_data = {
                     "symbol": symbol,
                     "timestamp": utc_now().isoformat(),
                     "current_price": current_price,
                     "volume_24h": volume_24h,
+                    "change_24h": change_24h,
+                    "spread_percent": round(spread_percent, 3),
+                    "volatility_24h": round(volatility_24h, 2),
+                    "risk_level": risk_level,
+                    "risk_color": risk_color,
                     "indicators": {
                         "sma_1h": sma_1h,
                         "sma_2h": sma_2h,
@@ -2073,7 +2736,7 @@ async def get_trading_live_data(
                         "strength": round(signal_strength, 2)
                     },
                     "position": position_data,
-                    "data_source": "direct_ccxt"
+                    "data_source": "symbol_selector_enhanced"
                 }
                 
                 trading_data.append(symbol_data)
@@ -2094,19 +2757,21 @@ async def get_trading_live_data(
         
         # Prepare response with performance metrics
         response_data = {
+            "success": True,
             "trading_data": trading_data,
             "total_symbols": len(trading_data),
             "requested_symbols": len(symbol_list),
             "timestamp": utc_now().isoformat(),
             "metadata": {
-                "endpoint_version": "2.1_parallel_optimized",
-                "data_source": "direct_bingx_api",
-                "data_type": "real_time_trading",
+                "endpoint_version": "3.0_symbol_selector_enhanced",
+                "data_source": "symbol_selector_with_metrics",
+                "data_type": "real_time_trading_enhanced",
                 "update_interval": "real_time",
                 "symbols_requested": symbol_list,
                 "fetch_duration_seconds": fetch_duration,
                 "cache_enabled": True,
-                "cache_ttl_seconds": TRADING_CACHE_TTL
+                "cache_ttl_seconds": TRADING_CACHE_TTL,
+                "features": ["price", "volume", "spread", "volatility", "risk_level", "indicators", "signals"]
             }
         }
         
@@ -2286,6 +2951,40 @@ async def execute_trading_signal(
     except Exception as e:
         logger.error(f"Error executing trading signal: {e}")
         raise HTTPException(status_code=500, detail=f"Signal execution error: {str(e)}")
+
+# Signal generation endpoints
+
+@app.post("/api/signals/generate/{symbol}")
+async def generate_signal_for_symbol(symbol: str):
+    """Generate trading signal for a specific symbol on demand"""
+    try:
+        from trading.signal_processor import get_signal_processor
+        
+        # Validate symbol
+        if not symbol or '/' not in symbol:
+            raise HTTPException(status_code=400, detail="Invalid symbol format")
+        
+        signal_processor = get_signal_processor()
+        
+        # Process signal manually
+        result = await signal_processor.process_manual_signal(symbol)
+        
+        if result:
+            return {
+                "message": f"Signal generated for {symbol}",
+                "signal": result,
+                "status": "success"
+            }
+        else:
+            return {
+                "message": f"No actionable signal for {symbol}",
+                "signal": None,
+                "status": "neutral"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error generating signal for {symbol}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/trading/positions")
 async def get_active_positions(
@@ -3820,14 +4519,119 @@ async def websocket_heartbeat_task():
             # Continue running even if there's an error
             continue
 
+async def websocket_cleanup_task():
+    """Background task to cleanup stale WebSocket connections."""
+    logger.info("Starting WebSocket cleanup task")
+    
+    while True:
+        try:
+            await asyncio.sleep(60)  # Cleanup every 60 seconds
+            
+            if manager.active_connections:
+                initial_count = len(manager.active_connections)
+                manager.cleanup_stale_connections()
+                final_count = len(manager.active_connections)
+                
+                if initial_count != final_count:
+                    logger.info(f"WebSocket cleanup: removed {initial_count - final_count} stale connections")
+            
+        except asyncio.CancelledError:
+            logger.info("WebSocket cleanup task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in WebSocket cleanup task: {e}")
+            await asyncio.sleep(5)
+
+async def force_initial_validation():
+    """Force initial validation on startup to ensure we always have data"""
+    try:
+        # Wait for database to be ready
+        await asyncio.sleep(2.0)
+        
+        logger.info("🔄 Forcing initial asset validation on startup...")
+        
+        # Check if we already have validated assets
+        from database.connection import get_session
+        from database.repository import AssetRepository
+        
+        try:
+            db = get_session()
+            if db:
+                repo = AssetRepository()
+                
+                # Count valid assets
+                try:
+                    valid_assets = repo.get_valid_assets(db)
+                    asset_count = len(valid_assets) if valid_assets else 0
+                    
+                    if asset_count < 50:  # If we have less than 50 valid assets, force validation
+                        logger.info(f"Only {asset_count} valid assets found, forcing validation...")
+                        await run_revalidation_task()
+                    else:
+                        logger.info(f"Found {asset_count} valid assets, skipping forced validation")
+                        
+                except Exception as e:
+                    logger.warning(f"Error checking assets, forcing validation anyway: {e}")
+                    await run_revalidation_task()
+                finally:
+                    if hasattr(db, 'close'):
+                        db.close()
+        except Exception as db_error:
+            logger.warning(f"Database session error: {db_error}")
+            # Skip validation if DB not ready
+        else:
+            logger.warning("Database not ready, will retry validation later")
+            
+    except Exception as e:
+        logger.error(f"Error in force_initial_validation: {e}")
+
+async def start_continuous_scanner():
+    """Start continuous scanner for real-time data"""
+    try:
+        logger.info("🚀 Starting continuous scanner for real-time market data...")
+        
+        # Wait for database and API to be ready
+        await asyncio.sleep(5)
+        
+        from scanner.enhanced_worker import EnhancedScannerWorker
+        
+        # Initialize worker
+        worker = EnhancedScannerWorker(use_parallel=False)  # Use regular mode for stability
+        
+        if not await worker.initialize():
+            logger.error("❌ Failed to initialize scanner worker")
+            return
+            
+        logger.info("✅ Scanner worker initialized successfully")
+        
+        while True:
+            try:
+                logger.info("📊 Running scanner cycle...")
+                
+                # Run one scan cycle
+                processed = await worker.scan_cycle()
+                
+                logger.info(f"✅ Scanner cycle completed: {processed} assets processed")
+                
+                # Wait before next cycle
+                await asyncio.sleep(30)  # 30 seconds between cycles
+                
+            except Exception as e:
+                logger.error(f"❌ Error in scanner cycle: {e}")
+                await asyncio.sleep(60)  # Wait longer on error
+                
+    except Exception as e:
+        logger.error(f"❌ Failed to start continuous scanner: {e}")
+
 # Start background task - merge with main startup event
 async def start_background_tasks():
-    """Start background tasks"""
-    asyncio.create_task(broadcast_realtime_data())
-    asyncio.create_task(automated_risk_management())
-    asyncio.create_task(broadcast_scanner_status())
+    """Start background tasks - MINIMAL MODE for performance"""
+    # DISABLED: All heavy background tasks to prevent server overload
+    logger.info("Background tasks disabled for performance optimization")
+    # Only keep essential WebSocket heartbeat and cleanup
     asyncio.create_task(websocket_heartbeat_task())
-    logger.info("Background tasks started: real-time data broadcasting, automated risk management, scanner status broadcasting, and WebSocket heartbeat")
+    asyncio.create_task(websocket_cleanup_task())
+    logger.info("Background tasks started: WebSocket heartbeat only (performance mode)")
 
 async def shutdown_event():
     """Cleanup on shutdown"""

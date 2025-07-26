@@ -17,13 +17,49 @@ class Validator:
     
     @staticmethod
     def is_valid_symbol(symbol: str) -> bool:
-        """Validate cryptocurrency trading symbol format."""
+        """Validate cryptocurrency trading symbol format with strict filtering."""
         if not symbol or not isinstance(symbol, str):
             return False
         
+        # Convert to uppercase for validation
+        symbol = symbol.upper().strip()
+        
+        # Reject symbols with invalid characters immediately
+        invalid_patterns = [
+            r'^\$',           # Starts with $ (like $1/USDT)
+            r'[^A-Z0-9/]',    # Contains non-alphanumeric chars except /
+            r'/.*/',          # Multiple slashes
+            r'^/',            # Starts with slash
+            r'/$',            # Ends with slash
+            r'^[0-9]+/',      # Starts with numbers only (like 1/USDT)
+            r'/[0-9]+$',      # Ends with numbers only
+        ]
+        
+        for pattern in invalid_patterns:
+            if re.search(pattern, symbol):
+                return False
+        
         # Expected format: BASE/QUOTE (e.g., BTC/USDT)
-        pattern = r'^[A-Z0-9]{2,10}\/[A-Z]{3,5}$'
-        return bool(re.match(pattern, symbol.upper()))
+        # Base must be 2-10 chars, Quote must be 3-5 chars
+        # Base cannot be purely numeric
+        pattern = r'^[A-Z][A-Z0-9]{1,9}\/[A-Z]{3,5}$'
+        if not re.match(pattern, symbol):
+            return False
+        
+        # Additional validation: base cannot be purely numeric
+        base_part = symbol.split('/')[0]
+        if base_part.isdigit():
+            return False
+        
+        # Reject known invalid symbols
+        invalid_symbols = {
+            '$1/USDT', '1/USDT', '2/USDT', '0/USDT', 
+            'NULL/USDT', 'UNDEFINED/USDT', 'TEST/USDT'
+        }
+        if symbol in invalid_symbols:
+            return False
+        
+        return True
     
     @staticmethod
     def is_valid_side(side: str) -> bool:

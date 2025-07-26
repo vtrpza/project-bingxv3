@@ -51,27 +51,47 @@ class BingXClient:
             'recovery_time': 300,  # 5 minutes
             'last_failure_time': 0
         }
-        # BingX strict rate limits - ULTRA CONSERVATIVE to prevent rate limiting
+        # BingX strict rate limits - ULTRA CONSERVATIVE with intelligent batching
         # Market interfaces: 100 requests per 10 seconds per IP = 10 req/s theoretical max
         # Account interfaces: 1,000 requests per 10 seconds per IP
-        # Using extremely conservative limits to ensure stability
+        # Using extremely conservative limits with intelligent request management
         self._rate_limits = {
-            # Market data endpoints - EXTREMELY conservative (60% of theoretical max)
-            'fetch_ticker': 1.5,     # 1.5 per second (ultra conservative)
-            'fetch_ohlcv': 1.5,      # 1.5 per second (ultra conservative)
-            'fetch_markets': 0.5,    # 0.5 per second (for initial scan only)
-            'fetch_orderbook': 1.0,  # 1 per second (ultra conservative)
+            # Market data endpoints - Optimized for better performance
+            'fetch_ticker': 5.0,     # 5 per second (50% of BingX limit)
+            'fetch_ohlcv': 5.0,      # 5 per second (50% of BingX limit)
+            'fetch_markets': 2.0,    # 2 per second (minimal usage)
+            'fetch_orderbook': 3.0,  # 3 per second (balanced)
             
-            # Account endpoints - conservative (10% of theoretical max)
-            'create_order': 20,      # 20 per second (conservative for trading)
-            'cancel_order': 20,      # 20 per second (conservative for trading)
-            'fetch_balance': 2,      # 2 per second (ultra conservative)
-            'fetch_order_status': 10,# 10 per second (moderate)
-            'fetch_open_orders': 2,  # 2 per second (ultra conservative)
+            # Account endpoints - very conservative
+            'create_order': 15,      # 15 per second (conservative for trading)
+            'cancel_order': 15,      # 15 per second (conservative for trading)
+            'fetch_balance': 1,      # 1 per second (ultra conservative)
+            'fetch_order_status': 5, # 5 per second (conservative)
+            'fetch_open_orders': 1,  # 1 per second (ultra conservative)
         }
         # Track requests per endpoint for rate limiting
         self._request_timestamps = defaultdict(deque)
         self._rate_limit_window = 10  # 10 seconds window
+        
+        # Request deduplication and caching
+        self._pending_requests = {}  # Track pending identical requests
+        self._request_cache = {}     # Cache recent results
+        self._cache_ttl = {
+            'fetch_ticker': 3,       # 3 seconds cache for tickers
+            'fetch_ohlcv': 30,       # 30 seconds cache for OHLCV
+            'fetch_markets': 300,    # 5 minutes cache for markets
+            'fetch_orderbook': 5,    # 5 seconds cache for orderbook
+        }
+        
+        # Request batching
+        self._batch_queue = defaultdict(list)
+        self._batch_timers = {}
+        self._batch_size = 5
+        self._batch_delay = 0.5  # 500ms batch window
+        
+        # Task cleanup
+        self._last_cleanup = time.time()
+        self._cleanup_interval = 60  # Cleanup every minute
         
     async def initialize(self) -> bool:
         """Initialize the CCXT exchange client."""
@@ -166,6 +186,129 @@ class BingXClient:
         
         # Record this request
         timestamps.append(current_time)
+    
+    def _get_cache_key(self, func_name: str, *args, **kwargs) -> str:
+        """Generate cache key for request."""
+        # Create a hash of function name and arguments
+        import hashlib
+        key_parts = [func_name] + [str(arg) for arg in args] + [f"{k}={v}" for k, v in sorted(kwargs.items())]
+        key_string = "|".join(key_parts)
+        return hashlib.md5(key_string.encode()).hexdigest()
+    
+    def _get_cached_result(self, cache_key: str, endpoint: str) -> Optional[Any]:
+        """Get cached result if valid."""
+        if cache_key not in self._request_cache:
+            return None
+        
+        cached_data = self._request_cache[cache_key]
+        current_time = time.time()
+        ttl = self._cache_ttl.get(endpoint, 60)
+        
+        if current_time - cached_data['timestamp'] > ttl:
+            # Cache expired
+            del self._request_cache[cache_key]
+            return None
+        
+        logger.debug(f"Cache HIT for {endpoint}: {cache_key[:8]}")
+        return cached_data['result']
+    
+    def _cache_result(self, cache_key: str, result: Any) -> None:
+        """Cache result with timestamp."""
+        self._request_cache[cache_key] = {
+            'result': result,
+            'timestamp': time.time()
+        }
+        
+        # Periodic cleanup to prevent memory issues
+        self._cleanup_caches()
+    
+    def _cleanup_caches(self) -> None:
+        """Clean up stale caches and completed tasks."""
+        current_time = time.time()
+        
+        # Only cleanup periodically to avoid overhead
+        if current_time - self._last_cleanup < self._cleanup_interval:
+            return
+        
+        self._last_cleanup = current_time
+        
+        # Clean up expired cache entries
+        expired_keys = []
+        for key, data in self._request_cache.items():
+            if current_time - data['timestamp'] > 600:  # Remove entries older than 10 minutes
+                expired_keys.append(key)
+        
+        for key in expired_keys:
+            del self._request_cache[key]
+        
+        # Clean up completed/cancelled tasks
+        completed_tasks = []
+        for key, task in self._pending_requests.items():
+            if hasattr(task, 'done') and task.done():
+                completed_tasks.append(key)
+        
+        for key in completed_tasks:
+            del self._pending_requests[key]
+        
+        # Limit cache size
+        if len(self._request_cache) > 1000:
+            # Remove oldest entries
+            oldest_keys = sorted(
+                self._request_cache.items(),
+                key=lambda x: x[1]['timestamp']
+            )[:200]  # Remove more entries when cleanup runs
+            for key, _ in oldest_keys:
+                del self._request_cache[key]
+        
+        if expired_keys or completed_tasks:
+            logger.debug(f"Cache cleanup: removed {len(expired_keys)} expired entries, {len(completed_tasks)} completed tasks")
+    
+    async def _deduplicated_request(self, func: Callable, endpoint: str, *args, **kwargs) -> Any:
+        """Execute request with deduplication, caching, and rate limiting."""
+        cache_key = self._get_cache_key(func.__name__, *args, **kwargs)
+        
+        # Check cache first
+        cached_result = self._get_cached_result(cache_key, endpoint)
+        if cached_result is not None:
+            return cached_result
+        
+        # Check if same request is already pending
+        if cache_key in self._pending_requests:
+            logger.debug(f"Deduplicating request {endpoint}: {cache_key[:8]}")
+            try:
+                return await self._pending_requests[cache_key]
+            except Exception as e:
+                # If awaiting the pending request fails, remove it and retry
+                logger.warning(f"Pending request failed, removing from cache: {e}")
+                self._pending_requests.pop(cache_key, None)
+                # Fall through to create new request
+        
+        # Create new request task (not coroutine) to avoid reuse issues
+        async def make_request():
+            try:
+                # Apply rate limiting before actual request
+                await self._check_rate_limit(endpoint)
+                result = await self._execute_with_retry(func, *args, **kwargs)
+                self._cache_result(cache_key, result)
+                return result
+            except Exception as e:
+                logger.error(f"Request failed for {endpoint}: {e}")
+                raise
+            finally:
+                # Remove from pending requests
+                self._pending_requests.pop(cache_key, None)
+        
+        # Create and store the task (not coroutine)
+        import asyncio
+        task = asyncio.create_task(make_request())
+        self._pending_requests[cache_key] = task
+        
+        try:
+            return await task
+        except Exception as e:
+            # Clean up on error
+            self._pending_requests.pop(cache_key, None)
+            raise
     
     def _check_circuit_breaker(self):
         """Check if circuit breaker should allow requests."""
@@ -293,16 +436,17 @@ class BingXClient:
             raise MarketDataError(f"Failed to fetch markets: {e}")
     
     async def fetch_ticker(self, symbol: str) -> Dict[str, Any]:
-        """Fetch current market ticker data."""
+        """Fetch current market ticker data with caching and deduplication."""
         self._check_initialized()
-        await self._check_rate_limit('fetch_ticker')
         
         if not Validator.is_valid_symbol(symbol):
             raise ValidationError(f"Invalid symbol format: {symbol}")
         
         try:
-            # Use symbol as-is (BTC/USDT format)
-            ticker = await self._execute_with_retry(self.exchange.fetch_ticker, symbol)
+            # Use deduplicated request with caching
+            ticker = await self._deduplicated_request(
+                self.exchange.fetch_ticker, 'fetch_ticker', symbol
+            )
             
             # Safe access to ticker data with proper error handling
             def safe_decimal(value):
@@ -336,9 +480,8 @@ class BingXClient:
     
     async def fetch_ohlcv(self, symbol: str, timeframe: str = '1h', 
                          limit: int = 100, since: Optional[int] = None) -> List[Dict[str, Any]]:
-        """Fetch OHLCV candlestick data."""
+        """Fetch OHLCV candlestick data with caching and deduplication."""
         self._check_initialized()
-        await self._check_rate_limit('fetch_ohlcv')
         
         if not Validator.is_valid_symbol(symbol):
             raise ValidationError(f"Invalid symbol format: {symbol}")
@@ -349,8 +492,9 @@ class BingXClient:
         try:
             # Convert BTC/VST format to BTC-VST for BingX API
             bingx_symbol = symbol.replace('/', '-')
-            candles = await self._execute_with_retry(
-                self.exchange.fetch_ohlcv, bingx_symbol, timeframe, since, limit
+            candles = await self._deduplicated_request(
+                self.exchange.fetch_ohlcv, 'fetch_ohlcv', 
+                bingx_symbol, timeframe, since, limit
             )
             
             formatted_candles = []
@@ -712,3 +856,60 @@ async def close_client():
     if _bingx_client:
         await _bingx_client.close()
         _bingx_client = None
+
+
+def get_rate_limit_status() -> Dict[str, Any]:
+    """Get current rate limit status for monitoring."""
+    client = get_client()
+    if not client._initialized:
+        return {"status": "not_initialized"}
+    
+    current_time = time.time()
+    status = {
+        "status": "active",
+        "circuit_breaker": client._circuit_breaker.copy(),
+        "cache_stats": {
+            "cache_size": len(client._request_cache),
+            "pending_requests": len(client._pending_requests),
+        },
+        "rate_limits": {}
+    }
+    
+    # Calculate rate limit utilization for each endpoint
+    for endpoint, limit in client._rate_limits.items():
+        timestamps = client._request_timestamps[endpoint]
+        # Count requests in the current window
+        recent_requests = sum(1 for ts in timestamps if current_time - ts <= client._rate_limit_window)
+        max_requests = limit * client._rate_limit_window / 10  # Convert to 10s window
+        
+        status["rate_limits"][endpoint] = {
+            "requests_in_window": recent_requests,
+            "max_requests": int(max_requests),
+            "utilization_percent": round((recent_requests / max_requests * 100) if max_requests > 0 else 0, 2)
+        }
+    
+    return status
+
+
+def clear_api_cache():
+    """Clear API request cache for testing or reset."""
+    client = get_client()
+    
+    # Cancel all pending tasks first
+    import asyncio
+    for key, task in list(client._pending_requests.items()):
+        if hasattr(task, 'cancel'):
+            task.cancel()
+    
+    client._request_cache.clear()
+    client._pending_requests.clear()
+    logger.info("API cache and pending requests cleared")
+
+
+def force_cleanup_tasks():
+    """Force cleanup of completed and stale tasks."""
+    client = get_client()
+    if hasattr(client, '_cleanup_caches'):
+        client._last_cleanup = 0  # Force cleanup
+        client._cleanup_caches()
+        logger.info("Forced task cleanup completed")

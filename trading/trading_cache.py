@@ -50,25 +50,31 @@ class TradingCache:
         logger.info(f"Trading cache initialized (max_symbols={max_symbols})")
     
     async def update_selected_symbols(self, symbols: List[TradingSymbol]):
-        """Update the list of selected trading symbols."""
+        """Update the list of selected trading symbols with optimized operations."""
+        # Pre-process data outside the lock for better concurrency
+        limited_symbols = symbols[:self._max_symbols]
+        current_symbol_set = {s.symbol for s in limited_symbols}
+        
         async with self._lock:
-            self._selected_symbols = symbols[:self._max_symbols]
+            self._selected_symbols = limited_symbols
             self._last_selection_time = utc_now()
             
-            # Remove symbols no longer selected
-            current_symbol_set = {s.symbol for s in symbols}
-            to_remove = [sym for sym in self._symbols if sym not in current_symbol_set]
-            for sym in to_remove:
-                del self._symbols[sym]
-                logger.debug(f"Removed {sym} from trading cache (no longer selected)")
+            # Batch remove symbols no longer selected using dict comprehension
+            original_count = len(self._symbols)
+            self._symbols = {
+                sym: data for sym, data in self._symbols.items()
+                if sym in current_symbol_set
+            }
+            removed_count = original_count - len(self._symbols)
             
-            # Add new symbols
+            # Batch add new symbols
+            added_count = 0
             for trading_symbol in self._selected_symbols:
                 if trading_symbol.symbol not in self._symbols:
                     self._symbols[trading_symbol.symbol] = TradingSymbolData(symbol=trading_symbol)
-                    logger.debug(f"Added {trading_symbol.symbol} to trading cache")
+                    added_count += 1
             
-            logger.info(f"Trading cache updated with {len(self._selected_symbols)} selected symbols")
+            logger.info(f"Trading cache updated: {len(self._selected_symbols)} selected, removed {removed_count}, added {added_count}")
     
     async def get_selected_symbols(self) -> List[TradingSymbol]:
         """Get currently selected trading symbols."""
@@ -107,6 +113,11 @@ class TradingCache:
         """Set current signal for a symbol."""
         await self.update_symbol_data(symbol, current_signal=signal)
         logger.info(f"Signal set for {symbol}: {signal.get('type')} ({signal.get('rule')})")
+    
+    async def get_signal(self, symbol: str) -> Optional[Dict]:
+        """Get current signal for a symbol."""
+        data = await self.get_symbol_data(symbol)
+        return data.current_signal if data else None
     
     async def clear_signal(self, symbol: str):
         """Clear signal for a symbol."""

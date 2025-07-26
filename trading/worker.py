@@ -27,6 +27,7 @@ from .engine import TradingEngine
 from .order_manager import OrderManager
 from .risk_manager import RiskManager
 from .position_tracker import PositionTracker
+from .signal_processor import get_signal_processor
 
 logger = get_logger(__name__)
 
@@ -61,6 +62,7 @@ class TradingWorker:
         self.order_manager: Optional[OrderManager] = None
         self.risk_manager: Optional[RiskManager] = None
         self.position_tracker: Optional[PositionTracker] = None
+        self.signal_processor = get_signal_processor()
         
         # Worker state
         self._is_running = False
@@ -108,6 +110,9 @@ class TradingWorker:
             self.position_tracker = PositionTracker(self.client, self.trade_repo)
             self.trading_engine = TradingEngine(self.client, self.trade_repo, self.asset_repo)
             
+            # Set trading worker reference in signal processor
+            self.signal_processor.set_trading_worker(self)
+            
             # Start all components
             await self.order_manager.start()
             await self.risk_manager.start()
@@ -148,6 +153,9 @@ class TradingWorker:
             # Start health check task
             self._health_check_task = asyncio.create_task(self._health_check_loop())
             
+            # Start signal processor for automatic signal generation
+            await self.signal_processor.start()
+            
             logger.info("✅ TradingWorker started successfully")
             
             # Log startup information
@@ -184,6 +192,10 @@ class TradingWorker:
                     await self._health_check_task
                 except asyncio.CancelledError:
                     pass
+            
+            # Stop signal processor
+            if self.signal_processor:
+                await self.signal_processor.stop()
             
             # Stop all trading components
             if self.trading_engine:

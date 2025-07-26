@@ -12,12 +12,14 @@ from pathlib import Path
 def setup_environment():
     """Set up environment variables for web interface"""
     os.environ['ENVIRONMENT'] = 'development'
-    os.environ['DATABASE_URL'] = 'sqlite:///vst_trading.db'
+    os.environ['DATABASE_URL'] = 'sqlite:///./bingx_trading.db'
     os.environ['DEBUG'] = 'true'
     os.environ['LOG_LEVEL'] = 'INFO'
     os.environ['TRADING_ENABLED'] = 'true'
     os.environ['BINGX_TESTNET'] = 'true'
     os.environ['MAX_ASSETS_TO_SCAN'] = '1500'
+    os.environ['PORT'] = '10000'
+    os.environ['HOST'] = '0.0.0.0'
 
     # Check if API keys are set
     if not os.environ.get('BINGX_API_KEY'):
@@ -77,19 +79,16 @@ def main():
     print()
     
     # Start web server
-    print("🚀 Starting Web Interface...")
-    print("🌐 URL: http://localhost:8000")
+    print("🚀 Starting Web Interface with Integrated Scanner...")
+    print("🌐 URL: http://localhost:10000")
+    print("📊 Scanner will start automatically with real-time data")
     print("Press Ctrl+C to stop")
     print("-" * 40)
     
     try:
-        # Run the web API with uvicorn
+        # Run the API module (which includes the integrated scanner)
         subprocess.run([
-            sys.executable, '-m', 'uvicorn', 
-            'api.web_api:app', 
-            '--host', '0.0.0.0', 
-            '--port', '8000', 
-            '--reload'
+            sys.executable, '-m', 'api'
         ], check=True)
     except KeyboardInterrupt:
         print("\n👋 Web interface stopped by user")

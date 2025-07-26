@@ -4,12 +4,8 @@ Provides dynamic asset names and metadata with caching and fallbacks
 """
 
 import logging
-import asyncio
-import aiohttp
 from typing import Dict, Optional, List
 from datetime import datetime, timedelta
-import json
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -100,49 +96,34 @@ class AssetInfoService:
         return datetime.utcnow() < self.cache_expiry[symbol]
     
     async def get_asset_info_batch(self, symbols: List[str]) -> Dict[str, Dict]:
-        """Get asset information for multiple symbols efficiently"""
+        """Get asset information for multiple symbols using only BingX data and fallbacks"""
         try:
-            # Filtrar símbolos que precisam ser buscados
-            symbols_to_fetch = []
             result = {}
             
             for symbol in symbols:
                 base_currency = symbol.split('/')[0] if '/' in symbol else symbol
                 
+                # Check cache first
                 if self._is_cache_valid(base_currency):
                     result[symbol] = self.cache[base_currency]
                 else:
-                    symbols_to_fetch.append(base_currency)
-            
-            # Buscar símbolos não cacheados
-            if symbols_to_fetch:
-                new_data = await self._fetch_from_coingecko(symbols_to_fetch)
-                
-                # Atualizar cache
-                for symbol, data in new_data.items():
-                    self.cache[symbol] = data
-                    self.cache_expiry[symbol] = datetime.utcnow() + self.cache_duration
-                    
-                    # Adicionar ao resultado
-                    full_symbol = f"{symbol}/USDT"
-                    if full_symbol in symbols:
-                        result[full_symbol] = data
-            
-            # Preencher símbolos não encontrados com fallbacks
-            for symbol in symbols:
-                if symbol not in result:
-                    base_currency = symbol.split('/')[0] if '/' in symbol else symbol
-                    result[symbol] = {
+                    # Use fallback names (no external API calls)
+                    asset_info = {
                         'name': self.fallback_names.get(base_currency, base_currency),
                         'symbol': base_currency,
-                        'source': 'fallback'
+                        'source': 'bingx_fallback'
                     }
+                    
+                    # Cache the fallback
+                    self.cache[base_currency] = asset_info
+                    self.cache_expiry[base_currency] = datetime.utcnow() + self.cache_duration
+                    result[symbol] = asset_info
             
             return result
             
         except Exception as e:
             logger.error(f"Error getting asset info batch: {e}")
-            # Retornar fallbacks para todos
+            # Return fallbacks for all
             return {
                 symbol: {
                     'name': self.fallback_names.get(symbol.split('/')[0], symbol.split('/')[0]),
@@ -152,99 +133,12 @@ class AssetInfoService:
                 for symbol in symbols
             }
     
-    async def _fetch_from_coingecko(self, symbols: List[str]) -> Dict[str, Dict]:
-        """Fetch asset info from CoinGecko API"""
-        try:
-            # Mapear símbolos para IDs do CoinGecko (símbolos comuns)
-            symbol_to_id = {
-                'BTC': 'bitcoin',
-                'ETH': 'ethereum',
-                'BNB': 'binancecoin',
-                'ADA': 'cardano',
-                'XRP': 'ripple',
-                'SOL': 'solana',
-                'DOT': 'polkadot',
-                'MATIC': 'matic-network',
-                'LTC': 'litecoin',
-                'LINK': 'chainlink',
-                'UNI': 'uniswap',
-                'ATOM': 'cosmos',
-                'VET': 'vechain',
-                'FIL': 'filecoin',
-                'TRX': 'tron',
-                'DOGE': 'dogecoin',
-                'AVAX': 'avalanche-2',
-                'SHIB': 'shiba-inu',
-                'NEAR': 'near',
-                'ALGO': 'algorand',
-                'APE': 'apecoin',
-                'LDO': 'lido-dao',
-                'OP': 'optimism',
-                'ARB': 'arbitrum',
-                'PEPE': 'pepe',
-                'MKR': 'maker',
-                'RNDR': 'render-token',
-                'GRT': 'the-graph',
-                'RUNE': 'thorchain',
-                'FLOW': 'flow',
-                'MINA': 'mina-protocol'
-            }
-            
-            # Buscar apenas símbolos que temos mapeamento
-            ids_to_fetch = []
-            symbol_map = {}
-            
-            for symbol in symbols:
-                if symbol in symbol_to_id:
-                    coin_id = symbol_to_id[symbol]
-                    ids_to_fetch.append(coin_id)
-                    symbol_map[coin_id] = symbol
-            
-            if not ids_to_fetch:
-                return {}
-            
-            # Fazer requisição para CoinGecko
-            ids_str = ','.join(ids_to_fetch)
-            url = f"https://api.coingecko.com/api/v3/coins/markets"
-            params = {
-                'vs_currency': 'usd',
-                'ids': ids_str,
-                'order': 'market_cap_desc',
-                'per_page': len(ids_to_fetch),
-                'page': 1,
-                'sparkline': 'false'
-            }
-            
-            timeout = aiohttp.ClientTimeout(total=10)
-            
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get(url, params=params) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        
-                        result = {}
-                        for coin in data:
-                            coin_id = coin['id']
-                            if coin_id in symbol_map:
-                                symbol = symbol_map[coin_id]
-                                result[symbol] = {
-                                    'name': coin['name'],
-                                    'symbol': coin['symbol'].upper(),
-                                    'market_cap_rank': coin.get('market_cap_rank'),
-                                    'source': 'coingecko'
-                                }
-                        
-                        return result
-                    else:
-                        logger.warning(f"CoinGecko API error: {response.status}")
-                        return {}
-                        
-        except asyncio.TimeoutError:
-            logger.warning("CoinGecko API timeout")
-            return {}
-        except Exception as e:
-            logger.error(f"Error fetching from CoinGecko: {e}")
-            return {}
+    async def _fetch_from_bingx(self, symbols: List[str]) -> Dict[str, Dict]:
+        """Fetch asset info from BingX using ticker data (future enhancement)"""
+        # Future: integrate with BingX client to get market data
+        # For now, return empty dict to use fallbacks
+        logger.info(f"Using BingX fallback names for {len(symbols)} symbols")
+        return {}
     
     def get_asset_display_name(self, symbol: str) -> str:
         """Get cached asset display name or fallback"""
@@ -256,12 +150,12 @@ class AssetInfoService:
         return self.fallback_names.get(base_currency, base_currency)
     
     async def warmup_cache(self, symbols: List[str]):
-        """Pre-warm cache with common symbols"""
+        """Pre-warm cache with common symbols using BingX fallback names"""
         try:
             await self.get_asset_info_batch(symbols)
-            logger.info(f"Cache warmed up for {len(symbols)} symbols")
+            logger.info(f"BingX asset cache warmed up for {len(symbols)} symbols")
         except Exception as e:
-            logger.error(f"Error warming up cache: {e}")
+            logger.error(f"Error warming up BingX asset cache: {e}")
 
 # Global instance
 asset_info_service = AssetInfoService()

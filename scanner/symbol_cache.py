@@ -111,10 +111,10 @@ class SymbolCache:
                 logger.info(f"Cleaned up {len(expired_symbols)} expired symbols from cache")
     
     async def bulk_update(self, symbols_data: Dict[str, SymbolData]):
-        """Update multiple symbols at once."""
+        """Update multiple symbols at once with optimized bulk operation."""
         async with self._lock:
-            for symbol, data in symbols_data.items():
-                self._cache[symbol] = data
+            # Use dict.update() for more efficient bulk operation
+            self._cache.update(symbols_data)
             logger.info(f"Bulk updated {len(symbols_data)} symbols in cache")
     
     def get_stats(self) -> Dict:
