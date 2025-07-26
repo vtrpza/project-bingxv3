@@ -1587,19 +1587,22 @@ async def get_active_signals(
     try:
         # Get pending signals (recent signals that may be unprocessed)
         signals = repo.get_pending_signals(db, limit=50)
-        return [
-            {
-                "id": str(signal.id),
-                "symbol": signal.asset.symbol if signal.asset else "UNKNOWN",
-                "signal_type": signal.signal_type,
-                "strength": float(signal.strength) if signal.strength else None,
-                "timestamp": signal.timestamp.isoformat() if signal.timestamp else None,
-                "is_processed": getattr(signal, 'is_processed', False),
-                "rules_triggered": signal.rules_triggered or [],
-                "created_at": signal.created_at.isoformat() if signal.created_at else None
-            }
-            for signal in signals
-        ]
+        return {
+            "success": True,
+            "signals": [
+                {
+                    "id": str(signal.id),
+                    "symbol": signal.asset.symbol if signal.asset else "UNKNOWN",
+                    "signal_type": signal.signal_type,
+                    "strength": float(signal.strength) if signal.strength else None,
+                    "timestamp": signal.timestamp.isoformat() if signal.timestamp else None,
+                    "is_processed": getattr(signal, 'is_processed', False),
+                    "rules_triggered": signal.rules_triggered or [],
+                    "created_at": signal.created_at.isoformat() if signal.created_at else None
+                }
+                for signal in signals
+            ]
+        }
     except Exception as e:
         logger.error(f"Error fetching active signals: {e}")
         raise HTTPException(status_code=500, detail=str(e))
