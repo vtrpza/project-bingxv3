@@ -496,7 +496,7 @@ class InitialScanner:
     
     def _clean_decimal_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Convert Decimal objects to float for JSON serialization."""
-        return clean_for_json_serialization(data)
+        return convert_decimals(data)
     
     def _validate_single_symbol(self, symbol: str, ticker_data: Dict[str, Any], criteria: Dict[str, Any]) -> Dict[str, Any]:
         """Validate a single symbol against trading criteria."""
